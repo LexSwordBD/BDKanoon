@@ -248,7 +248,7 @@ export default function App() {
         {/* Navbar */}
         <nav className="navbar navbar-expand-lg fixed-top">
             <div className="container">
-                <a className="navbar-brand" href="#" onClick={()=>window.location.reload()}>Case<span>Reference</span></a>
+                <a className="navbar-brand" href="#" onClick={()=>window.location.reload()}>BD<span>Kanoon</span></a>
                 <button className="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <i className="fas fa-bars"></i>
                 </button>
