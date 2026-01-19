@@ -193,6 +193,7 @@ export default function App() {
             queryBuilder = queryBuilder.eq('journal', journal).eq('volume', vol).eq('division', div).eq('page_number', pg);
             highlightTerm = `${journal} ${vol} ${pg}`;
         } else {
+            // --- LAW FILTER ---
             let aliasCondition = "";
             if(selectedLaw) {
                const aliases = lawAliases[selectedLaw] || [selectedLaw];
@@ -202,12 +203,19 @@ export default function App() {
             }
 
             if (isExactMatch) {
+               // --- EXACT MATCH LOGIC ---
+               // This searches for the exact phrase "A B C" side-by-side.
                const queryStr = `headnote.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%`;
+               
                if(aliasCondition) queryBuilder = queryBuilder.or(aliasCondition + ',' + queryStr);
                else queryBuilder = queryBuilder.or(queryStr);
+               
                highlightTerm = searchTerm;
             } else {
-               // FIXED: Strict Stop Word Filtering
+               // --- NORMAL SEARCH LOGIC ---
+               // 1. Split words
+               // 2. Remove stop words
+               // 3. Match ANY valid word (OR logic)
                const words = searchTerm.split(/\s+/).filter(w => !stopwords.includes(w.toLowerCase()) && w.length > 1);
                let textCondition = "";
                
@@ -215,12 +223,13 @@ export default function App() {
                    textCondition = words.map(w => `headnote.ilike.%${w}%,title.ilike.%${w}%`).join(',');
                }
                
-               // If no valid search words and no law selected, return empty result (don't search)
+               // STRICT: If only stop words were typed (words array is empty) and no law is selected, 
+               // return NO results immediately. Do NOT run query.
                if (textCondition === "" && !aliasCondition) {
                    setLoading(false);
                    setResults([]);
                    setTotalCount(0);
-                   return;
+                   return; 
                }
 
                if(aliasCondition && textCondition) queryBuilder = queryBuilder.or(aliasCondition + ',' + textCondition);
