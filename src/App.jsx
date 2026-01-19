@@ -6,6 +6,7 @@ const githubUser = 'LexSwordBD';
 const repoName = 'casereference';
 const siteLink = window.location.origin; 
 
+// আপনার আইনের তালিকা (lawAliases) এখানে হুবহু থাকবে
 const lawAliases = {
     'Constitution of Bangladesh (সংবিধান)': ['Constitution', 'Konstitution', 'Art.', 'Article', 'সংবিধান'],
     'Code of Civil Procedure (CPC/দেওয়ানী)': ['CPC', 'Code of Civil Procedure', 'Civil Procedure', 'C.P.C', 'দেওয়ানী', 'Order', 'Rule'],
@@ -42,6 +43,21 @@ const lawAliases = {
 };
 
 const stopwords = ['a', 'an', 'the', 'of', 'in', 'and', 'or', 'is', 'are', 'was', 'were', 'be', 'to', 'for', 'with', 'on', 'at', 'by', 'from', 'shall', 'will', 'am'];
+
+// --- Helper Component for Highlighting ---
+const HighlightedText = ({ text, highlight }) => {
+    if (!highlight) return <span>{text}</span>;
+    const parts = text.split(new RegExp(`(${highlight.replace(/\s+/g, '|')})`, 'gi'));
+    return (
+      <span>
+        {parts.map((part, i) => 
+          highlight.toLowerCase().includes(part.toLowerCase()) && part.trim() !== "" 
+          ? <span key={i} className="highlight">{part}</span> 
+          : part
+        )}
+      </span>
+    );
+};
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -146,9 +162,8 @@ export default function App() {
     const from = (page - 1) * itemsPerPage;
     const to = from + itemsPerPage - 1;
     
-    // Check advanced gate
+    // Check advanced gate logic
     if (type === 'advanced' && (!session || !subStatus)) {
-        // Just checking count to show gate
         const { count } = await queryBuilder.range(0, 1).order('page_number', { ascending: true });
         if (count > 0) { setModalMode('gate'); setLoading(false); return; }
     }
@@ -187,19 +202,6 @@ export default function App() {
     setLoading(false);
   };
 
-  // --- Highlight Helper ---
-  const HighlightedText = ({ text, highlight }) => {
-    if (!highlight) return <span>{text}</span>;
-    const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
-    return (
-      <span>
-        {parts.map((part, i) => 
-          part.toLowerCase() === highlight.toLowerCase() ? <span key={i} className="highlight">{part}</span> : part
-        )}
-      </span>
-    );
-  };
-
   // --- Auth Handlers ---
   const handleLogin = async (email) => {
       const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: siteLink } });
@@ -228,16 +230,14 @@ export default function App() {
       setLoading(true);
       const { data } = await supabase.from('bookmarks').select('*').eq('email', session.user.email);
       setLoading(false);
-      // Here you would typically load these into results or a separate view. 
-      // For simplicity in this conversion, we'll map them to result format
       if(data) {
           setResults(data.map(b => ({
               id: b.id, title: b.case_title, citation: b.case_citation, 
-              case_anchor: b.case_anchor, github_filename: b.github_filename, is_premium: true // assume premium
+              case_anchor: b.case_anchor, github_filename: b.github_filename, 
+              is_premium: true, headnote: "Saved Bookmark" // Placeholder for bookmark list
           })));
           setView('results');
           setTotalCount(data.length);
-          // Force hero shrink
           document.getElementById('homeSection')?.classList.add('hero-shrunk');
       }
   };
@@ -331,9 +331,11 @@ export default function App() {
 
         {/* Main Content Area */}
         <div className="container" style={{minHeight: '400px'}}>
+            
+            {/* Loading */}
             {loading && <div className="text-center py-5"><div className="spinner-border text-primary"></div></div>}
 
-            {/* Results View */}
+            {/* Results View (UPDATED: Full Headnote & Justify) */}
             {view === 'results' && !loading && (
                 <div id="resultsArea">
                     <p className="text-muted small mb-3">Found {totalCount} results</p>
@@ -347,7 +349,11 @@ export default function App() {
                                     <span className="badge bg-secondary text-white"><i className="fas fa-lock"></i> Premium</span>
                                 }
                             </div>
-                            <div className="headnote-text">{item.headnote ? item.headnote.substring(0, 300) + '...' : ''}</div>
+                            
+                            {/* FIXED: Full Headnote with Formatting */}
+                            <div className="headnote-text" style={{whiteSpace: 'pre-wrap', textAlign: 'justify'}}>
+                                <HighlightedText text={item.headnote || ""} highlight={searchTerm || selectedLaw} />
+                            </div>
                         </div>
                     ))}
                     
@@ -364,7 +370,7 @@ export default function App() {
                 </div>
             )}
 
-            {/* Reader View */}
+            {/* Reader View (UPDATED: Justify Mode) */}
             {view === 'reader' && !loading && currentJudgment && (
                 <div id="readerView" className="bg-white p-4 p-md-5 rounded-3 shadow-sm border mb-5">
                     <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
@@ -376,7 +382,9 @@ export default function App() {
                     </div>
                     <h3 className="fw-bold text-center text-primary mb-2" style={{fontFamily:'Playfair Display'}}>{currentJudgment.title}</h3>
                     <p className="text-center text-muted fw-bold mb-4">{currentJudgment.citation}</p>
-                    <div className="mt-4 text-justify" style={{whiteSpace: 'pre-wrap', fontFamily:'Merriweather'}}>
+                    
+                    {/* FIXED: Justify Mode for Full Judgment */}
+                    <div className="mt-4 text-justify" style={{whiteSpace: 'pre-wrap', fontFamily:'Merriweather', textAlign: 'justify'}}>
                         {judgmentText}
                     </div>
                 </div>
@@ -470,6 +478,7 @@ export default function App() {
             </div>
         )}
 
+        {/* FIXED: Profile Modal with Close Button */}
         {modalMode === 'profile' && profileData && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
                 <div className="modal-dialog modal-dialog-centered">
@@ -484,8 +493,8 @@ export default function App() {
                             <span className={`badge mb-3 ${profileData.isPremium ? 'bg-success' : 'bg-secondary'}`}>{profileData.isPremium ? 'Premium Member' : 'Free Member'}</span>
                             <div className="card bg-light border-0 p-3 mt-3 text-start">
                                 <p className="mb-1 small text-muted text-uppercase fw-bold">Subscription Details</p>
-                                <div className="d-flex justify-content-between border-bottom pb-2 mb-2"><span>Expiry Date:</span><span class="fw-bold text-dark">{profileData.expDate}</span></div>
-                                <div className="d-flex justify-content-between"><span>Days Remaining:</span><span class="fw-bold text-primary">{profileData.diffDays}</span></div>
+                                <div className="d-flex justify-content-between border-bottom pb-2 mb-2"><span>Expiry Date:</span><span className="fw-bold text-dark">{profileData.expDate}</span></div>
+                                <div className="d-flex justify-content-between"><span>Days Remaining:</span><span className="fw-bold text-primary">{profileData.diffDays}</span></div>
                             </div>
                             <button className="btn btn-outline-danger w-100 mt-4" onClick={handleLogout}>Sign Out</button>
                         </div>
@@ -565,16 +574,16 @@ export default function App() {
         {/* Footer */}
         <footer className="bg-dark text-secondary py-5 text-center">
             <div className="container">
-                <h4 className="text-white fw-bold mb-4">CaseReference BD</h4>
+                <h4 className="text-white fw-bold mb-4">BDKanoon</h4>
                 <div className="mb-4">
                     <a href="#" className="footer-link">Home</a>
                     <a href="#packages" className="footer-link">Pricing</a>
                     <a href="#" className="footer-link">Privacy Policy</a>
                 </div>
-                <p className="mb-1">Bashundhara Riverview, Dhaka.</p>
-                <p className="mb-1">Email: legalvoicebd@gmail.com</p>
+                <p className="mb-1">Supreme Court, Dhaka.</p>
+                <p className="mb-1">Email: caseref.bd@gmail.com</p>
                 <p className="mb-4">Phone: 01911 008 518</p>
-                <p className="small opacity-50">&copy; 2026 CaseReference. All rights reserved.</p>
+                <p class="small opacity-50">&copy; 2026 CaseReference. All rights reserved.</p>
             </div>
         </footer>
         <a href="https://wa.me/8801911008518" className="whatsapp-float" target="_blank"><i className="fab fa-whatsapp"></i></a>
