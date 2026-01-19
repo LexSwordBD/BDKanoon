@@ -98,33 +98,34 @@ export default function App() {
       setSession(session);
       if(session) {
           checkSubscription(session.user.email);
-          // Start monitoring ONLY if logged in
-          sessionInterval = startSessionMonitor(session);
+          sessionInterval = startSessionMonitor(session); 
       }
     });
 
-    // 2. Listener for Login/Logout
+    // 2. Auth State Listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       
-      if (event === 'PASSWORD_RECOVERY') setModalMode('resetPassword');
+      if (event === 'PASSWORD_RECOVERY') {
+          setModalMode('resetPassword');
+      }
       
       if(session) {
           checkSubscription(session.user.email);
           
           if (event === 'SIGNED_IN') {
               // FORCE UPDATE: When user logs in, save this NEW token to DB
-              // This kicks out any previous session because their token won't match anymore
-              await supabase.from('members')
-                  .update({ current_session_id: session.access_token })
-                  .eq('email', session.user.email);
+              try {
+                  await supabase.from('members')
+                      .update({ current_session_id: session.access_token })
+                      .eq('email', session.user.email);
+              } catch (err) { console.error("Session update failed", err); }
               
-              // Restart monitor with new session
+              // Restart monitor
               if (sessionInterval) clearInterval(sessionInterval);
               sessionInterval = startSessionMonitor(session);
           }
       } else {
-          // If logged out, stop monitoring
           if (sessionInterval) clearInterval(sessionInterval);
       }
     });
@@ -137,7 +138,6 @@ export default function App() {
 
   // --- Session Monitor Logic ---
   const startSessionMonitor = (currentSession) => {
-      // Check every 5 seconds
       return setInterval(async () => {
           if (!currentSession?.user?.email) return;
 
@@ -150,9 +150,9 @@ export default function App() {
           if (!error && data) {
               // If DB has a different token than mine, someone else logged in!
               if (data.current_session_id && data.current_session_id !== currentSession.access_token) {
-                  await supabase.auth.signOut(); // Kick me out
+                  await supabase.auth.signOut(); 
                   setSession(null);
-                  setModalMode('sessionError'); // Show error
+                  setModalMode('sessionError'); 
               }
           }
       }, 5000); // 5 Seconds interval
@@ -180,61 +180,68 @@ export default function App() {
     setCurrentPage(page);
     setView('results'); 
 
-    let queryBuilder = supabase.from('cases').select('*', { count: 'exact' });
-    let highlightTerm = "";
+    try {
+        let queryBuilder = supabase.from('cases').select('*', { count: 'exact' });
+        let highlightTerm = "";
 
-    if (type === 'advanced') {
-        const { journal, vol, div, page: pg } = advFields;
-        if (!journal || !vol || !div || !pg) { alert("Fill all fields."); setLoading(false); return; }
-        queryBuilder = queryBuilder.eq('journal', journal).eq('volume', vol).eq('division', div).eq('page_number', pg);
-        highlightTerm = `${journal} ${vol} ${pg}`;
-    } else {
-        let aliasCondition = "";
-        if(selectedLaw) {
-           const aliases = lawAliases[selectedLaw] || [selectedLaw];
-           const headnoteChecks = aliases.map(a => `headnote.ilike.%${a}%`).join(',');
-           const titleChecks = aliases.map(a => `title.ilike.%${a}%`).join(',');
-           aliasCondition = headnoteChecks + ',' + titleChecks;
-        }
-
-        if (isExactMatch) {
-           const queryStr = `headnote.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%`;
-           if(aliasCondition) queryBuilder = queryBuilder.or(aliasCondition + ',' + queryStr);
-           else queryBuilder = queryBuilder.or(queryStr);
-           highlightTerm = searchTerm;
+        if (type === 'advanced') {
+            const { journal, vol, div, page: pg } = advFields;
+            if (!journal || !vol || !div || !pg) { alert("Fill all fields."); setLoading(false); return; }
+            queryBuilder = queryBuilder.eq('journal', journal).eq('volume', vol).eq('division', div).eq('page_number', pg);
+            highlightTerm = `${journal} ${vol} ${pg}`;
         } else {
-           const words = searchTerm.split(/\s+/).filter(w => !stopwords.includes(w.toLowerCase()) && w.length > 1);
-           let textCondition = "";
-           if (words.length > 0) {
-               textCondition = words.map(w => `headnote.ilike.%${w}%,title.ilike.%${w}%`).join(',');
-           } else if (searchTerm) {
-               textCondition = `headnote.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%`;
-           }
+            let aliasCondition = "";
+            if(selectedLaw) {
+               const aliases = lawAliases[selectedLaw] || [selectedLaw];
+               const headnoteChecks = aliases.map(a => `headnote.ilike.%${a}%`).join(',');
+               const titleChecks = aliases.map(a => `title.ilike.%${a}%`).join(',');
+               aliasCondition = headnoteChecks + ',' + titleChecks;
+            }
 
-           if(aliasCondition && textCondition) queryBuilder = queryBuilder.or(aliasCondition + ',' + textCondition);
-           else if (aliasCondition) queryBuilder = queryBuilder.or(aliasCondition);
-           else if (textCondition) queryBuilder = queryBuilder.or(textCondition);
-           
-           highlightTerm = words.join('|');
+            if (isExactMatch) {
+               const queryStr = `headnote.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%`;
+               if(aliasCondition) queryBuilder = queryBuilder.or(aliasCondition + ',' + queryStr);
+               else queryBuilder = queryBuilder.or(queryStr);
+               highlightTerm = searchTerm;
+            } else {
+               const words = searchTerm.split(/\s+/).filter(w => !stopwords.includes(w.toLowerCase()) && w.length > 1);
+               let textCondition = "";
+               if (words.length > 0) {
+                   textCondition = words.map(w => `headnote.ilike.%${w}%,title.ilike.%${w}%`).join(',');
+               } else if (searchTerm) {
+                   textCondition = `headnote.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%`;
+               }
+
+               if(aliasCondition && textCondition) queryBuilder = queryBuilder.or(aliasCondition + ',' + textCondition);
+               else if (aliasCondition) queryBuilder = queryBuilder.or(aliasCondition);
+               else if (textCondition) queryBuilder = queryBuilder.or(textCondition);
+               
+               highlightTerm = words.join('|');
+            }
         }
-    }
 
-    const itemsPerPage = 20;
-    const from = (page - 1) * itemsPerPage;
-    const to = from + itemsPerPage - 1;
-    
-    if (type === 'advanced' && (!session || !subStatus)) {
-        const { count } = await queryBuilder.range(0, 1).order('page_number', { ascending: true });
-        if (count > 0) { setModalMode('gate'); setLoading(false); return; }
-    }
+        const itemsPerPage = 20;
+        const from = (page - 1) * itemsPerPage;
+        const to = from + itemsPerPage - 1;
+        
+        if (type === 'advanced' && (!session || !subStatus)) {
+            const { count } = await queryBuilder.range(0, 1).order('page_number', { ascending: true });
+            if (count > 0) { setModalMode('gate'); setLoading(false); return; }
+        }
 
-    const { data, error, count } = await queryBuilder.range(from, to).order('page_number', { ascending: true });
-    
-    if(data) {
-        setResults(data);
-        setTotalCount(count || 0);
+        const { data, error, count } = await queryBuilder.range(from, to).order('page_number', { ascending: true });
+        
+        if(data) {
+            setResults(data);
+            setTotalCount(count || 0);
+        } else if (error) {
+            console.error("Search Error:", error);
+        }
+    } catch (e) {
+        console.error("Search Exception:", e);
+    } finally {
+        setLoading(false); // নিশ্চিতভাবে লোডিং বন্ধ হবে
     }
-    setLoading(false);
   };
 
   const loadJudgment = async (item) => {
@@ -248,17 +255,26 @@ export default function App() {
     try {
         const url = `https://raw.githubusercontent.com/${githubUser}/${repoName}/main/judgments/${item.github_filename}`;
         const res = await fetch(url);
+        if(!res.ok) throw new Error("File not found");
+        
         const fullText = await res.text();
         const start = `===${item.case_anchor}===`;
         const end = `===End===`;
         const sIdx = fullText.indexOf(start);
-        let content = sIdx !== -1 ? fullText.substring(sIdx + start.length, fullText.indexOf(end, sIdx)) : "Content Error";
+        
+        let content;
+        if (sIdx !== -1) {
+            content = fullText.substring(sIdx + start.length, fullText.indexOf(end, sIdx));
+        } else {
+            content = "Content Error: Anchor not found in file.";
+        }
         
         setJudgmentText(content); 
     } catch(e) {
-        setJudgmentText("Error loading judgment text.");
+        setJudgmentText("Error loading judgment text: " + e.message);
+    } finally {
+        setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleAuth = async (email, password, isSignUp) => {
