@@ -88,12 +88,13 @@ export default function App() {
   // Modals Control
   const [modalMode, setModalMode] = useState(null); 
   const [profileData, setProfileData] = useState(null);
+  // NEW: Payment Success Modal State
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   // --- Auth & Session Lock Effects ---
   useEffect(() => {
     let sessionInterval;
 
-    // 1. Initial Check
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if(session) {
@@ -102,19 +103,14 @@ export default function App() {
       }
     });
 
-    // 2. Auth State Listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       
-      if (event === 'PASSWORD_RECOVERY') {
-          setModalMode('resetPassword');
-      }
+      if (event === 'PASSWORD_RECOVERY') setModalMode('resetPassword');
       
       if(session) {
           checkSubscription(session.user.email);
-          
           if (event === 'SIGNED_IN') {
-              // Update Session ID on Login
               try {
                   await supabase.from('members')
                       .update({ current_session_id: session.access_token })
@@ -135,17 +131,10 @@ export default function App() {
     };
   }, []);
 
-  // --- Session Monitor Logic ---
   const startSessionMonitor = (currentSession) => {
       return setInterval(async () => {
           if (!currentSession?.user?.email) return;
-
-          const { data, error } = await supabase
-              .from('members')
-              .select('current_session_id')
-              .eq('email', currentSession.user.email)
-              .single();
-          
+          const { data, error } = await supabase.from('members').select('current_session_id').eq('email', currentSession.user.email).single();
           if (!error && data) {
               if (data.current_session_id && data.current_session_id !== currentSession.access_token) {
                   await supabase.auth.signOut(); 
@@ -177,7 +166,7 @@ export default function App() {
     }
   };
 
-  // --- Search Functions ---
+  // --- FIXED: Search Logic (Strict AND) ---
   const handleSearch = async (page = 1, type = 'simple') => {
     setLoading(true);
     setCurrentPage(page);
@@ -194,8 +183,9 @@ export default function App() {
             highlightTerm = `${journal} ${vol} ${pg}`;
         } else {
             let aliasCondition = "";
-            
-            // --- FIX: Law Selection Logic ---
+            let textCondition = "";
+
+            // 1. Law Filter (First Layer)
             if(selectedLaw) {
                const aliases = lawAliases[selectedLaw] || [selectedLaw];
                const headnoteChecks = aliases.map(a => `headnote.ilike.%${a}%`).join(',');
@@ -203,7 +193,7 @@ export default function App() {
                aliasCondition = headnoteChecks + ',' + titleChecks;
             }
 
-            let textCondition = "";
+            // 2. Text Search (Second Layer)
             if (isExactMatch) {
                const queryStr = `headnote.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%`;
                textCondition = queryStr;
@@ -211,19 +201,21 @@ export default function App() {
             } else {
                const words = searchTerm.split(/\s+/).filter(w => !stopwords.includes(w.toLowerCase()) && w.length > 1);
                if (words.length > 0) {
-                   textCondition = words.map(w => `headnote.ilike.%${w}%,title.ilike.%${w}%`).join(',');
+                   // Added parallel_citation to search fields
+                   textCondition = words.map(w => `headnote.ilike.%${w}%,title.ilike.%${w}%,parallel_citation.ilike.%${w}%`).join(',');
                } else if (searchTerm) {
-                   textCondition = `headnote.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%`;
+                   textCondition = `headnote.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%,parallel_citation.ilike.%${searchTerm}%`;
                }
                highlightTerm = words.join('|');
             }
 
-            // --- FIX: Apply Filters Separately (AND Logic) ---
-            // যদি আইন সিলেক্ট করা থাকে, তবে আগে আইনের ফিল্টার বসবে
+            // 3. Apply Filters Separately (Chaining .or() in Supabase acts as AND between groups)
+            // If Law is selected, restrict results to that law FIRST
             if (aliasCondition) {
                 queryBuilder = queryBuilder.or(aliasCondition);
             }
-            // এরপর সার্চ টেক্সটের ফিল্টার বসবে (অটোমেটিক AND হয়ে যাবে)
+            
+            // THEN, if search term exists, restrict further within those results
             if (textCondition) {
                 queryBuilder = queryBuilder.or(textCondition);
             }
@@ -251,6 +243,33 @@ export default function App() {
     } finally {
         setLoading(false);
     }
+  };
+
+  // --- NEW: Handle Payment Submit (AJAX) ---
+  const handlePaymentSubmit = async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = new FormData(form);
+      
+      try {
+          const response = await fetch("https://formspree.io/f/xgookqen", {
+              method: "POST",
+              body: data,
+              headers: {
+                  'Accept': 'application/json'
+              }
+          });
+          
+          if (response.ok) {
+              form.reset();
+              setModalMode(null); // Close input modal
+              setPaymentSuccess(true); // Open Success Modal
+          } else {
+              alert("There was a problem submitting your form");
+          }
+      } catch (error) {
+          alert("Error sending form");
+      }
   };
 
   const loadJudgment = async (item) => {
@@ -705,14 +724,15 @@ export default function App() {
             </div>
         )}
 
+        {/* UPDATED: Payment Modal with AJAX Logic */}
         {modalMode === 'payment' && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
                 <div className="modal-dialog modal-dialog-centered">
                     <div className="modal-content">
                         <div className="modal-header"><h5 className="modal-title">Payment Verification</h5><button className="btn-close" onClick={()=>setModalMode(null)}></button></div>
                         <div className="modal-body p-4">
-                            <form action="https://formsubmit.co/bdkanoon@gmail.com" method="POST">
-                                <input type="hidden" name="_captcha" value="false"/><input type="hidden" name="_subject" value="New Payment"/>
+                            <form onSubmit={handlePaymentSubmit}>
+                                <input type="hidden" name="_subject" value="New Payment"/>
                                 <div className="mb-3"><label className="form-label">Name</label><input type="text" name="Name" className="form-control" required/></div>
                                 <div className="mb-3"><label className="form-label">Phone</label><input type="text" name="Phone" className="form-control" required/></div>
                                 <div className="mb-3"><label className="form-label">Email</label><input type="email" name="Email" className="form-control" required/></div>
@@ -725,7 +745,28 @@ export default function App() {
             </div>
         )}
 
-        {/* FIXED: Warning Modal (The Professional Pop-up) */}
+        {/* NEW: Payment Success Modal (International Standard) */}
+        {paymentSuccess && (
+            <div className="modal d-block" style={{background: 'rgba(0,0,0,0.6)'}}>
+                <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content text-center p-5 border-0 shadow-lg" style={{borderRadius: '20px'}}>
+                        <div className="modal-body">
+                            <div style={{width:'80px', height:'80px', background:'#e8f5e9', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto'}}>
+                                <i className="fas fa-check fa-3x text-success"></i>
+                            </div>
+                            <h2 className="fw-bold mt-4 mb-2 text-dark">Submission Successful!</h2>
+                            <p className="text-muted mb-4">
+                                Thank you for your payment. We have received your request and will activate your premium membership shortly.
+                            </p>
+                            <button className="btn btn-success rounded-pill px-5 py-2 shadow-sm fw-bold" onClick={()=>setPaymentSuccess(false)}>
+                                Continue
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
         {modalMode === 'warning' && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
                 <div className="modal-dialog modal-dialog-centered">
