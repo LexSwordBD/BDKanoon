@@ -6,7 +6,7 @@ const githubUser = 'LexSwordBD';
 const repoName = 'BDKanoon';
 const siteLink = window.location.origin; 
 
-// আপনার আইনের তালিকা (lawAliases) এখানে হুবহু থাকবে
+// আপনার আইনের তালিকা (lawAliases) হুবহু রাখা হলো
 const lawAliases = {
     'Constitution of Bangladesh (সংবিধান)': ['Constitution', 'Konstitution', 'Art.', 'Article', 'সংবিধান'],
     'Code of Civil Procedure (CPC/দেওয়ানী)': ['CPC', 'Code of Civil Procedure', 'Civil Procedure', 'C.P.C', 'দেওয়ানী', 'Order', 'Rule'],
@@ -62,7 +62,7 @@ const HighlightedText = ({ text, highlight }) => {
 export default function App() {
   const [session, setSession] = useState(null);
   const [subStatus, setSubStatus] = useState(false);
-  const [view, setView] = useState('home'); // 'home', 'results', 'reader'
+  const [view, setView] = useState('home'); 
   const [loading, setLoading] = useState(false);
   
   // Search States
@@ -80,7 +80,7 @@ export default function App() {
   const [judgmentText, setJudgmentText] = useState('');
 
   // Modals Control
-  const [modalMode, setModalMode] = useState(null); // 'login', 'profile', 'payment', 'app', 'gate', 'checkEmail', 'warning'
+  const [modalMode, setModalMode] = useState(null); // 'login', 'profile', 'payment', 'app', 'gate', 'warning'
   const [profileData, setProfileData] = useState(null);
 
   // --- Auth & Effects ---
@@ -202,10 +202,37 @@ export default function App() {
     setLoading(false);
   };
 
-  // --- Auth Handlers ---
-  const handleLogin = async (email) => {
-      const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: siteLink } });
-      if(error) alert(error.message); else setModalMode('checkEmail');
+  // --- NEW: Email + Password Auth Handler ---
+  const handleAuth = async (email, password, isSignUp) => {
+      setLoading(true);
+      if (isSignUp) {
+          const { data, error } = await supabase.auth.signUp({
+              email: email,
+              password: password,
+          });
+          if (error) alert(error.message);
+          else alert("Account created successfully! You are now logged in.");
+      } else {
+          const { data, error } = await supabase.auth.signInWithPassword({
+              email: email,
+              password: password,
+          });
+          if (error) alert(error.message);
+      }
+      setLoading(false);
+      setModalMode(null);
+  };
+
+  // --- NEW: Password Reset Handler ---
+  const handlePasswordReset = async (email) => {
+      if (!email) return alert("Please enter your email first in the box.");
+      setLoading(true);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: siteLink,
+      });
+      if (error) alert(error.message);
+      else alert("Password reset link sent to your email!");
+      setLoading(false);
   };
 
   const handleLogout = async () => {
@@ -234,7 +261,7 @@ export default function App() {
           setResults(data.map(b => ({
               id: b.id, title: b.case_title, citation: b.case_citation, 
               case_anchor: b.case_anchor, github_filename: b.github_filename, 
-              is_premium: true, headnote: "Saved Bookmark" // Placeholder for bookmark list
+              is_premium: true, headnote: "Saved Bookmark"
           })));
           setView('results');
           setTotalCount(data.length);
@@ -335,7 +362,7 @@ export default function App() {
             {/* Loading */}
             {loading && <div className="text-center py-5"><div className="spinner-border text-primary"></div></div>}
 
-            {/* Results View (UPDATED: Full Headnote & Justify) */}
+            {/* Results View */}
             {view === 'results' && !loading && (
                 <div id="resultsArea">
                     <p className="text-muted small mb-3">Found {totalCount} results</p>
@@ -350,7 +377,6 @@ export default function App() {
                                 }
                             </div>
                             
-                            {/* FIXED: Full Headnote with Formatting */}
                             <div className="headnote-text" style={{whiteSpace: 'pre-wrap', textAlign: 'justify'}}>
                                 <HighlightedText text={item.headnote || ""} highlight={searchTerm || selectedLaw} />
                             </div>
@@ -370,7 +396,7 @@ export default function App() {
                 </div>
             )}
 
-            {/* Reader View (UPDATED: Justify Mode) */}
+            {/* Reader View */}
             {view === 'reader' && !loading && currentJudgment && (
                 <div id="readerView" className="bg-white p-4 p-md-5 rounded-3 shadow-sm border mb-5">
                     <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
@@ -383,7 +409,6 @@ export default function App() {
                     <h3 className="fw-bold text-center text-primary mb-2" style={{fontFamily:'Playfair Display'}}>{currentJudgment.title}</h3>
                     <p className="text-center text-muted fw-bold mb-4">{currentJudgment.citation}</p>
                     
-                    {/* FIXED: Justify Mode for Full Judgment */}
                     <div className="mt-4 text-justify" style={{whiteSpace: 'pre-wrap', fontFamily:'Merriweather', textAlign: 'justify'}}>
                         {judgmentText}
                     </div>
@@ -445,52 +470,85 @@ export default function App() {
              </div>
         </div>
 
-        {/* --- MODALS --- */}
+        {/* --- UPDATED LOGIN MODAL (Email + Password) --- */}
         {modalMode === 'login' && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
                 <div className="modal-dialog modal-dialog-centered">
                     <div className="modal-content">
-                        <div className="modal-header"><h5 className="modal-title">Member Login</h5><button className="btn-close" onClick={()=>setModalMode(null)}></button></div>
-                        <div className="modal-body p-4 text-center">
-                            <p className="text-muted mb-3">Login with your email address.</p>
-                            <form onSubmit={(e)=>{e.preventDefault(); handleLogin(e.target.email.value)}}>
-                                <input name="email" type="email" className="form-control form-control-lg mb-3" placeholder="name@example.com" required/>
-                                <button className="btn btn-dark w-100">Send Link</button>
-                            </form>
+                        <div className="modal-header border-0 pb-0 justify-content-center position-relative">
+                            <h5 className="modal-title fw-bold">Welcome</h5>
+                            <button className="btn-close position-absolute end-0 me-3" onClick={()=>setModalMode(null)}></button>
+                        </div>
+                        <div className="modal-body p-4">
+                            <ul className="nav nav-pills nav-fill mb-3" id="pills-tab" role="tablist">
+                                <li className="nav-item" role="presentation">
+                                    <button className="nav-link active" id="pills-login-tab" data-bs-toggle="pill" data-bs-target="#pills-login" type="button">Login</button>
+                                </li>
+                                <li className="nav-item" role="presentation">
+                                    <button className="nav-link" id="pills-signup-tab" data-bs-toggle="pill" data-bs-target="#pills-signup" type="button">Sign Up</button>
+                                </li>
+                            </ul>
+                            
+                            <div className="tab-content" id="pills-tabContent">
+                                {/* Login Form */}
+                                <div className="tab-pane fade show active" id="pills-login">
+                                    <form onSubmit={(e)=>{
+                                        e.preventDefault(); 
+                                        handleAuth(e.target.email.value, e.target.password.value, false);
+                                    }}>
+                                        <div className="mb-3">
+                                            <label className="form-label small text-muted">Email</label>
+                                            <input name="email" type="email" className="form-control" required />
+                                        </div>
+                                        <div className="mb-3">
+                                            <label className="form-label small text-muted">Password</label>
+                                            <input name="password" type="password" className="form-control" required />
+                                        </div>
+                                        <div className="text-end mb-3">
+                                            <a href="#" className="text-decoration-none small text-muted" onClick={(e) => {
+                                                e.preventDefault();
+                                                const email = e.target.closest('form').querySelector('input[name="email"]').value;
+                                                handlePasswordReset(email);
+                                            }}>Forgot Password?</a>
+                                        </div>
+                                        <button className="btn btn-dark w-100 py-2">Login</button>
+                                    </form>
+                                </div>
+
+                                {/* Sign Up Form */}
+                                <div className="tab-pane fade" id="pills-signup">
+                                    <form onSubmit={(e)=>{
+                                        e.preventDefault(); 
+                                        handleAuth(e.target.email.value, e.target.password.value, true);
+                                    }}>
+                                        <div className="mb-3">
+                                            <label className="form-label small text-muted">Email</label>
+                                            <input name="email" type="email" className="form-control" required />
+                                        </div>
+                                        <div className="mb-3">
+                                            <label className="form-label small text-muted">Create Password</label>
+                                            <input name="password" type="password" className="form-control" required minLength="6"/>
+                                            <div className="form-text text-muted" style={{fontSize:'12px'}}>Min 6 characters</div>
+                                        </div>
+                                        <button className="btn btn-success text-white w-100 py-2">Create Account</button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         )}
 
-        {modalMode === 'checkEmail' && (
-            <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
-                <div className="modal-dialog modal-dialog-centered">
-                    <div className="modal-content text-center p-5">
-                        <div className="modal-body">
-                            <i className="fas fa-paper-plane fa-4x text-success mb-4"></i>
-                            <h3 className="fw-bold mb-2">Check Your Email</h3>
-                            <p className="text-muted">We have sent a login link to your email.</p>
-                            <button className="btn btn-outline-success mt-3 px-4 rounded-pill" onClick={()=>setModalMode(null)}>OK</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        )}
-
-        {/* FIXED: Profile Modal with Close Button */}
+        {/* Profile Modal */}
         {modalMode === 'profile' && profileData && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
                 <div className="modal-dialog modal-dialog-centered">
-                    <div className="modal-content overflow-hidden p-0"> {/* p-0 added to remove extra padding */}
-                        
-                        {/* --- HEADER FIXED (Centered & Balanced) --- */}
+                    <div className="modal-content overflow-hidden p-0">
                         <div className="modal-header border-0 position-relative d-flex justify-content-center align-items-center py-3 bg-dark text-white">
                             <h5 className="modal-title fw-bold m-0">My Account</h5>
                             <button className="btn-close btn-close-white position-absolute end-0 me-3" onClick={()=>setModalMode(null)}></button>
                         </div>
-                        {/* ------------------------------------------ */}
-                        
                         <div className="modal-body text-center p-4">
                             <i className="fas fa-user-circle fa-4x text-secondary mb-3"></i>
                             <h5 className="fw-bold mb-1">{profileData.email}</h5>
