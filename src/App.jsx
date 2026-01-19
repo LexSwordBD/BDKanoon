@@ -3,7 +3,7 @@ import { supabase } from './supabaseClient';
 
 // --- Constants & Data ---
 const githubUser = 'LexSwordBD';
-const repoName = 'casereference';
+const repoName = 'BDKanoon';
 const siteLink = window.location.origin; 
 
 // আপনার আইনের তালিকা (lawAliases) এখানে হুবহু থাকবে
@@ -587,7 +587,7 @@ export default function App() {
                 <p className="mb-1">Supreme Court, Dhaka.</p>
                 <p className="mb-1">Email: caseref.bd@gmail.com</p>
                 <p className="mb-4">Phone: 01911 008 518</p>
-                <p class="small opacity-50">&copy; 2026 CaseReference. All rights reserved.</p>
+                <p class="small opacity-50">&copy; 2026 BDKanoon. All rights reserved.</p>
             </div>
         </footer>
         <a href="https://wa.me/8801911008518" className="whatsapp-float" target="_blank"><i className="fab fa-whatsapp"></i></a>
