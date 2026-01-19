@@ -114,14 +114,13 @@ export default function App() {
           checkSubscription(session.user.email);
           
           if (event === 'SIGNED_IN') {
-              // FORCE UPDATE: When user logs in, save this NEW token to DB
+              // Update Session ID on Login
               try {
                   await supabase.from('members')
                       .update({ current_session_id: session.access_token })
                       .eq('email', session.user.email);
               } catch (err) { console.error("Session update failed", err); }
               
-              // Restart monitor
               if (sessionInterval) clearInterval(sessionInterval);
               sessionInterval = startSessionMonitor(session);
           }
@@ -148,27 +147,33 @@ export default function App() {
               .single();
           
           if (!error && data) {
-              // If DB has a different token than mine, someone else logged in!
               if (data.current_session_id && data.current_session_id !== currentSession.access_token) {
                   await supabase.auth.signOut(); 
                   setSession(null);
                   setModalMode('sessionError'); 
               }
           }
-      }, 5000); // 5 Seconds interval
+      }, 5000); 
   };
 
   const checkSubscription = async (email) => {
-    const { data } = await supabase.from('members').select('*').eq('email', email).single();
-    if(data) {
-        const expDate = new Date(data.expiry_date);
-        const today = new Date();
-        const diffTime = Math.abs(expDate - today);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-        const isPremium = expDate > today;
-        setSubStatus(isPremium);
-        setProfileData({ ...data, isPremium, diffDays, expDate: expDate.toDateString() });
-    } else {
+    try {
+        const { data, error } = await supabase.from('members').select('*').eq('email', email).single();
+        if(data) {
+            const expDate = new Date(data.expiry_date);
+            const today = new Date();
+            const diffTime = Math.abs(expDate - today);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            const isPremium = expDate > today;
+            setSubStatus(isPremium);
+            setProfileData({ ...data, isPremium, diffDays, expDate: expDate.toDateString() });
+        } else {
+            setSubStatus(false);
+            // Fallback profile data so button still works
+            setProfileData({ email, isPremium: false, diffDays: 0, expDate: 'N/A' });
+        }
+    } catch(e) {
+        // Error fallback
         setSubStatus(false);
         setProfileData({ email, isPremium: false, diffDays: 0, expDate: 'N/A' });
     }
@@ -240,13 +245,14 @@ export default function App() {
     } catch (e) {
         console.error("Search Exception:", e);
     } finally {
-        setLoading(false); // নিশ্চিতভাবে লোডিং বন্ধ হবে
+        setLoading(false);
     }
   };
 
   const loadJudgment = async (item) => {
+    // FIXED: Use Modal instead of Alert
     if(item.is_premium && !session) { setModalMode('warning'); return; }
-    if(item.is_premium && !subStatus) { alert("Premium Access Required. Please Subscribe."); return; }
+    if(item.is_premium && !subStatus) { setModalMode('warning'); return; }
 
     setLoading(true);
     setView('reader');
@@ -408,7 +414,6 @@ export default function App() {
                         <button className="btn-search-hero" onClick={()=>handleSearch(1)}><i className="fas fa-arrow-right"></i></button>
                     </div>
                     
-                    {/* FIXED: Checkbox Alignment */}
                     <div className="d-flex justify-content-center gap-3 mt-3">
                         <label className="small text-secondary d-flex align-items-center gap-2" style={{cursor:'pointer'}}>
                             <input type="checkbox" onChange={(e)=>setIsExactMatch(e.target.checked)}/> Exact Phrase Match
@@ -650,8 +655,8 @@ export default function App() {
             </div>
         )}
 
-        {/* Profile Modal */}
-        {modalMode === 'profile' && profileData && (
+        {/* FIXED: Profile Modal now renders even if profileData has partial info */}
+        {modalMode === 'profile' && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
                 <div className="modal-dialog modal-dialog-centered">
                     <div className="modal-content overflow-hidden p-0">
@@ -661,13 +666,19 @@ export default function App() {
                         </div>
                         <div className="modal-body text-center p-4">
                             <i className="fas fa-user-circle fa-4x text-secondary mb-3"></i>
-                            <h5 className="fw-bold mb-1">{profileData.email}</h5>
-                            <span className={`badge mb-3 ${profileData.isPremium ? 'bg-success' : 'bg-secondary'}`}>{profileData.isPremium ? 'Premium Member' : 'Free Member'}</span>
-                            <div className="card bg-light border-0 p-3 mt-3 text-start">
-                                <p className="mb-1 small text-muted text-uppercase fw-bold">Subscription Details</p>
-                                <div className="d-flex justify-content-between border-bottom pb-2 mb-2"><span>Expiry Date:</span><span className="fw-bold text-dark">{profileData.expDate}</span></div>
-                                <div className="d-flex justify-content-between"><span>Days Remaining:</span><span className="fw-bold text-primary">{profileData.diffDays}</span></div>
-                            </div>
+                            <h5 className="fw-bold mb-1">{profileData?.email || session?.user?.email || "Loading..."}</h5>
+                            <span className={`badge mb-3 ${profileData?.isPremium ? 'bg-success' : 'bg-secondary'}`}>
+                                {profileData?.isPremium ? 'Premium Member' : 'Free Member'}
+                            </span>
+                            
+                            {profileData && (
+                                <div className="card bg-light border-0 p-3 mt-3 text-start">
+                                    <p className="mb-1 small text-muted text-uppercase fw-bold">Subscription Details</p>
+                                    <div className="d-flex justify-content-between border-bottom pb-2 mb-2"><span>Expiry Date:</span><span className="fw-bold text-dark">{profileData.expDate}</span></div>
+                                    <div className="d-flex justify-content-between"><span>Days Remaining:</span><span className="fw-bold text-primary">{profileData.diffDays}</span></div>
+                                </div>
+                            )}
+                            
                             <button className="btn btn-outline-danger w-100 mt-4" onClick={handleLogout}>Sign Out</button>
                         </div>
                     </div>
@@ -711,6 +722,7 @@ export default function App() {
             </div>
         )}
 
+        {/* FIXED: Warning Modal (The Professional Pop-up) */}
         {modalMode === 'warning' && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
                 <div className="modal-dialog modal-dialog-centered">
