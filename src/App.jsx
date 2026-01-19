@@ -78,7 +78,6 @@ export default function App() {
   const [judgmentText, setJudgmentText] = useState('');
 
   // Modals Control
-  // Added 'resetPassword' and 'sessionError'
   const [modalMode, setModalMode] = useState(null); 
   const [profileData, setProfileData] = useState(null);
 
@@ -89,17 +88,15 @@ export default function App() {
       setSession(session);
       if(session) {
           checkSubscription(session.user.email);
-          startSessionMonitor(session); // Start checking for multiple logins
+          startSessionMonitor(session); 
       }
     });
 
     // 2. Auth State Listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth Event:", event);
       setSession(session);
       
       if (event === 'PASSWORD_RECOVERY') {
-          // If user clicked "Reset Password" link
           setModalMode('resetPassword');
       }
       
@@ -107,7 +104,6 @@ export default function App() {
           checkSubscription(session.user.email);
           
           if (event === 'SIGNED_IN') {
-              // On Login: Update DB with this session ID (Kick out others)
               await updateSessionId(session);
           }
       }
@@ -117,18 +113,15 @@ export default function App() {
 
   // --- Single Device Lock Logic ---
   const updateSessionId = async (session) => {
-      // Save current Access Token to DB
       await supabase.from('members')
           .update({ current_session_id: session.access_token })
           .eq('email', session.user.email);
   };
 
   const startSessionMonitor = (session) => {
-      // Check every 5 seconds if my token matches DB token
       const interval = setInterval(async () => {
           const { data } = await supabase.from('members').select('current_session_id').eq('email', session.user.email).single();
           if (data && data.current_session_id && data.current_session_id !== session.access_token) {
-              // Token mismatch! Log out.
               clearInterval(interval);
               await supabase.auth.signOut();
               setSession(null);
@@ -271,7 +264,7 @@ export default function App() {
       else {
           alert("Password updated successfully!");
           setModalMode(null);
-          window.location.hash = ''; // Clear the recovery hash
+          window.location.hash = ''; 
       }
       setLoading(false);
   };
@@ -372,8 +365,9 @@ export default function App() {
                         <button className="btn-search-hero" onClick={()=>handleSearch(1)}><i className="fas fa-arrow-right"></i></button>
                     </div>
                     
+                    {/* FIXED: Checkbox Alignment */}
                     <div className="d-flex justify-content-center gap-3 mt-3">
-                        <label className="small text-secondary" style={{cursor:'pointer'}}>
+                        <label className="small text-secondary d-flex align-items-center gap-2" style={{cursor:'pointer'}}>
                             <input type="checkbox" onChange={(e)=>setIsExactMatch(e.target.checked)}/> Exact Phrase Match
                         </label>
                     </div>
@@ -574,7 +568,7 @@ export default function App() {
             </div>
         )}
 
-        {/* --- NEW: Reset Password Modal --- */}
+        {/* --- Reset Password Modal --- */}
         {modalMode === 'resetPassword' && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
                 <div className="modal-dialog modal-dialog-centered">
@@ -597,7 +591,7 @@ export default function App() {
             </div>
         )}
 
-        {/* --- NEW: Session Error Modal (Device Lock) --- */}
+        {/* --- Session Error Modal --- */}
         {modalMode === 'sessionError' && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.8)'}}>
                 <div className="modal-dialog modal-dialog-centered">
