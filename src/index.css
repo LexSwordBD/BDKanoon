@@ -1,0 +1,145 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&family=Hind+Siliguri:wght@400;500;600&display=swap');
+        
+        :root {
+            --primary: #0f172a;
+            --accent: #2563eb;
+            --bg-body: #f8fafc;
+            --surface: #ffffff;
+            --text-main: #1e293b;
+            --text-light: #64748b;
+        }
+
+        body { 
+            background-color: var(--bg-body); 
+            font-family: 'Inter', 'Hind Siliguri', sans-serif; 
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        /* Navbar */
+        .navbar { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(0,0,0,0.05); padding: 15px 0; transition: 0.3s; }
+        .navbar-brand { font-size: 26px; font-weight: 700; color: var(--primary) !important; font-family: 'Playfair Display', serif; }
+        .navbar-brand span { color: var(--accent); }
+        .nav-link { font-weight: 500; color: var(--text-main); font-size: 14px; margin: 0 10px; transition: 0.3s; }
+        .nav-link:hover { color: var(--accent); }
+        .btn-app { background: var(--text-main); color: white; border-radius: 50px; padding: 8px 20px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: 0.3s; text-decoration: none; }
+        .btn-app:hover { background: var(--accent); color: white; }
+
+        /* Hero Section (Collapsible) */
+        .hero-section {
+            min-height: 80vh; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: radial-gradient(circle at 50% 50%, #ffffff 0%, #f1f5f9 100%);
+            padding: 20px; transition: all 0.5s ease-in-out;
+        }
+        
+        /* Shrunk State */
+        .hero-section.hero-shrunk {
+            min-height: auto;
+            padding-top: 100px;
+            padding-bottom: 30px;
+        }
+        .hero-section.hero-shrunk .hero-title,
+        .hero-section.hero-shrunk .hero-subtitle {
+            display: none;
+        }
+
+        .hero-content { text-align: center; width: 100%; max-width: 900px; z-index: 2; }
+        .hero-title { font-size: 48px; font-weight: 700; color: var(--primary); margin-bottom: 15px; font-family: 'Playfair Display', serif; }
+        .hero-subtitle { font-size: 18px; color: var(--text-light); margin-bottom: 40px; }
+
+        /* Search Bar */
+        .search-container-box {
+            background: var(--surface); padding: 10px; border-radius: 50px;
+            box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.1); border: 1px solid rgba(0,0,0,0.05);
+            display: flex; align-items: center; gap: 10px; transition: 0.3s;
+        }
+        .law-select-wrapper { position: relative; min-width: 250px; border-right: 1px solid #eee; padding-right: 10px; }
+        .law-input { width: 100%; border: none; font-size: 14px; font-weight: 600; color: var(--primary); background: transparent; outline: none; padding: 10px 20px; }
+        .main-input { flex-grow: 1; border: none; font-size: 16px; outline: none; color: var(--text-main); padding: 10px; background: transparent; }
+        
+        .btn-search-hero {
+            background: var(--accent); color: white; border: none;
+            width: 50px; height: 50px; border-radius: 50%; font-size: 18px; transition: 0.3s;
+        }
+        
+        /* Advanced Panel */
+        .adv-search-panel { display: none; background: #fff; border-radius: 12px; padding: 25px; margin-top: 15px; text-align: left; color: #333; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid #eee; }
+
+        /* Features */
+        .features-section { padding: 40px 15px; margin-top: 20px; }
+        .feature-icon { font-size: 24px; color: var(--accent); margin-bottom: 10px; }
+
+        /* Result List */
+        .result-item {
+            background: var(--surface); border: 1px solid #f1f5f9; padding: 25px; border-radius: 12px;
+            margin-bottom: 15px; transition: 0.2s; cursor: pointer;
+        }
+        .result-item:hover { border-color: var(--accent); box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .result-item h5 { color: var(--accent); font-family: 'Playfair Display', serif; font-weight: 700; font-size: 20px; }
+        .headnote-text { text-align: justify; font-size: 15px; line-height: 1.7; color: #475569; margin-top: 10px; white-space: pre-wrap; }
+        .highlight { background-color: #fef08a; padding: 0 2px; border-radius: 2px; }
+
+        /* Pricing (Screenshot Style) */
+        .packages-section { padding: 60px 15px; background: #fff; }
+        .pricing-card {
+            background: #f8fafc; /* Light Grayish */
+            padding: 40px 30px; border-radius: 20px; text-align: center;
+            border: 1px solid transparent; transition: 0.3s; position: relative; overflow: hidden;
+        }
+        .pricing-card.popular {
+            background: #ffffff;
+            border: 2px solid var(--accent);
+            box-shadow: 0 20px 40px rgba(37, 99, 235, 0.1);
+        }
+        .best-value-badge {
+            position: absolute; top: 20px; right: -35px; background: var(--accent); color: white;
+            padding: 5px 40px; transform: rotate(45deg); font-size: 10px; font-weight: bold; letter-spacing: 1px;
+        }
+        .plan-name { font-size: 18px; font-weight: 600; color: var(--text-light); margin-bottom: 10px; }
+        .plan-price { font-size: 42px; font-weight: 700; color: var(--primary); font-family: 'Inter', sans-serif; }
+        .plan-desc { font-size: 14px; color: #94a3b8; margin-bottom: 30px; }
+        .btn-plan {
+            display: block; width: 100%; padding: 12px; border-radius: 8px; font-weight: 600;
+            background: var(--primary); color: white; text-decoration: none; transition: 0.3s;
+        }
+        .btn-plan:hover { background: var(--accent); }
+        .pricing-card:not(.popular) .btn-plan { background: #e2e8f0; color: var(--text-main); }
+        .pricing-card:not(.popular) .btn-plan:hover { background: #cbd5e1; }
+
+        /* Footer */
+        footer { background: #111; color: #888; padding: 60px 0; font-size: 14px; text-align: center; }
+        .footer-link { color: #888; text-decoration: none; margin: 0 10px; transition: 0.3s; }
+        .footer-link:hover { color: white; }
+
+        /* Mobile Tweaks */
+        @media (max-width: 768px) {
+            .hero-title { font-size: 32px; }
+            .hero-section { min-height: auto; padding-top: 100px; padding-bottom: 50px; }
+            /* Mobile Search Box Separation */
+            .search-container-box { 
+                background: transparent; box-shadow: none; border: none; 
+                flex-direction: column; padding: 0; align-items: stretch; gap: 15px; 
+            }
+            .law-select-wrapper { 
+                background: white; border-radius: 50px; border: 1px solid #e2e8f0; 
+                padding: 5px 15px; width: 100%; 
+            }
+            .main-input { 
+                background: white; border-radius: 50px; border: 1px solid #e2e8f0; 
+                padding: 15px 20px; width: 100%; 
+            }
+            .btn-search-hero { width: 100%; border-radius: 50px; }
+            .col-6 { padding: 5px; }
+        }
+        
+        .whatsapp-float { position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; background-color: #25d366; color: white; border-radius: 50%; text-align: center; line-height: 60px; font-size: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 1000; }
+        
+        /* Modals & Forms */
+        .modal-content { border-radius: 15px; border: none; }
+        .modal-header { background: var(--primary); color: white; }
+        .form-control, .form-select { padding: 12px; border-radius: 8px; font-size: 15px; }
+        .pagination { justify-content: center; margin-top: 30px; padding-bottom: 50px; }
+        .page-link { color: var(--text-dark); border: none; margin: 0 5px; border-radius: 5px; font-weight: 600; }
+        .page-link.active { background-color: var(--accent); color: white; }
+    
