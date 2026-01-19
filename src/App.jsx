@@ -43,18 +43,39 @@ const lawAliases = {
 
 const stopwords = ['a', 'an', 'the', 'of', 'in', 'and', 'or', 'is', 'are', 'was', 'were', 'be', 'to', 'for', 'with', 'on', 'at', 'by', 'from', 'shall', 'will', 'am'];
 
+// --- FIXED: Safe HighlightedText Component (No Crash) ---
 const HighlightedText = ({ text, highlight }) => {
+    // 1. Safety check: if no text or no highlight keyword, return plain text
+    if (!text) return null;
     if (!highlight) return <span>{text}</span>;
-    const parts = text.split(new RegExp(`(${highlight.replace(/\s+/g, '|')})`, 'gi'));
-    return (
-      <span>
-        {parts.map((part, i) => 
-          highlight.toLowerCase().includes(part.toLowerCase()) && part.trim() !== "" 
-          ? <span key={i} className="highlight">{part}</span> 
-          : part
-        )}
-      </span>
-    );
+
+    try {
+        // 2. Escape special Regex characters (like brackets, plus, dot) to prevent crash
+        // This stops "Code (CPC)" from breaking the logic
+        const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        
+        // 3. Prepare words: split by space, remove empty, and escape each word
+        const words = highlight.split(/\s+/).filter(w => w.length > 0).map(escapeRegExp);
+        
+        if (words.length === 0) return <span>{text}</span>;
+
+        // 4. Create safe RegExp
+        const regex = new RegExp(`(${words.join('|')})`, 'gi');
+        const parts = text.toString().split(regex);
+
+        return (
+            <span>
+                {parts.map((part, i) => 
+                    // Check if this part matches our search words
+                    regex.test(part) ? <span key={i} className="highlight">{part}</span> : part
+                )}
+            </span>
+        );
+    } catch (e) {
+        // If anything fails, fallback to plain text instead of white screen
+        console.error("Highlight Error:", e);
+        return <span>{text}</span>;
+    }
 };
 
 export default function App() {
