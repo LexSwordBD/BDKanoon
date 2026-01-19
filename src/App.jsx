@@ -166,7 +166,7 @@ export default function App() {
     }
   };
 
-  // --- FIXED: Search Logic (Strict AND) ---
+  // --- FIXED: Search Logic (Parallel Citation Added) ---
   const handleSearch = async (page = 1, type = 'simple') => {
     setLoading(true);
     setCurrentPage(page);
@@ -185,7 +185,7 @@ export default function App() {
             let aliasCondition = "";
             let textCondition = "";
 
-            // 1. Law Filter (First Layer)
+            // 1. Law Filter
             if(selectedLaw) {
                const aliases = lawAliases[selectedLaw] || [selectedLaw];
                const headnoteChecks = aliases.map(a => `headnote.ilike.%${a}%`).join(',');
@@ -193,7 +193,7 @@ export default function App() {
                aliasCondition = headnoteChecks + ',' + titleChecks;
             }
 
-            // 2. Text Search (Second Layer)
+            // 2. Text Search (Includes parallel_citation now)
             if (isExactMatch) {
                const queryStr = `headnote.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%`;
                textCondition = queryStr;
@@ -209,13 +209,10 @@ export default function App() {
                highlightTerm = words.join('|');
             }
 
-            // 3. Apply Filters Separately (Chaining .or() in Supabase acts as AND between groups)
-            // If Law is selected, restrict results to that law FIRST
+            // 3. Apply Filters Separately (AND Logic)
             if (aliasCondition) {
                 queryBuilder = queryBuilder.or(aliasCondition);
             }
-            
-            // THEN, if search term exists, restrict further within those results
             if (textCondition) {
                 queryBuilder = queryBuilder.or(textCondition);
             }
