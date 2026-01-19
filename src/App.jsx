@@ -169,11 +169,9 @@ export default function App() {
             setProfileData({ ...data, isPremium, diffDays, expDate: expDate.toDateString() });
         } else {
             setSubStatus(false);
-            // Fallback profile data so button still works
             setProfileData({ email, isPremium: false, diffDays: 0, expDate: 'N/A' });
         }
     } catch(e) {
-        // Error fallback
         setSubStatus(false);
         setProfileData({ email, isPremium: false, diffDays: 0, expDate: 'N/A' });
     }
@@ -209,12 +207,20 @@ export default function App() {
                else queryBuilder = queryBuilder.or(queryStr);
                highlightTerm = searchTerm;
             } else {
+               // FIXED: Strict Stop Word Filtering
                const words = searchTerm.split(/\s+/).filter(w => !stopwords.includes(w.toLowerCase()) && w.length > 1);
                let textCondition = "";
+               
                if (words.length > 0) {
                    textCondition = words.map(w => `headnote.ilike.%${w}%,title.ilike.%${w}%`).join(',');
-               } else if (searchTerm) {
-                   textCondition = `headnote.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%`;
+               }
+               
+               // If no valid search words and no law selected, return empty result (don't search)
+               if (textCondition === "" && !aliasCondition) {
+                   setLoading(false);
+                   setResults([]);
+                   setTotalCount(0);
+                   return;
                }
 
                if(aliasCondition && textCondition) queryBuilder = queryBuilder.or(aliasCondition + ',' + textCondition);
@@ -250,7 +256,6 @@ export default function App() {
   };
 
   const loadJudgment = async (item) => {
-    // FIXED: Use Modal instead of Alert
     if(item.is_premium && !session) { setModalMode('warning'); return; }
     if(item.is_premium && !subStatus) { setModalMode('warning'); return; }
 
@@ -349,6 +354,35 @@ export default function App() {
       }
   };
 
+  // --- Payment Submission Logic ---
+  const handlePaymentSubmit = async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = new FormData(form);
+      
+      setLoading(true);
+      try {
+          const response = await fetch("https://formspree.io/f/xgookqen", {
+              method: "POST",
+              body: data,
+              headers: {
+                  'Accept': 'application/json'
+              }
+          });
+          
+          if (response.ok) {
+              setModalMode('paymentSuccess');
+              form.reset();
+          } else {
+              alert("There was a problem submitting your form.");
+          }
+      } catch (error) {
+          alert("Error sending form.");
+      } finally {
+          setLoading(false);
+      }
+  };
+
   // ================= RENDER =================
   return (
     <div>
@@ -407,6 +441,7 @@ export default function App() {
                             type="text" className="main-input" 
                             placeholder="Search keywords..." 
                             value={searchTerm}
+                            maxLength={50}
                             onChange={(e)=>setSearchTerm(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSearch(1)}
                         />
@@ -655,7 +690,7 @@ export default function App() {
             </div>
         )}
 
-        {/* FIXED: Profile Modal now renders even if profileData has partial info */}
+        {/* Profile Modal */}
         {modalMode === 'profile' && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
                 <div className="modal-dialog modal-dialog-centered">
@@ -686,7 +721,7 @@ export default function App() {
             </div>
         )}
 
-        {/* Other Modals (App, Payment, Warning, Gate) */}
+        {/* App Modal */}
         {modalMode === 'app' && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
                 <div className="modal-dialog modal-dialog-centered">
@@ -702,13 +737,15 @@ export default function App() {
             </div>
         )}
 
+        {/* Payment Confirmation Modal */}
         {modalMode === 'payment' && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
                 <div className="modal-dialog modal-dialog-centered">
                     <div className="modal-content">
                         <div className="modal-header"><h5 className="modal-title">Payment Verification</h5><button className="btn-close" onClick={()=>setModalMode(null)}></button></div>
                         <div className="modal-body p-4">
-                            <form action="https://formsubmit.co/caseref.bd@gmail.com" method="POST">
+                            {/* Updated Form using onSubmit handler for Formspree AJAX */}
+                            <form onSubmit={handlePaymentSubmit}>
                                 <input type="hidden" name="_captcha" value="false"/><input type="hidden" name="_subject" value="New Payment"/>
                                 <div className="mb-3"><label className="form-label">Name</label><input type="text" name="Name" className="form-control" required/></div>
                                 <div className="mb-3"><label className="form-label">Phone</label><input type="text" name="Phone" className="form-control" required/></div>
@@ -722,7 +759,37 @@ export default function App() {
             </div>
         )}
 
-        {/* FIXED: Warning Modal (The Professional Pop-up) */}
+        {/* --- NEW: Payment Success Modal (Modern Professional UX) --- */}
+        {modalMode === 'paymentSuccess' && (
+            <div className="modal d-block" style={{background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)'}}>
+                <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content border-0 shadow-lg" style={{borderRadius: '20px', overflow: 'hidden'}}>
+                        <div className="modal-body p-5 text-center">
+                            <div className="mb-4" style={{width:'80px', height:'80px', background:'#28a74520', borderRadius:'50%', margin:'0 auto', display:'flex', alignItems:'center', justifyContent:'center'}}>
+                                <i className="fas fa-check fa-3x text-success"></i>
+                            </div>
+                            <h2 className="fw-bold mb-3" style={{color:'#333'}}>Success!</h2>
+                            <p className="text-muted mb-4" style={{fontSize:'16px', lineHeight:'1.6'}}>
+                                Thank you! Your payment verification request has been submitted securely.
+                            </p>
+                            <div className="p-3 bg-light rounded mb-4 text-start">
+                                <small className="text-secondary fw-bold text-uppercase">What happens next?</small>
+                                <ul className="mb-0 mt-2 ps-3 text-muted small">
+                                    <li>Our team will verify your transaction ID.</li>
+                                    <li>Your account will be upgraded within 30 minutes.</li>
+                                    <li>You will receive a confirmation email shortly.</li>
+                                </ul>
+                            </div>
+                            <button className="btn btn-success rounded-pill w-100 py-3 fw-bold" onClick={()=>setModalMode(null)}>
+                                Continue to Home
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* Warning Modal */}
         {modalMode === 'warning' && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
                 <div className="modal-dialog modal-dialog-centered">
@@ -738,6 +805,7 @@ export default function App() {
             </div>
         )}
 
+        {/* Gate Modal */}
         {modalMode === 'gate' && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
                 <div className="modal-dialog modal-dialog-centered">
@@ -766,7 +834,7 @@ export default function App() {
                     <a href="#" className="footer-link">Privacy Policy</a>
                 </div>
                 <p className="mb-1">Supreme Court, Dhaka.</p>
-                <p className="mb-1">Email: caseref.bd@gmail.com</p>
+                <p className="mb-1">Email: bdkanoon@gmail.com</p>
                 <p className="mb-4">Phone: 01911 008 518</p>
                 <p class="small opacity-50">&copy; 2026 BDKanoon. All rights reserved.</p>
             </div>
