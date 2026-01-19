@@ -43,37 +43,25 @@ const lawAliases = {
 
 const stopwords = ['a', 'an', 'the', 'of', 'in', 'and', 'or', 'is', 'are', 'was', 'were', 'be', 'to', 'for', 'with', 'on', 'at', 'by', 'from', 'shall', 'will', 'am'];
 
-// --- FIXED: Safe HighlightedText Component (No Crash) ---
+// --- Safe HighlightedText Component ---
 const HighlightedText = ({ text, highlight }) => {
-    // 1. Safety check: if no text or no highlight keyword, return plain text
     if (!text) return null;
     if (!highlight) return <span>{text}</span>;
 
     try {
-        // 2. Escape special Regex characters (like brackets, plus, dot) to prevent crash
-        // This stops "Code (CPC)" from breaking the logic
         const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        
-        // 3. Prepare words: split by space, remove empty, and escape each word
         const words = highlight.split(/\s+/).filter(w => w.length > 0).map(escapeRegExp);
-        
         if (words.length === 0) return <span>{text}</span>;
-
-        // 4. Create safe RegExp
         const regex = new RegExp(`(${words.join('|')})`, 'gi');
         const parts = text.toString().split(regex);
-
         return (
             <span>
                 {parts.map((part, i) => 
-                    // Check if this part matches our search words
                     regex.test(part) ? <span key={i} className="highlight">{part}</span> : part
                 )}
             </span>
         );
     } catch (e) {
-        // If anything fails, fallback to plain text instead of white screen
-        console.error("Highlight Error:", e);
         return <span>{text}</span>;
     }
 };
@@ -109,7 +97,9 @@ export default function App() {
       setSession(session);
       if(session) {
           checkSubscription(session.user.email);
-          startSessionMonitor(session); 
+          startSessionMonitor(session);
+          // FIXED: Update session ID on initial load to confirm this device is active
+          updateSessionId(session); 
       }
     });
 
@@ -123,8 +113,8 @@ export default function App() {
       
       if(session) {
           checkSubscription(session.user.email);
-          
           if (event === 'SIGNED_IN') {
+              // On Login: Update DB immediately
               await updateSessionId(session);
           }
       }
@@ -134,6 +124,8 @@ export default function App() {
 
   // --- Single Device Lock Logic ---
   const updateSessionId = async (session) => {
+      if (!session) return;
+      // This will now work because of the SQL Policy Update
       await supabase.from('members')
           .update({ current_session_id: session.access_token })
           .eq('email', session.user.email);
@@ -141,14 +133,17 @@ export default function App() {
 
   const startSessionMonitor = (session) => {
       const interval = setInterval(async () => {
+          // Check database to see what the "valid" session ID is
           const { data } = await supabase.from('members').select('current_session_id').eq('email', session.user.email).single();
+          
+          // If database has a token, and it's DIFFERENT from my current token, log me out
           if (data && data.current_session_id && data.current_session_id !== session.access_token) {
               clearInterval(interval);
               await supabase.auth.signOut();
               setSession(null);
               setModalMode('sessionError');
           }
-      }, 5000);
+      }, 5000); // Check every 5 seconds
       return () => clearInterval(interval);
   };
 
@@ -386,7 +381,7 @@ export default function App() {
                         <button className="btn-search-hero" onClick={()=>handleSearch(1)}><i className="fas fa-arrow-right"></i></button>
                     </div>
                     
-                    {/* FIXED: Checkbox Alignment */}
+                    {/* Checkbox Alignment */}
                     <div className="d-flex justify-content-center gap-3 mt-3">
                         <label className="small text-secondary d-flex align-items-center gap-2" style={{cursor:'pointer'}}>
                             <input type="checkbox" onChange={(e)=>setIsExactMatch(e.target.checked)}/> Exact Phrase Match
@@ -411,7 +406,6 @@ export default function App() {
 
         {/* Main Content Area */}
         <div className="container" style={{minHeight: '400px'}}>
-            
             {loading && <div className="text-center py-5"><div className="spinner-border text-primary"></div></div>}
 
             {/* Results View */}
@@ -538,47 +532,19 @@ export default function App() {
                                     <button className="nav-link" id="pills-signup-tab" data-bs-toggle="pill" data-bs-target="#pills-signup" type="button">Sign Up</button>
                                 </li>
                             </ul>
-                            
                             <div className="tab-content" id="pills-tabContent">
-                                {/* Login */}
                                 <div className="tab-pane fade show active" id="pills-login">
-                                    <form onSubmit={(e)=>{
-                                        e.preventDefault(); 
-                                        handleAuth(e.target.email.value, e.target.password.value, false);
-                                    }}>
-                                        <div className="mb-3">
-                                            <label className="form-label small text-muted">Email</label>
-                                            <input name="email" type="email" className="form-control" required />
-                                        </div>
-                                        <div className="mb-3">
-                                            <label className="form-label small text-muted">Password</label>
-                                            <input name="password" type="password" className="form-control" required />
-                                        </div>
-                                        <div className="text-end mb-3">
-                                            <a href="#" className="text-decoration-none small text-muted" onClick={(e) => {
-                                                e.preventDefault();
-                                                const email = e.target.closest('form').querySelector('input[name="email"]').value;
-                                                handlePasswordReset(email);
-                                            }}>Forgot Password?</a>
-                                        </div>
+                                    <form onSubmit={(e)=>{ e.preventDefault(); handleAuth(e.target.email.value, e.target.password.value, false); }}>
+                                        <div className="mb-3"><label className="form-label small text-muted">Email</label><input name="email" type="email" className="form-control" required /></div>
+                                        <div className="mb-3"><label className="form-label small text-muted">Password</label><input name="password" type="password" className="form-control" required /></div>
+                                        <div className="text-end mb-3"><a href="#" className="text-decoration-none small text-muted" onClick={(e) => { e.preventDefault(); const email = e.target.closest('form').querySelector('input[name="email"]').value; handlePasswordReset(email); }}>Forgot Password?</a></div>
                                         <button className="btn btn-dark w-100 py-2">Login</button>
                                     </form>
                                 </div>
-                                {/* Sign Up */}
                                 <div className="tab-pane fade" id="pills-signup">
-                                    <form onSubmit={(e)=>{
-                                        e.preventDefault(); 
-                                        handleAuth(e.target.email.value, e.target.password.value, true);
-                                    }}>
-                                        <div className="mb-3">
-                                            <label className="form-label small text-muted">Email</label>
-                                            <input name="email" type="email" className="form-control" required />
-                                        </div>
-                                        <div className="mb-3">
-                                            <label className="form-label small text-muted">Create Password</label>
-                                            <input name="password" type="password" className="form-control" required minLength="6"/>
-                                            <div className="form-text text-muted" style={{fontSize:'12px'}}>Min 6 characters</div>
-                                        </div>
+                                    <form onSubmit={(e)=>{ e.preventDefault(); handleAuth(e.target.email.value, e.target.password.value, true); }}>
+                                        <div className="mb-3"><label className="form-label small text-muted">Email</label><input name="email" type="email" className="form-control" required /></div>
+                                        <div className="mb-3"><label className="form-label small text-muted">Create Password</label><input name="password" type="password" className="form-control" required minLength="6"/><div className="form-text text-muted" style={{fontSize:'12px'}}>Min 6 characters</div></div>
                                         <button className="btn btn-success text-white w-100 py-2">Create Account</button>
                                     </form>
                                 </div>
@@ -589,21 +555,14 @@ export default function App() {
             </div>
         )}
 
-        {/* --- Reset Password Modal --- */}
         {modalMode === 'resetPassword' && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
                 <div className="modal-dialog modal-dialog-centered">
                     <div className="modal-content">
                         <div className="modal-header"><h5 className="modal-title">Set New Password</h5></div>
                         <div className="modal-body p-4">
-                            <form onSubmit={(e)=>{
-                                e.preventDefault();
-                                handleUpdatePassword(e.target.newPass.value);
-                            }}>
-                                <div className="mb-3">
-                                    <label className="form-label">New Password</label>
-                                    <input name="newPass" type="password" className="form-control" required minLength="6"/>
-                                </div>
+                            <form onSubmit={(e)=>{ e.preventDefault(); handleUpdatePassword(e.target.newPass.value); }}>
+                                <div className="mb-3"><label className="form-label">New Password</label><input name="newPass" type="password" className="form-control" required minLength="6"/></div>
                                 <button className="btn btn-primary w-100">Update Password</button>
                             </form>
                         </div>
@@ -612,7 +571,6 @@ export default function App() {
             </div>
         )}
 
-        {/* --- Session Error Modal --- */}
         {modalMode === 'sessionError' && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.8)'}}>
                 <div className="modal-dialog modal-dialog-centered">
@@ -628,7 +586,6 @@ export default function App() {
             </div>
         )}
 
-        {/* Profile Modal */}
         {modalMode === 'profile' && profileData && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
                 <div className="modal-dialog modal-dialog-centered">
@@ -653,7 +610,6 @@ export default function App() {
             </div>
         )}
 
-        {/* Other Modals (App, Payment, Warning, Gate) */}
         {modalMode === 'app' && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
                 <div className="modal-dialog modal-dialog-centered">
