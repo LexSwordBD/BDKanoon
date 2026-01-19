@@ -6,7 +6,6 @@ const githubUser = 'LexSwordBD';
 const repoName = 'BDKanoon';
 const siteLink = window.location.origin; 
 
-// আপনার আইনের তালিকা (lawAliases) হুবহু রাখা হলো
 const lawAliases = {
     'Constitution of Bangladesh (সংবিধান)': ['Constitution', 'Konstitution', 'Art.', 'Article', 'সংবিধান'],
     'Code of Civil Procedure (CPC/দেওয়ানী)': ['CPC', 'Code of Civil Procedure', 'Civil Procedure', 'C.P.C', 'দেওয়ানী', 'Order', 'Rule'],
@@ -44,7 +43,6 @@ const lawAliases = {
 
 const stopwords = ['a', 'an', 'the', 'of', 'in', 'and', 'or', 'is', 'are', 'was', 'were', 'be', 'to', 'for', 'with', 'on', 'at', 'by', 'from', 'shall', 'will', 'am'];
 
-// --- Helper Component for Highlighting ---
 const HighlightedText = ({ text, highlight }) => {
     if (!highlight) return <span>{text}</span>;
     const parts = text.split(new RegExp(`(${highlight.replace(/\s+/g, '|')})`, 'gi'));
@@ -80,22 +78,65 @@ export default function App() {
   const [judgmentText, setJudgmentText] = useState('');
 
   // Modals Control
-  const [modalMode, setModalMode] = useState(null); // 'login', 'profile', 'payment', 'app', 'gate', 'warning'
+  // Added 'resetPassword' and 'sessionError'
+  const [modalMode, setModalMode] = useState(null); 
   const [profileData, setProfileData] = useState(null);
 
   // --- Auth & Effects ---
   useEffect(() => {
+    // 1. Check Initial Session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if(session) checkSubscription(session.user.email);
+      if(session) {
+          checkSubscription(session.user.email);
+          startSessionMonitor(session); // Start checking for multiple logins
+      }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // 2. Auth State Listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth Event:", event);
       setSession(session);
-      if(session) checkSubscription(session.user.email);
+      
+      if (event === 'PASSWORD_RECOVERY') {
+          // If user clicked "Reset Password" link
+          setModalMode('resetPassword');
+      }
+      
+      if(session) {
+          checkSubscription(session.user.email);
+          
+          if (event === 'SIGNED_IN') {
+              // On Login: Update DB with this session ID (Kick out others)
+              await updateSessionId(session);
+          }
+      }
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  // --- Single Device Lock Logic ---
+  const updateSessionId = async (session) => {
+      // Save current Access Token to DB
+      await supabase.from('members')
+          .update({ current_session_id: session.access_token })
+          .eq('email', session.user.email);
+  };
+
+  const startSessionMonitor = (session) => {
+      // Check every 5 seconds if my token matches DB token
+      const interval = setInterval(async () => {
+          const { data } = await supabase.from('members').select('current_session_id').eq('email', session.user.email).single();
+          if (data && data.current_session_id && data.current_session_id !== session.access_token) {
+              // Token mismatch! Log out.
+              clearInterval(interval);
+              await supabase.auth.signOut();
+              setSession(null);
+              setModalMode('sessionError');
+          }
+      }, 5000);
+      return () => clearInterval(interval);
+  };
 
   const checkSubscription = async (email) => {
     const { data } = await supabase.from('members').select('*').eq('email', email).single();
@@ -162,7 +203,6 @@ export default function App() {
     const from = (page - 1) * itemsPerPage;
     const to = from + itemsPerPage - 1;
     
-    // Check advanced gate logic
     if (type === 'advanced' && (!session || !subStatus)) {
         const { count } = await queryBuilder.range(0, 1).order('page_number', { ascending: true });
         if (count > 0) { setModalMode('gate'); setLoading(false); return; }
@@ -177,7 +217,6 @@ export default function App() {
     setLoading(false);
   };
 
-  // --- Judgment Reader ---
   const loadJudgment = async (item) => {
     if(item.is_premium && !session) { setModalMode('warning'); return; }
     if(item.is_premium && !subStatus) { alert("Premium Access Required. Please Subscribe."); return; }
@@ -202,36 +241,38 @@ export default function App() {
     setLoading(false);
   };
 
-  // --- NEW: Email + Password Auth Handler ---
   const handleAuth = async (email, password, isSignUp) => {
       setLoading(true);
       if (isSignUp) {
-          const { data, error } = await supabase.auth.signUp({
-              email: email,
-              password: password,
-          });
+          const { data, error } = await supabase.auth.signUp({ email: email, password: password });
           if (error) alert(error.message);
           else alert("Account created successfully! You are now logged in.");
       } else {
-          const { data, error } = await supabase.auth.signInWithPassword({
-              email: email,
-              password: password,
-          });
+          const { data, error } = await supabase.auth.signInWithPassword({ email: email, password: password });
           if (error) alert(error.message);
       }
       setLoading(false);
       setModalMode(null);
   };
 
-  // --- NEW: Password Reset Handler ---
   const handlePasswordReset = async (email) => {
       if (!email) return alert("Please enter your email first in the box.");
       setLoading(true);
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: siteLink,
-      });
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: siteLink });
       if (error) alert(error.message);
       else alert("Password reset link sent to your email!");
+      setLoading(false);
+  };
+
+  const handleUpdatePassword = async (newPassword) => {
+      setLoading(true);
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) alert("Error: " + error.message);
+      else {
+          alert("Password updated successfully!");
+          setModalMode(null);
+          window.location.hash = ''; // Clear the recovery hash
+      }
       setLoading(false);
   };
 
@@ -243,11 +284,8 @@ export default function App() {
   const toggleBookmark = async (item) => {
       if(!session) { setModalMode('login'); return; }
       const { error } = await supabase.from('bookmarks').insert([{ 
-          email: session.user.email, 
-          case_title: item.title, 
-          case_citation: item.citation, 
-          case_anchor: item.case_anchor, 
-          github_filename: item.github_filename 
+          email: session.user.email, case_title: item.title, case_citation: item.citation, 
+          case_anchor: item.case_anchor, github_filename: item.github_filename 
       }]);
       if(error) alert("Already saved or error."); else alert("Saved!");
   };
@@ -359,7 +397,6 @@ export default function App() {
         {/* Main Content Area */}
         <div className="container" style={{minHeight: '400px'}}>
             
-            {/* Loading */}
             {loading && <div className="text-center py-5"><div className="spinner-border text-primary"></div></div>}
 
             {/* Results View */}
@@ -376,7 +413,6 @@ export default function App() {
                                     <span className="badge bg-secondary text-white"><i className="fas fa-lock"></i> Premium</span>
                                 }
                             </div>
-                            
                             <div className="headnote-text" style={{whiteSpace: 'pre-wrap', textAlign: 'justify'}}>
                                 <HighlightedText text={item.headnote || ""} highlight={searchTerm || selectedLaw} />
                             </div>
@@ -408,14 +444,13 @@ export default function App() {
                     </div>
                     <h3 className="fw-bold text-center text-primary mb-2" style={{fontFamily:'Playfair Display'}}>{currentJudgment.title}</h3>
                     <p className="text-center text-muted fw-bold mb-4">{currentJudgment.citation}</p>
-                    
                     <div className="mt-4 text-justify" style={{whiteSpace: 'pre-wrap', fontFamily:'Merriweather', textAlign: 'justify'}}>
                         {judgmentText}
                     </div>
                 </div>
             )}
 
-            {/* Features (Only visible on Home) */}
+            {/* Features */}
             {view === 'home' && (
                 <div id="featuresSection" className="py-5">
                     <div className="row g-4 justify-content-center text-center">
@@ -428,7 +463,7 @@ export default function App() {
             )}
         </div>
 
-        {/* Pricing Section */}
+        {/* Pricing */}
         <div className="packages-section" id="packages">
              <div className="container">
                 <div className="text-center mb-5">
@@ -470,7 +505,7 @@ export default function App() {
              </div>
         </div>
 
-        {/* --- UPDATED LOGIN MODAL (Email + Password) --- */}
+        {/* --- MODALS --- */}
         {modalMode === 'login' && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
                 <div className="modal-dialog modal-dialog-centered">
@@ -490,7 +525,7 @@ export default function App() {
                             </ul>
                             
                             <div className="tab-content" id="pills-tabContent">
-                                {/* Login Form */}
+                                {/* Login */}
                                 <div className="tab-pane fade show active" id="pills-login">
                                     <form onSubmit={(e)=>{
                                         e.preventDefault(); 
@@ -514,8 +549,7 @@ export default function App() {
                                         <button className="btn btn-dark w-100 py-2">Login</button>
                                     </form>
                                 </div>
-
-                                {/* Sign Up Form */}
+                                {/* Sign Up */}
                                 <div className="tab-pane fade" id="pills-signup">
                                     <form onSubmit={(e)=>{
                                         e.preventDefault(); 
@@ -534,6 +568,45 @@ export default function App() {
                                     </form>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* --- NEW: Reset Password Modal --- */}
+        {modalMode === 'resetPassword' && (
+            <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
+                <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content">
+                        <div className="modal-header"><h5 className="modal-title">Set New Password</h5></div>
+                        <div className="modal-body p-4">
+                            <form onSubmit={(e)=>{
+                                e.preventDefault();
+                                handleUpdatePassword(e.target.newPass.value);
+                            }}>
+                                <div className="mb-3">
+                                    <label className="form-label">New Password</label>
+                                    <input name="newPass" type="password" className="form-control" required minLength="6"/>
+                                </div>
+                                <button className="btn btn-primary w-100">Update Password</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* --- NEW: Session Error Modal (Device Lock) --- */}
+        {modalMode === 'sessionError' && (
+            <div className="modal d-block" style={{background: 'rgba(0,0,0,0.8)'}}>
+                <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content text-center p-5 border-0">
+                        <div className="modal-body">
+                            <i className="fas fa-exclamation-triangle fa-4x text-warning mb-4"></i>
+                            <h3 className="fw-bold text-dark">Logged Out</h3>
+                            <p className="text-muted mt-3 mb-4">You have logged in from another device.<br/>For security, this session has been terminated.</p>
+                            <button className="btn btn-dark rounded-pill px-5" onClick={()=>window.location.reload()}>Login Again</button>
                         </div>
                     </div>
                 </div>
@@ -565,6 +638,7 @@ export default function App() {
             </div>
         )}
 
+        {/* Other Modals (App, Payment, Warning, Gate) */}
         {modalMode === 'app' && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
                 <div className="modal-dialog modal-dialog-centered">
