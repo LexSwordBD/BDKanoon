@@ -1,0 +1,583 @@
+import React, { useState, useEffect } from 'react';
+import { supabase } from './supabaseClient';
+
+// --- Constants & Data ---
+const githubUser = 'LexSwordBD';
+const repoName = 'casereference';
+const siteLink = window.location.origin; 
+
+const lawAliases = {
+    'Constitution of Bangladesh (সংবিধান)': ['Constitution', 'Konstitution', 'Art.', 'Article', 'সংবিধান'],
+    'Code of Civil Procedure (CPC/দেওয়ানী)': ['CPC', 'Code of Civil Procedure', 'Civil Procedure', 'C.P.C', 'দেওয়ানী', 'Order', 'Rule'],
+    'Code of Criminal Procedure (CrPC/ফৌজদারী)': ['CrPC', 'Code of Criminal Procedure', 'Criminal Procedure', 'Cr.P.C', 'ফৌজদারী', '561A', '498', 's. 144'],
+    'Penal Code (দণ্ডবিধি)': ['Penal', 'PC', 'P.C', 'dondobidhi', 'দণ্ডবিধি', '302', '304', '1860', 'Penal Code'],
+    'Evidence Act (সাক্ষ্য আইন)': ['Evidence', 'sakkho', 'sakhho', 'সাক্ষ্য'],
+    'Limitation Act (তামাদি আইন)': ['Limitation', 'Section 5', 'condonation', 'তামাদি'],
+    'Specific Relief Act (সুনির্দিষ্ট প্রতিকার)': ['Specific Relief', 'SR Act', 'S.R. Act', 'সুনির্দিষ্ট প্রতিকার'],
+    'Nari O Shishu Nirjatan Daman Ain (নারী ও শিশু)': ['Nari O Shishu', 'Women and Children', 'Nari-O-Shishu', 'নারী ও শিশু', 'নারী শিশু', 'Shishu'],
+    'Artha Rin Adalat Ain (অর্থ ঋণ আদালত)': ['Artha Rin', 'Money Loan', 'Adalat', 'অর্থ ঋণ'],
+    'Digital Security Act (ডিজিটাল নিরাপত্তা)': ['Digital Security', 'Cyber', 'ICT Act', 'ডিজিটাল নিরাপত্তা'],
+    'Narcotics Control Act (মাদক দ্রব্য নিয়ন্ত্রণ)': ['Narcotics', 'Madok', 'Drug', 'Table', 'Yaba', 'Heroin', 'Phensedyl', 'মাদক'],
+    'Special Powers Act (বিশেষ ক্ষমতা)': ['Special Powers', 'SPA', 'Special Power', 'বিশেষ ক্ষমতা'],
+    'Anti-Terrorism Act (সন্ত্রাস বিরোধী)': ['Anti-Terrorism', 'Terrorism', 'সন্ত্রাস'],
+    'Arms Act (অস্ত্র আইন)': ['Arms Act', 'অস্ত্র'],
+    'Ain Srinkhola Bighnokari (দ্রুত বিচার)': ['Druto Bichar', 'Speedy Trial', 'দ্রুত বিচার'],
+    'Mobile Court Act (মোবাইল কোর্ট)': ['Mobile Court', 'মোবাইল কোর্ট'],
+    'Transfer of Property Act (সম্পত্তি হস্তান্তর)': ['Transfer of Property', 'TP Act', 'T.P. Act', 'সম্পত্তি হস্তান্তর'],
+    'Contract Act (চুক্তি আইন)': ['Contract Act', 'Agreement', 'চুক্তি'],
+    'Registration Act (রেজিস্ট্রেশন)': ['Registration', 'Section 17', 'রেজিস্ট্রেশন'],
+    'State Acquisition & Tenancy Act (প্রজাস্বত্ব)': ['State Acquisition', 'SAT Act', 'Tenancy', 'প্রজাস্বত্ব'],
+    'Vested Property Return Act (অর্পিত সম্পত্তি)': ['Vested Property', 'Enemy Property', 'অর্পিত', 'Vested'],
+    'Trust Act (ট্রাস্ট আইন)': ['Trust Act', 'Trustee'],
+    'Muslim Family Laws (মুসলিম পারিবারিক আইন)': ['Muslim Family', 'MFLO', 'Denmohar', 'Dower', 'Talaq'],
+    'Family Courts Ordinance (পারিবারিক আদালত)': ['Family Courts', 'Family Court', 'পারিবারিক'],
+    'Guardians and Wards Act (অভিভাবক ও প্রতিপাল্য)': ['Guardians and Wards', 'Guardian', 'Custody', 'অভিভাবক'],
+    'Negotiable Instruments Act (NI Act/চেক ডিজঅনার)': ['Negotiable Instruments', 'NI Act', 'N.I. Act', '138', 'Cheque', 'Dishonour', 'চেক'],
+    'Bangladesh Labor Act (শ্রম আইন)': ['Labor Act', 'Labour', 'Employment', 'Worker', 'শ্রম'],
+    'Companies Act (কোম্পানি আইন)': ['Companies Act', 'Company Law', 'Winding up', 'কোম্পানি'],
+    'VAT Act (ভ্যাট আইন)': ['Value Added Tax', 'VAT', 'ভ্যাট', 'Musok'],
+    'Income Tax Ordinance (আয়কর)': ['Income Tax', 'Tax', 'Taxes', 'আয়কর'],
+    'Customs Act (কাস্টমস)': ['Customs', 'Custom'],
+    'Right to Information Act (তথ্য অধিকার)': ['Right to Information', 'RTI', 'তথ্য অধিকার']
+};
+
+const stopwords = ['a', 'an', 'the', 'of', 'in', 'and', 'or', 'is', 'are', 'was', 'were', 'be', 'to', 'for', 'with', 'on', 'at', 'by', 'from', 'shall', 'will', 'am'];
+
+export default function App() {
+  const [session, setSession] = useState(null);
+  const [subStatus, setSubStatus] = useState(false);
+  const [view, setView] = useState('home'); // 'home', 'results', 'reader'
+  const [loading, setLoading] = useState(false);
+  
+  // Search States
+  const [results, setResults] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedLaw, setSelectedLaw] = useState('');
+  const [isExactMatch, setIsExactMatch] = useState(false);
+  const [showAdvSearch, setShowAdvSearch] = useState(false);
+  const [advFields, setAdvFields] = useState({journal: '', vol: '', div: '', page: ''});
+  
+  // Reader State
+  const [currentJudgment, setCurrentJudgment] = useState(null);
+  const [judgmentText, setJudgmentText] = useState('');
+
+  // Modals Control
+  const [modalMode, setModalMode] = useState(null); // 'login', 'profile', 'payment', 'app', 'gate', 'checkEmail', 'warning'
+  const [profileData, setProfileData] = useState(null);
+
+  // --- Auth & Effects ---
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if(session) checkSubscription(session.user.email);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if(session) checkSubscription(session.user.email);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const checkSubscription = async (email) => {
+    const { data } = await supabase.from('members').select('*').eq('email', email).single();
+    if(data) {
+        const expDate = new Date(data.expiry_date);
+        const today = new Date();
+        const diffTime = Math.abs(expDate - today);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        const isPremium = expDate > today;
+        setSubStatus(isPremium);
+        setProfileData({ ...data, isPremium, diffDays, expDate: expDate.toDateString() });
+    } else {
+        setSubStatus(false);
+        setProfileData({ email, isPremium: false, diffDays: 0, expDate: 'N/A' });
+    }
+  };
+
+  // --- Search Functions ---
+  const handleSearch = async (page = 1, type = 'simple') => {
+    setLoading(true);
+    setCurrentPage(page);
+    setView('results'); 
+
+    let queryBuilder = supabase.from('cases').select('*', { count: 'exact' });
+    let highlightTerm = "";
+
+    if (type === 'advanced') {
+        const { journal, vol, div, page: pg } = advFields;
+        if (!journal || !vol || !div || !pg) { alert("Fill all fields."); setLoading(false); return; }
+        queryBuilder = queryBuilder.eq('journal', journal).eq('volume', vol).eq('division', div).eq('page_number', pg);
+        highlightTerm = `${journal} ${vol} ${pg}`;
+    } else {
+        let aliasCondition = "";
+        if(selectedLaw) {
+           const aliases = lawAliases[selectedLaw] || [selectedLaw];
+           const headnoteChecks = aliases.map(a => `headnote.ilike.%${a}%`).join(',');
+           const titleChecks = aliases.map(a => `title.ilike.%${a}%`).join(',');
+           aliasCondition = headnoteChecks + ',' + titleChecks;
+        }
+
+        if (isExactMatch) {
+           const queryStr = `headnote.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%`;
+           if(aliasCondition) queryBuilder = queryBuilder.or(aliasCondition + ',' + queryStr);
+           else queryBuilder = queryBuilder.or(queryStr);
+           highlightTerm = searchTerm;
+        } else {
+           const words = searchTerm.split(/\s+/).filter(w => !stopwords.includes(w.toLowerCase()) && w.length > 1);
+           let textCondition = "";
+           if (words.length > 0) {
+               textCondition = words.map(w => `headnote.ilike.%${w}%,title.ilike.%${w}%`).join(',');
+           } else if (searchTerm) {
+               textCondition = `headnote.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%`;
+           }
+
+           if(aliasCondition && textCondition) queryBuilder = queryBuilder.or(aliasCondition + ',' + textCondition);
+           else if (aliasCondition) queryBuilder = queryBuilder.or(aliasCondition);
+           else if (textCondition) queryBuilder = queryBuilder.or(textCondition);
+           
+           highlightTerm = words.join('|');
+        }
+    }
+
+    const itemsPerPage = 20;
+    const from = (page - 1) * itemsPerPage;
+    const to = from + itemsPerPage - 1;
+    
+    // Check advanced gate
+    if (type === 'advanced' && (!session || !subStatus)) {
+        // Just checking count to show gate
+        const { count } = await queryBuilder.range(0, 1).order('page_number', { ascending: true });
+        if (count > 0) { setModalMode('gate'); setLoading(false); return; }
+    }
+
+    const { data, error, count } = await queryBuilder.range(from, to).order('page_number', { ascending: true });
+    
+    if(data) {
+        setResults(data);
+        setTotalCount(count || 0);
+    }
+    setLoading(false);
+  };
+
+  // --- Judgment Reader ---
+  const loadJudgment = async (item) => {
+    if(item.is_premium && !session) { setModalMode('warning'); return; }
+    if(item.is_premium && !subStatus) { alert("Premium Access Required. Please Subscribe."); return; }
+
+    setLoading(true);
+    setView('reader');
+    setCurrentJudgment(item);
+
+    try {
+        const url = `https://raw.githubusercontent.com/${githubUser}/${repoName}/main/judgments/${item.github_filename}`;
+        const res = await fetch(url);
+        const fullText = await res.text();
+        const start = `===${item.case_anchor}===`;
+        const end = `===End===`;
+        const sIdx = fullText.indexOf(start);
+        let content = sIdx !== -1 ? fullText.substring(sIdx + start.length, fullText.indexOf(end, sIdx)) : "Content Error";
+        
+        setJudgmentText(content); 
+    } catch(e) {
+        setJudgmentText("Error loading judgment text.");
+    }
+    setLoading(false);
+  };
+
+  // --- Highlight Helper ---
+  const HighlightedText = ({ text, highlight }) => {
+    if (!highlight) return <span>{text}</span>;
+    const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
+    return (
+      <span>
+        {parts.map((part, i) => 
+          part.toLowerCase() === highlight.toLowerCase() ? <span key={i} className="highlight">{part}</span> : part
+        )}
+      </span>
+    );
+  };
+
+  // --- Auth Handlers ---
+  const handleLogin = async (email) => {
+      const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: siteLink } });
+      if(error) alert(error.message); else setModalMode('checkEmail');
+  };
+
+  const handleLogout = async () => {
+      await supabase.auth.signOut();
+      window.location.reload();
+  };
+
+  const toggleBookmark = async (item) => {
+      if(!session) { setModalMode('login'); return; }
+      const { error } = await supabase.from('bookmarks').insert([{ 
+          email: session.user.email, 
+          case_title: item.title, 
+          case_citation: item.citation, 
+          case_anchor: item.case_anchor, 
+          github_filename: item.github_filename 
+      }]);
+      if(error) alert("Already saved or error."); else alert("Saved!");
+  };
+
+  const fetchBookmarks = async () => {
+      if(!session) { setModalMode('login'); return; }
+      setLoading(true);
+      const { data } = await supabase.from('bookmarks').select('*').eq('email', session.user.email);
+      setLoading(false);
+      // Here you would typically load these into results or a separate view. 
+      // For simplicity in this conversion, we'll map them to result format
+      if(data) {
+          setResults(data.map(b => ({
+              id: b.id, title: b.case_title, citation: b.case_citation, 
+              case_anchor: b.case_anchor, github_filename: b.github_filename, is_premium: true // assume premium
+          })));
+          setView('results');
+          setTotalCount(data.length);
+          // Force hero shrink
+          document.getElementById('homeSection')?.classList.add('hero-shrunk');
+      }
+  };
+
+  // ================= RENDER =================
+  return (
+    <div>
+        {/* Navbar */}
+        <nav className="navbar navbar-expand-lg fixed-top">
+            <div className="container">
+                <a className="navbar-brand" href="#" onClick={()=>window.location.reload()}>Case<span>Reference</span></a>
+                <button className="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <i className="fas fa-bars"></i>
+                </button>
+                <div className="collapse navbar-collapse" id="navbarNav">
+                    <ul className="navbar-nav ms-auto align-items-center">
+                        <li className="nav-item"><a className="nav-link nav-link-close" href="#" onClick={()=>{setView('home'); setResults([]);}}>Home</a></li>
+                        <li className="nav-item"><a className="nav-link nav-link-close" href="#" onClick={fetchBookmarks}>Bookmarks</a></li>
+                        <li className="nav-item"><a className="nav-link nav-link-close" href="#packages">Pricing</a></li>
+                        <li className="nav-item">
+                            <button className="btn-app ms-lg-3 mt-3 mt-lg-0 border-0" onClick={()=>setModalMode('app')}>
+                                <i className="fab fa-android"></i> Get App
+                            </button>
+                        </li>
+                        <li className="nav-item ms-lg-3 mt-3 mt-lg-0">
+                            {session ? (
+                                <button className="btn btn-outline-dark rounded-pill px-3 btn-sm" onClick={()=>setModalMode('profile')}>
+                                    <i className="fas fa-user-circle"></i> Account
+                                </button>
+                            ) : (
+                                <button className="btn btn-dark rounded-pill px-4 btn-sm" onClick={()=>setModalMode('login')}>
+                                    Login
+                                </button>
+                            )}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        {/* Hero Section */}
+        <div className={`hero-section ${view !== 'home' ? 'hero-shrunk' : ''}`} id="homeSection">
+            <div className="hero-content">
+                {view === 'home' && (
+                    <>
+                        <h1 className="hero-title">Intelligent Legal Research.</h1>
+                        <p className="hero-subtitle">Search over 50,000+ judgments from the Supreme Court of Bangladesh.</p>
+                    </>
+                )}
+                
+                <div className="search-container">
+                    <div className="search-container-box">
+                        <div className="law-select-wrapper">
+                            <input className="law-input" list="lawList" placeholder="Select Law..." onChange={(e)=>setSelectedLaw(e.target.value)}/>
+                            <datalist id="lawList">
+                                {Object.keys(lawAliases).map(law => <option key={law} value={law}/>)}
+                            </datalist>
+                        </div>
+                        <input 
+                            type="text" className="main-input" 
+                            placeholder="Search keywords..." 
+                            value={searchTerm}
+                            onChange={(e)=>setSearchTerm(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSearch(1)}
+                        />
+                        <button className="btn btn-link text-secondary" onClick={()=>setShowAdvSearch(!showAdvSearch)}><i className="fas fa-sliders-h"></i></button>
+                        <button className="btn-search-hero" onClick={()=>handleSearch(1)}><i className="fas fa-arrow-right"></i></button>
+                    </div>
+                    
+                    <div className="d-flex justify-content-center gap-3 mt-3">
+                        <label className="small text-secondary" style={{cursor:'pointer'}}>
+                            <input type="checkbox" onChange={(e)=>setIsExactMatch(e.target.checked)}/> Exact Phrase Match
+                        </label>
+                    </div>
+
+                    {showAdvSearch && (
+                        <div className="adv-search-panel" style={{display:'block'}}>
+                            <h6 className="small fw-bold text-uppercase text-secondary mb-3">Citation Search</h6>
+                            <div className="row g-2">
+                                <div className="col-6 col-md-3"><select className="form-select form-select-sm" onChange={e=>setAdvFields({...advFields, journal: e.target.value})}><option value="">Journal</option><option>DLR</option><option>BLD</option><option>ADC</option><option>MLR</option><option>BLC</option></select></div>
+                                <div className="col-6 col-md-2"><input type="text" className="form-control form-control-sm" placeholder="Vol" onChange={e=>setAdvFields({...advFields, vol: e.target.value})}/></div>
+                                <div className="col-6 col-md-3"><select className="form-select form-select-sm" onChange={e=>setAdvFields({...advFields, div: e.target.value})}><option value="">Division</option><option>AD</option><option>HCD</option></select></div>
+                                <div className="col-6 col-md-2"><input type="text" className="form-control form-control-sm" placeholder="Page" onChange={e=>setAdvFields({...advFields, page: e.target.value})}/></div>
+                                <div className="col-12 col-md-2"><button className="btn btn-dark btn-sm w-100" onClick={()=>handleSearch(1, 'advanced')}>Go</button></div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="container" style={{minHeight: '400px'}}>
+            {loading && <div className="text-center py-5"><div className="spinner-border text-primary"></div></div>}
+
+            {/* Results View */}
+            {view === 'results' && !loading && (
+                <div id="resultsArea">
+                    <p className="text-muted small mb-3">Found {totalCount} results</p>
+                    {results.length === 0 && <div className="text-center mt-5 text-muted"><h5>No cases found.</h5></div>}
+                    {results.map(item => (
+                        <div key={item.id} className="result-item" onClick={()=>loadJudgment(item)}>
+                            <h5>{item.title}</h5>
+                            <div className="mb-2">
+                                {(session && subStatus) ? 
+                                    <><span className="badge bg-light text-dark border">{item.citation}</span> <span className="text-muted small ms-2">{item.division}</span></> : 
+                                    <span className="badge bg-secondary text-white"><i className="fas fa-lock"></i> Premium</span>
+                                }
+                            </div>
+                            <div className="headnote-text">{item.headnote ? item.headnote.substring(0, 300) + '...' : ''}</div>
+                        </div>
+                    ))}
+                    
+                    {/* Pagination */}
+                    {totalCount > 20 && (
+                        <nav className="mt-4 pb-5 d-flex justify-content-center">
+                            <ul className="pagination">
+                                <li className={`page-item ${currentPage===1?'disabled':''}`}><button className="page-link" onClick={()=>handleSearch(currentPage-1)}>&lt;</button></li>
+                                <li className="page-item active"><button className="page-link">{currentPage}</button></li>
+                                <li className="page-item"><button className="page-link" onClick={()=>handleSearch(currentPage+1)}>&gt;</button></li>
+                            </ul>
+                        </nav>
+                    )}
+                </div>
+            )}
+
+            {/* Reader View */}
+            {view === 'reader' && !loading && currentJudgment && (
+                <div id="readerView" className="bg-white p-4 p-md-5 rounded-3 shadow-sm border mb-5">
+                    <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                        <button className="btn btn-outline-secondary btn-sm" onClick={()=>setView('results')}><i className="fas fa-arrow-left"></i> Back</button>
+                        <div className="d-flex gap-2">
+                            <button className="btn btn-sm btn-outline-warning text-dark" onClick={()=>toggleBookmark(currentJudgment)}><i className="far fa-bookmark"></i> Save</button>
+                            <button className="btn btn-sm btn-outline-dark" onClick={()=>window.print()}><i className="fas fa-print"></i> Print</button>
+                        </div>
+                    </div>
+                    <h3 className="fw-bold text-center text-primary mb-2" style={{fontFamily:'Playfair Display'}}>{currentJudgment.title}</h3>
+                    <p className="text-center text-muted fw-bold mb-4">{currentJudgment.citation}</p>
+                    <div className="mt-4 text-justify" style={{whiteSpace: 'pre-wrap', fontFamily:'Merriweather'}}>
+                        {judgmentText}
+                    </div>
+                </div>
+            )}
+
+            {/* Features (Only visible on Home) */}
+            {view === 'home' && (
+                <div id="featuresSection" className="py-5">
+                    <div className="row g-4 justify-content-center text-center">
+                        <div className="col-6 col-md-3"><i className="fas fa-bolt fa-2x text-warning mb-3"></i><h6 className="fw-bold">Fast Search</h6></div>
+                        <div className="col-6 col-md-3"><i className="fas fa-book fa-2x text-primary mb-3"></i><h6 className="fw-bold">All Laws</h6></div>
+                        <div className="col-6 col-md-3"><i className="fas fa-mobile-alt fa-2x text-success mb-3"></i><h6 className="fw-bold">Mobile First</h6></div>
+                        <div className="col-6 col-md-3"><i className="fas fa-headset fa-2x text-secondary mb-3"></i><h6 className="fw-bold">24/7 Support</h6></div>
+                    </div>
+                </div>
+            )}
+        </div>
+
+        {/* Pricing Section */}
+        <div className="packages-section" id="packages">
+             <div className="container">
+                <div className="text-center mb-5">
+                    <h2 className="hero-title" style={{fontSize:'32px'}}>Simple, Transparent Pricing</h2>
+                    <p class="text-muted">Choose the plan that fits your practice.</p>
+                </div>
+                <div className="row g-4 justify-content-center">
+                    <div className="col-md-3 col-sm-6">
+                        <div className="pricing-card">
+                            <div className="plan-name">Monthly</div>
+                            <div className="plan-price">199৳</div>
+                            <div className="plan-desc">Billed monthly</div>
+                            <a href="https://shop.bkash.com/ak-jurist-law-firm01911008518/pay/bdt199/4NosNL" target="_blank" className="btn-plan">Get Started</a>
+                        </div>
+                    </div>
+                    <div className="col-md-3 col-sm-6">
+                        <div className="pricing-card popular">
+                            <div className="best-value-badge">BEST VALUE</div>
+                            <div className="plan-name">Quarterly</div>
+                            <div className="plan-price">499৳</div>
+                            <div className="plan-desc">Save 15%</div>
+                            <a href="https://shop.bkash.com/ak-jurist-law-firm01911008518/pay/bdt499/IxcDIa" target="_blank" className="btn-plan">Get Started</a>
+                        </div>
+                    </div>
+                    <div className="col-md-3 col-sm-6">
+                        <div className="pricing-card">
+                            <div className="plan-name">Yearly</div>
+                            <div className="plan-price">1200৳</div>
+                            <div className="plan-desc">Save 50%</div>
+                            <a href="https://shop.bkash.com/ak-jurist-law-firm01911008518/pay/bdt1200/O3FBxR" target="_blank" className="btn-plan">Get Started</a>
+                        </div>
+                    </div>
+                </div>
+                <div className="text-center mt-5">
+                    <button className="btn btn-link text-secondary text-decoration-none" onClick={()=>setModalMode('payment')}>
+                        Already paid via bKash? <span className="text-primary fw-bold">Confirm Payment</span>
+                    </button>
+                </div>
+             </div>
+        </div>
+
+        {/* --- MODALS --- */}
+        {modalMode === 'login' && (
+            <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
+                <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content">
+                        <div className="modal-header"><h5 className="modal-title">Member Login</h5><button className="btn-close" onClick={()=>setModalMode(null)}></button></div>
+                        <div className="modal-body p-4 text-center">
+                            <p className="text-muted mb-3">Login with your email address.</p>
+                            <form onSubmit={(e)=>{e.preventDefault(); handleLogin(e.target.email.value)}}>
+                                <input name="email" type="email" className="form-control form-control-lg mb-3" placeholder="name@example.com" required/>
+                                <button className="btn btn-dark w-100">Send Magic Link</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {modalMode === 'checkEmail' && (
+            <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
+                <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content text-center p-5">
+                        <div className="modal-body">
+                            <i className="fas fa-paper-plane fa-4x text-success mb-4"></i>
+                            <h3 className="fw-bold mb-2">Check Your Email</h3>
+                            <p className="text-muted">We have sent a login link to your email.</p>
+                            <button className="btn btn-outline-success mt-3 px-4 rounded-pill" onClick={()=>setModalMode(null)}>OK</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {modalMode === 'profile' && profileData && (
+            <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
+                <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content p-4">
+                        <div className="modal-header border-0 pb-0">
+                            <h5 className="modal-title">My Account</h5>
+                            <button className="btn-close" onClick={()=>setModalMode(null)}></button>
+                        </div>
+                        <div className="modal-body text-center pt-4">
+                            <i className="fas fa-user-circle fa-4x text-secondary mb-3"></i>
+                            <h5 className="fw-bold mb-1">{profileData.email}</h5>
+                            <span className={`badge mb-3 ${profileData.isPremium ? 'bg-success' : 'bg-secondary'}`}>{profileData.isPremium ? 'Premium Member' : 'Free Member'}</span>
+                            <div className="card bg-light border-0 p-3 mt-3 text-start">
+                                <p className="mb-1 small text-muted text-uppercase fw-bold">Subscription Details</p>
+                                <div className="d-flex justify-content-between border-bottom pb-2 mb-2"><span>Expiry Date:</span><span class="fw-bold text-dark">{profileData.expDate}</span></div>
+                                <div className="d-flex justify-content-between"><span>Days Remaining:</span><span class="fw-bold text-primary">{profileData.diffDays}</span></div>
+                            </div>
+                            <button className="btn btn-outline-danger w-100 mt-4" onClick={handleLogout}>Sign Out</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {modalMode === 'app' && (
+            <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
+                <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content text-center p-5 border-0">
+                        <div className="modal-body">
+                            <i className="fas fa-android fa-4x text-success mb-3"></i>
+                            <h3 className="fw-bold">Coming Soon!</h3>
+                            <p className="text-muted mt-3">Our dedicated Android App is currently under development.</p>
+                            <button className="btn btn-light rounded-pill px-4 mt-3" onClick={()=>setModalMode(null)}>Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {modalMode === 'payment' && (
+            <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
+                <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content">
+                        <div className="modal-header"><h5 className="modal-title">Payment Verification</h5><button className="btn-close" onClick={()=>setModalMode(null)}></button></div>
+                        <div className="modal-body p-4">
+                            <form action="https://formsubmit.co/caseref.bd@gmail.com" method="POST">
+                                <input type="hidden" name="_captcha" value="false"/><input type="hidden" name="_subject" value="New Payment"/>
+                                <div className="mb-3"><label className="form-label">Name</label><input type="text" name="Name" className="form-control" required/></div>
+                                <div className="mb-3"><label className="form-label">Phone</label><input type="text" name="Phone" className="form-control" required/></div>
+                                <div className="mb-3"><label className="form-label">Email</label><input type="email" name="Email" className="form-control" required/></div>
+                                <div className="row"><div className="col-6 mb-3"><label className="form-label">TrxID</label><input type="text" name="TrxID" className="form-control" required/></div><div className="col-6 mb-3"><label className="form-label">Plan</label><select name="Package" className="form-select"><option>Monthly</option><option>Quarterly</option><option>Yearly</option></select></div></div>
+                                <button className="btn btn-success w-100 py-2">Submit</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {modalMode === 'warning' && (
+            <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
+                <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content">
+                        <div className="modal-header bg-warning"><h5 className="modal-title text-dark">🔒 Login Required</h5><button className="btn-close" onClick={()=>setModalMode(null)}></button></div>
+                        <div className="modal-body p-4 text-center">
+                            <p className="lead">This is a <strong>Premium</strong> Judgment.</p>
+                            <p className="text-muted mb-4">You need to login to read the full text.</p>
+                            <button className="btn btn-dark w-100" onClick={()=>setModalMode('login')}>Login Now</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {modalMode === 'gate' && (
+            <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
+                <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content text-center p-5 border-0 shadow">
+                        <div className="modal-body">
+                            <i className="fas fa-check-circle fa-4x text-success mb-4"></i>
+                            <h3 className="fw-bold text-dark">Judgment Found!</h3>
+                            <p className="text-muted mt-3 mb-4">Great news! The case is in our database.<br/>However, <b>Advanced Search</b> is a <b>Premium Feature</b>.</p>
+                            <div className="d-grid gap-2">
+                                <a href="#packages" className="btn btn-dark" onClick={()=>setModalMode(null)}>View Plans</a>
+                                <button className="btn btn-outline-secondary" onClick={()=>setModalMode(null)}>Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* Footer */}
+        <footer className="bg-dark text-secondary py-5 text-center">
+            <div className="container">
+                <h4 className="text-white fw-bold mb-4">CaseReference BD</h4>
+                <div className="mb-4">
+                    <a href="#" className="footer-link">Home</a>
+                    <a href="#packages" className="footer-link">Pricing</a>
+                    <a href="#" className="footer-link">Privacy Policy</a>
+                </div>
+                <p className="mb-1">Bashundhara Riverview, Dhaka.</p>
+                <p className="mb-1">Email: legalvoicebd@gmail.com</p>
+                <p className="mb-4">Phone: 01911 008 518</p>
+                <p className="small opacity-50">&copy; 2026 CaseReference. All rights reserved.</p>
+            </div>
+        </footer>
+        <a href="https://wa.me/8801911008518" className="whatsapp-float" target="_blank"><i className="fab fa-whatsapp"></i></a>
+    </div>
+  );
+}
