@@ -88,7 +88,6 @@ export default function App() {
   // Modals Control
   const [modalMode, setModalMode] = useState(null); 
   const [profileData, setProfileData] = useState(null);
-  const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   // --- Auth & Session Lock Effects ---
   useEffect(() => {
@@ -115,6 +114,7 @@ export default function App() {
           checkSubscription(session.user.email);
           
           if (event === 'SIGNED_IN') {
+              // Update Session ID on Login
               try {
                   await supabase.from('members')
                       .update({ current_session_id: session.access_token })
@@ -135,6 +135,7 @@ export default function App() {
     };
   }, []);
 
+  // --- Session Monitor Logic ---
   const startSessionMonitor = (currentSession) => {
       return setInterval(async () => {
           if (!currentSession?.user?.email) return;
@@ -168,15 +169,17 @@ export default function App() {
             setProfileData({ ...data, isPremium, diffDays, expDate: expDate.toDateString() });
         } else {
             setSubStatus(false);
+            // Fallback profile data so button still works
             setProfileData({ email, isPremium: false, diffDays: 0, expDate: 'N/A' });
         }
     } catch(e) {
+        // Error fallback
         setSubStatus(false);
         setProfileData({ email, isPremium: false, diffDays: 0, expDate: 'N/A' });
     }
   };
 
-  // --- FIXED: SEARCH LOGIC (STRICT SCOPING) ---
+  // --- Search Functions ---
   const handleSearch = async (page = 1, type = 'simple') => {
     setLoading(true);
     setCurrentPage(page);
@@ -193,42 +196,32 @@ export default function App() {
             highlightTerm = `${journal} ${vol} ${pg}`;
         } else {
             let aliasCondition = "";
-            
-            // 1. LAW FILTER (STRICT AND)
-            // If a law is selected, FIRST restrict the entire query to that law.
             if(selectedLaw) {
                const aliases = lawAliases[selectedLaw] || [selectedLaw];
-               // We search title and headnote for the law name to ensure the case belongs to it
                const headnoteChecks = aliases.map(a => `headnote.ilike.%${a}%`).join(',');
                const titleChecks = aliases.map(a => `title.ilike.%${a}%`).join(',');
                aliasCondition = headnoteChecks + ',' + titleChecks;
-               
-               // Apply this filter strictly (This creates an AND relationship with the next filter)
-               queryBuilder = queryBuilder.or(aliasCondition);
             }
 
-            // 2. TEXT SEARCH (WITHIN RESULT)
-            let textCondition = "";
             if (isExactMatch) {
                const queryStr = `headnote.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%`;
-               textCondition = queryStr;
+               if(aliasCondition) queryBuilder = queryBuilder.or(aliasCondition + ',' + queryStr);
+               else queryBuilder = queryBuilder.or(queryStr);
                highlightTerm = searchTerm;
             } else {
-               const words = searchTerm.split(/\s+/).filter(w => !stopwords.includes(w.toLowerCase()) && w.length > 0);
-               
+               const words = searchTerm.split(/\s+/).filter(w => !stopwords.includes(w.toLowerCase()) && w.length > 1);
+               let textCondition = "";
                if (words.length > 0) {
-                   // Search in headnote, title AND parallel_citation
-                   textCondition = words.map(w => `headnote.ilike.%${w}%,title.ilike.%${w}%,parallel_citation.ilike.%${w}%`).join(',');
+                   textCondition = words.map(w => `headnote.ilike.%${w}%,title.ilike.%${w}%`).join(',');
                } else if (searchTerm) {
-                   // Fallback if stopwords removed everything but search term exists (e.g. "Death")
-                   textCondition = `headnote.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%,parallel_citation.ilike.%${searchTerm}%`;
+                   textCondition = `headnote.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%`;
                }
-               highlightTerm = words.join('|') || searchTerm;
-            }
 
-            // Apply Text Filter (This acts as AND because we chained it after the Law filter)
-            if (textCondition) {
-                queryBuilder = queryBuilder.or(textCondition);
+               if(aliasCondition && textCondition) queryBuilder = queryBuilder.or(aliasCondition + ',' + textCondition);
+               else if (aliasCondition) queryBuilder = queryBuilder.or(aliasCondition);
+               else if (textCondition) queryBuilder = queryBuilder.or(textCondition);
+               
+               highlightTerm = words.join('|');
             }
         }
 
@@ -256,33 +249,8 @@ export default function App() {
     }
   };
 
-  const handlePaymentSubmit = async (e) => {
-      e.preventDefault();
-      const form = e.target;
-      const data = new FormData(form);
-      
-      try {
-          const response = await fetch("https://formspree.io/f/xgookqen", {
-              method: "POST",
-              body: data,
-              headers: {
-                  'Accept': 'application/json'
-              }
-          });
-          
-          if (response.ok) {
-              form.reset();
-              setModalMode(null); // Close the input modal
-              setPaymentSuccess(true); // Open the Success Modal
-          } else {
-              alert("There was a problem submitting your form");
-          }
-      } catch (error) {
-          alert("Error sending form");
-      }
-  };
-
   const loadJudgment = async (item) => {
+    // FIXED: Use Modal instead of Alert
     if(item.is_premium && !session) { setModalMode('warning'); return; }
     if(item.is_premium && !subStatus) { setModalMode('warning'); return; }
 
@@ -687,7 +655,7 @@ export default function App() {
             </div>
         )}
 
-        {/* Profile Modal */}
+        {/* FIXED: Profile Modal now renders even if profileData has partial info */}
         {modalMode === 'profile' && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
                 <div className="modal-dialog modal-dialog-centered">
@@ -734,15 +702,14 @@ export default function App() {
             </div>
         )}
 
-        {/* UPDATED: Payment Modal with AJAX Logic */}
         {modalMode === 'payment' && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
                 <div className="modal-dialog modal-dialog-centered">
                     <div className="modal-content">
                         <div className="modal-header"><h5 className="modal-title">Payment Verification</h5><button className="btn-close" onClick={()=>setModalMode(null)}></button></div>
                         <div className="modal-body p-4">
-                            <form onSubmit={handlePaymentSubmit}>
-                                <input type="hidden" name="_subject" value="New Payment"/>
+                            <form action="https://formsubmit.co/caseref.bd@gmail.com" method="POST">
+                                <input type="hidden" name="_captcha" value="false"/><input type="hidden" name="_subject" value="New Payment"/>
                                 <div className="mb-3"><label className="form-label">Name</label><input type="text" name="Name" className="form-control" required/></div>
                                 <div className="mb-3"><label className="form-label">Phone</label><input type="text" name="Phone" className="form-control" required/></div>
                                 <div className="mb-3"><label className="form-label">Email</label><input type="email" name="Email" className="form-control" required/></div>
@@ -755,28 +722,7 @@ export default function App() {
             </div>
         )}
 
-        {/* NEW: Payment Success Modal (International Standard) */}
-        {paymentSuccess && (
-            <div className="modal d-block" style={{background: 'rgba(0,0,0,0.6)'}}>
-                <div className="modal-dialog modal-dialog-centered">
-                    <div className="modal-content text-center p-5 border-0 shadow-lg" style={{borderRadius: '20px'}}>
-                        <div className="modal-body">
-                            <div style={{width:'80px', height:'80px', background:'#e8f5e9', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto'}}>
-                                <i className="fas fa-check fa-3x text-success"></i>
-                            </div>
-                            <h2 className="fw-bold mt-4 mb-2 text-dark">Submission Successful!</h2>
-                            <p className="text-muted mb-4">
-                                Thank you for your payment. We have received your request and will activate your premium membership shortly.
-                            </p>
-                            <button className="btn btn-success rounded-pill px-5 py-2 shadow-sm fw-bold" onClick={()=>setPaymentSuccess(false)}>
-                                Continue
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        )}
-
+        {/* FIXED: Warning Modal (The Professional Pop-up) */}
         {modalMode === 'warning' && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
                 <div className="modal-dialog modal-dialog-centered">
@@ -820,7 +766,7 @@ export default function App() {
                     <a href="#" className="footer-link">Privacy Policy</a>
                 </div>
                 <p className="mb-1">Supreme Court, Dhaka.</p>
-                <p className="mb-1">Email: bdkanoon@gmail.com</p>
+                <p className="mb-1">Email: caseref.bd@gmail.com</p>
                 <p className="mb-4">Phone: 01911 008 518</p>
                 <p class="small opacity-50">&copy; 2026 BDKanoon. All rights reserved.</p>
             </div>
