@@ -524,9 +524,9 @@ export default function App() {
                     <div className="col-md-3 col-sm-6">
                         <div className="pricing-card popular">
                             <div className="best-value-badge">BEST VALUE</div>
-                            <div className="plan-name">Quarterly</div>
-                            <div className="plan-price">499৳</div>
-                            <div className="plan-desc">Save 15%</div>
+                            <div className="plan-name">Half Yearly</div>
+                            <div className="plan-price">799৳</div>
+                            <div className="plan-desc">Save 33%</div>
                             <a href="https://shop.bkash.com/ak-jurist-law-firm01911008518/pay/bdt499/IxcDIa" target="_blank" className="btn-plan">Get Started</a>
                         </div>
                     </div>
@@ -713,7 +713,7 @@ export default function App() {
                                 <div className="mb-3"><label className="form-label">Name</label><input type="text" name="Name" className="form-control" required/></div>
                                 <div className="mb-3"><label className="form-label">Phone</label><input type="text" name="Phone" className="form-control" required/></div>
                                 <div className="mb-3"><label className="form-label">Email</label><input type="email" name="Email" className="form-control" required/></div>
-                                <div className="row"><div className="col-6 mb-3"><label className="form-label">TrxID</label><input type="text" name="TrxID" className="form-control" required/></div><div className="col-6 mb-3"><label className="form-label">Plan</label><select name="Package" className="form-select"><option>Monthly</option><option>Quarterly</option><option>Yearly</option></select></div></div>
+                                <div className="row"><div className="col-6 mb-3"><label className="form-label">TrxID</label><input type="text" name="TrxID" className="form-control" required/></div><div className="col-6 mb-3"><label className="form-label">Plan</label><select name="Package" className="form-select"><option>Monthly</option><option>Half Yearly</option><option>Yearly</option></select></div></div>
                                 <button className="btn btn-success w-100 py-2">Submit</button>
                             </form>
                         </div>
