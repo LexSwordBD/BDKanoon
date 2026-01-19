@@ -43,37 +43,24 @@ const lawAliases = {
 
 const stopwords = ['a', 'an', 'the', 'of', 'in', 'and', 'or', 'is', 'are', 'was', 'were', 'be', 'to', 'for', 'with', 'on', 'at', 'by', 'from', 'shall', 'will', 'am'];
 
-// --- FIXED: Safe HighlightedText Component (No Crash) ---
 const HighlightedText = ({ text, highlight }) => {
-    // 1. Safety check: if no text or no highlight keyword, return plain text
     if (!text) return null;
     if (!highlight) return <span>{text}</span>;
 
     try {
-        // 2. Escape special Regex characters (like brackets, plus, dot) to prevent crash
-        // This stops "Code (CPC)" from breaking the logic
         const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        
-        // 3. Prepare words: split by space, remove empty, and escape each word
         const words = highlight.split(/\s+/).filter(w => w.length > 0).map(escapeRegExp);
-        
         if (words.length === 0) return <span>{text}</span>;
-
-        // 4. Create safe RegExp
         const regex = new RegExp(`(${words.join('|')})`, 'gi');
         const parts = text.toString().split(regex);
-
         return (
             <span>
                 {parts.map((part, i) => 
-                    // Check if this part matches our search words
                     regex.test(part) ? <span key={i} className="highlight">{part}</span> : part
                 )}
             </span>
         );
     } catch (e) {
-        // If anything fails, fallback to plain text instead of white screen
-        console.error("Highlight Error:", e);
         return <span>{text}</span>;
     }
 };
@@ -102,54 +89,73 @@ export default function App() {
   const [modalMode, setModalMode] = useState(null); 
   const [profileData, setProfileData] = useState(null);
 
-  // --- Auth & Effects ---
+  // --- Auth & Session Lock Effects ---
   useEffect(() => {
-    // 1. Check Initial Session
+    let sessionInterval;
+
+    // 1. Initial Check
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if(session) {
           checkSubscription(session.user.email);
-          startSessionMonitor(session); 
+          // Start monitoring ONLY if logged in
+          sessionInterval = startSessionMonitor(session);
       }
     });
 
-    // 2. Auth State Listener
+    // 2. Listener for Login/Logout
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       
-      if (event === 'PASSWORD_RECOVERY') {
-          setModalMode('resetPassword');
-      }
+      if (event === 'PASSWORD_RECOVERY') setModalMode('resetPassword');
       
       if(session) {
           checkSubscription(session.user.email);
           
           if (event === 'SIGNED_IN') {
-              await updateSessionId(session);
+              // FORCE UPDATE: When user logs in, save this NEW token to DB
+              // This kicks out any previous session because their token won't match anymore
+              await supabase.from('members')
+                  .update({ current_session_id: session.access_token })
+                  .eq('email', session.user.email);
+              
+              // Restart monitor with new session
+              if (sessionInterval) clearInterval(sessionInterval);
+              sessionInterval = startSessionMonitor(session);
           }
+      } else {
+          // If logged out, stop monitoring
+          if (sessionInterval) clearInterval(sessionInterval);
       }
     });
-    return () => subscription.unsubscribe();
+
+    return () => {
+        subscription.unsubscribe();
+        if (sessionInterval) clearInterval(sessionInterval);
+    };
   }, []);
 
-  // --- Single Device Lock Logic ---
-  const updateSessionId = async (session) => {
-      await supabase.from('members')
-          .update({ current_session_id: session.access_token })
-          .eq('email', session.user.email);
-  };
+  // --- Session Monitor Logic ---
+  const startSessionMonitor = (currentSession) => {
+      // Check every 5 seconds
+      return setInterval(async () => {
+          if (!currentSession?.user?.email) return;
 
-  const startSessionMonitor = (session) => {
-      const interval = setInterval(async () => {
-          const { data } = await supabase.from('members').select('current_session_id').eq('email', session.user.email).single();
-          if (data && data.current_session_id && data.current_session_id !== session.access_token) {
-              clearInterval(interval);
-              await supabase.auth.signOut();
-              setSession(null);
-              setModalMode('sessionError');
+          const { data, error } = await supabase
+              .from('members')
+              .select('current_session_id')
+              .eq('email', currentSession.user.email)
+              .single();
+          
+          if (!error && data) {
+              // If DB has a different token than mine, someone else logged in!
+              if (data.current_session_id && data.current_session_id !== currentSession.access_token) {
+                  await supabase.auth.signOut(); // Kick me out
+                  setSession(null);
+                  setModalMode('sessionError'); // Show error
+              }
           }
-      }, 5000);
-      return () => clearInterval(interval);
+      }, 5000); // 5 Seconds interval
   };
 
   const checkSubscription = async (email) => {
