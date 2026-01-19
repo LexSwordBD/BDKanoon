@@ -169,11 +169,9 @@ export default function App() {
             setProfileData({ ...data, isPremium, diffDays, expDate: expDate.toDateString() });
         } else {
             setSubStatus(false);
-            // Fallback profile data so button still works
             setProfileData({ email, isPremium: false, diffDays: 0, expDate: 'N/A' });
         }
     } catch(e) {
-        // Error fallback
         setSubStatus(false);
         setProfileData({ email, isPremium: false, diffDays: 0, expDate: 'N/A' });
     }
@@ -196,6 +194,8 @@ export default function App() {
             highlightTerm = `${journal} ${vol} ${pg}`;
         } else {
             let aliasCondition = "";
+            
+            // --- FIX: Law Selection Logic ---
             if(selectedLaw) {
                const aliases = lawAliases[selectedLaw] || [selectedLaw];
                const headnoteChecks = aliases.map(a => `headnote.ilike.%${a}%`).join(',');
@@ -203,25 +203,29 @@ export default function App() {
                aliasCondition = headnoteChecks + ',' + titleChecks;
             }
 
+            let textCondition = "";
             if (isExactMatch) {
                const queryStr = `headnote.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%`;
-               if(aliasCondition) queryBuilder = queryBuilder.or(aliasCondition + ',' + queryStr);
-               else queryBuilder = queryBuilder.or(queryStr);
+               textCondition = queryStr;
                highlightTerm = searchTerm;
             } else {
                const words = searchTerm.split(/\s+/).filter(w => !stopwords.includes(w.toLowerCase()) && w.length > 1);
-               let textCondition = "";
                if (words.length > 0) {
                    textCondition = words.map(w => `headnote.ilike.%${w}%,title.ilike.%${w}%`).join(',');
                } else if (searchTerm) {
                    textCondition = `headnote.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%`;
                }
-
-               if(aliasCondition && textCondition) queryBuilder = queryBuilder.or(aliasCondition + ',' + textCondition);
-               else if (aliasCondition) queryBuilder = queryBuilder.or(aliasCondition);
-               else if (textCondition) queryBuilder = queryBuilder.or(textCondition);
-               
                highlightTerm = words.join('|');
+            }
+
+            // --- FIX: Apply Filters Separately (AND Logic) ---
+            // যদি আইন সিলেক্ট করা থাকে, তবে আগে আইনের ফিল্টার বসবে
+            if (aliasCondition) {
+                queryBuilder = queryBuilder.or(aliasCondition);
+            }
+            // এরপর সার্চ টেক্সটের ফিল্টার বসবে (অটোমেটিক AND হয়ে যাবে)
+            if (textCondition) {
+                queryBuilder = queryBuilder.or(textCondition);
             }
         }
 
@@ -250,7 +254,6 @@ export default function App() {
   };
 
   const loadJudgment = async (item) => {
-    // FIXED: Use Modal instead of Alert
     if(item.is_premium && !session) { setModalMode('warning'); return; }
     if(item.is_premium && !subStatus) { setModalMode('warning'); return; }
 
@@ -655,7 +658,7 @@ export default function App() {
             </div>
         )}
 
-        {/* FIXED: Profile Modal now renders even if profileData has partial info */}
+        {/* Profile Modal */}
         {modalMode === 'profile' && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
                 <div className="modal-dialog modal-dialog-centered">
@@ -708,7 +711,7 @@ export default function App() {
                     <div className="modal-content">
                         <div className="modal-header"><h5 className="modal-title">Payment Verification</h5><button className="btn-close" onClick={()=>setModalMode(null)}></button></div>
                         <div className="modal-body p-4">
-                            <form action="https://formsubmit.co/caseref.bd@gmail.com" method="POST">
+                            <form action="https://formsubmit.co/bdkanoon@gmail.com" method="POST">
                                 <input type="hidden" name="_captcha" value="false"/><input type="hidden" name="_subject" value="New Payment"/>
                                 <div className="mb-3"><label className="form-label">Name</label><input type="text" name="Name" className="form-control" required/></div>
                                 <div className="mb-3"><label className="form-label">Phone</label><input type="text" name="Phone" className="form-control" required/></div>
@@ -766,7 +769,7 @@ export default function App() {
                     <a href="#" className="footer-link">Privacy Policy</a>
                 </div>
                 <p className="mb-1">Supreme Court, Dhaka.</p>
-                <p className="mb-1">Email: caseref.bd@gmail.com</p>
+                <p className="mb-1">Email: bdkanoon@gmail.com</p>
                 <p className="mb-4">Phone: 01911 008 518</p>
                 <p class="small opacity-50">&copy; 2026 BDKanoon. All rights reserved.</p>
             </div>
