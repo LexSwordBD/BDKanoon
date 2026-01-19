@@ -482,15 +482,16 @@ export default function App() {
         {modalMode === 'profile' && profileData && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.5)'}}>
                 <div className="modal-dialog modal-dialog-centered">
-                    <div className="modal-content p-4">
-                        {/* --- হেডার ফিক্সড করা হয়েছে --- */}
-                        <div className="modal-header border-0 pb-0 position-relative justify-content-center">
-                            <h5 className="modal-title text-white fw-bold">My Account</h5>
+                    <div className="modal-content overflow-hidden p-0"> {/* p-0 added to remove extra padding */}
+                        
+                        {/* --- HEADER FIXED (Centered & Balanced) --- */}
+                        <div className="modal-header border-0 position-relative d-flex justify-content-center align-items-center py-3 bg-dark text-white">
+                            <h5 className="modal-title fw-bold m-0">My Account</h5>
                             <button className="btn-close btn-close-white position-absolute end-0 me-3" onClick={()=>setModalMode(null)}></button>
                         </div>
-                        {/* ----------------------------- */}
+                        {/* ------------------------------------------ */}
                         
-                        <div className="modal-body text-center pt-4">
+                        <div className="modal-body text-center p-4">
                             <i className="fas fa-user-circle fa-4x text-secondary mb-3"></i>
                             <h5 className="fw-bold mb-1">{profileData.email}</h5>
                             <span className={`badge mb-3 ${profileData.isPremium ? 'bg-success' : 'bg-secondary'}`}>{profileData.isPremium ? 'Premium Member' : 'Free Member'}</span>
