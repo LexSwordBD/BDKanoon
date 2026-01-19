@@ -88,13 +88,13 @@ export default function App() {
   // Modals Control
   const [modalMode, setModalMode] = useState(null); 
   const [profileData, setProfileData] = useState(null);
-  // NEW: Payment Success Modal State
   const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   // --- Auth & Session Lock Effects ---
   useEffect(() => {
     let sessionInterval;
 
+    // 1. Initial Check
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if(session) {
@@ -103,13 +103,17 @@ export default function App() {
       }
     });
 
+    // 2. Auth State Listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       
-      if (event === 'PASSWORD_RECOVERY') setModalMode('resetPassword');
+      if (event === 'PASSWORD_RECOVERY') {
+          setModalMode('resetPassword');
+      }
       
       if(session) {
           checkSubscription(session.user.email);
+          
           if (event === 'SIGNED_IN') {
               try {
                   await supabase.from('members')
@@ -134,7 +138,13 @@ export default function App() {
   const startSessionMonitor = (currentSession) => {
       return setInterval(async () => {
           if (!currentSession?.user?.email) return;
-          const { data, error } = await supabase.from('members').select('current_session_id').eq('email', currentSession.user.email).single();
+
+          const { data, error } = await supabase
+              .from('members')
+              .select('current_session_id')
+              .eq('email', currentSession.user.email)
+              .single();
+          
           if (!error && data) {
               if (data.current_session_id && data.current_session_id !== currentSession.access_token) {
                   await supabase.auth.signOut(); 
@@ -166,7 +176,7 @@ export default function App() {
     }
   };
 
-  // --- FIXED: Search Logic (Parallel Citation Added) ---
+  // --- FIXED: SEARCH LOGIC (STRICT SCOPING) ---
   const handleSearch = async (page = 1, type = 'simple') => {
     setLoading(true);
     setCurrentPage(page);
@@ -183,36 +193,40 @@ export default function App() {
             highlightTerm = `${journal} ${vol} ${pg}`;
         } else {
             let aliasCondition = "";
-            let textCondition = "";
-
-            // 1. Law Filter
+            
+            // 1. LAW FILTER (STRICT AND)
+            // If a law is selected, FIRST restrict the entire query to that law.
             if(selectedLaw) {
                const aliases = lawAliases[selectedLaw] || [selectedLaw];
+               // We search title and headnote for the law name to ensure the case belongs to it
                const headnoteChecks = aliases.map(a => `headnote.ilike.%${a}%`).join(',');
                const titleChecks = aliases.map(a => `title.ilike.%${a}%`).join(',');
                aliasCondition = headnoteChecks + ',' + titleChecks;
+               
+               // Apply this filter strictly (This creates an AND relationship with the next filter)
+               queryBuilder = queryBuilder.or(aliasCondition);
             }
 
-            // 2. Text Search (Includes parallel_citation now)
+            // 2. TEXT SEARCH (WITHIN RESULT)
+            let textCondition = "";
             if (isExactMatch) {
                const queryStr = `headnote.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%`;
                textCondition = queryStr;
                highlightTerm = searchTerm;
             } else {
-               const words = searchTerm.split(/\s+/).filter(w => !stopwords.includes(w.toLowerCase()) && w.length > 1);
+               const words = searchTerm.split(/\s+/).filter(w => !stopwords.includes(w.toLowerCase()) && w.length > 0);
+               
                if (words.length > 0) {
-                   // Added parallel_citation to search fields
+                   // Search in headnote, title AND parallel_citation
                    textCondition = words.map(w => `headnote.ilike.%${w}%,title.ilike.%${w}%,parallel_citation.ilike.%${w}%`).join(',');
                } else if (searchTerm) {
+                   // Fallback if stopwords removed everything but search term exists (e.g. "Death")
                    textCondition = `headnote.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%,parallel_citation.ilike.%${searchTerm}%`;
                }
-               highlightTerm = words.join('|');
+               highlightTerm = words.join('|') || searchTerm;
             }
 
-            // 3. Apply Filters Separately (AND Logic)
-            if (aliasCondition) {
-                queryBuilder = queryBuilder.or(aliasCondition);
-            }
+            // Apply Text Filter (This acts as AND because we chained it after the Law filter)
             if (textCondition) {
                 queryBuilder = queryBuilder.or(textCondition);
             }
@@ -242,7 +256,6 @@ export default function App() {
     }
   };
 
-  // --- NEW: Handle Payment Submit (AJAX) ---
   const handlePaymentSubmit = async (e) => {
       e.preventDefault();
       const form = e.target;
@@ -259,8 +272,8 @@ export default function App() {
           
           if (response.ok) {
               form.reset();
-              setModalMode(null); // Close input modal
-              setPaymentSuccess(true); // Open Success Modal
+              setModalMode(null); // Close the input modal
+              setPaymentSuccess(true); // Open the Success Modal
           } else {
               alert("There was a problem submitting your form");
           }
