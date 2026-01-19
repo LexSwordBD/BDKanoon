@@ -455,7 +455,7 @@ export default function App() {
                             <p className="text-muted mb-3">Login with your email address.</p>
                             <form onSubmit={(e)=>{e.preventDefault(); handleLogin(e.target.email.value)}}>
                                 <input name="email" type="email" className="form-control form-control-lg mb-3" placeholder="name@example.com" required/>
-                                <button className="btn btn-dark w-100">Send Magic Link</button>
+                                <button className="btn btn-dark w-100">Send Link</button>
                             </form>
                         </div>
                     </div>
