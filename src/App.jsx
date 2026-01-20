@@ -69,7 +69,7 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [subStatus, setSubStatus] = useState(false);
   const [view, setView] = useState('home'); 
-  const [loading, setLoading] = useState(true); // Default true to prevent premature rendering
+  const [loading, setLoading] = useState(true);
   
   // Search States
   const [results, setResults] = useState([]);
@@ -110,12 +110,18 @@ export default function App() {
         if(data) {
             const expDate = new Date(data.expiry_date);
             const today = new Date();
-            const diffTime = Math.abs(expDate - today);
+            // Fix invalid date issue
+            if (isNaN(expDate.getTime())) {
+                setSubStatus(false);
+                setProfileData({ ...data, isPremium: false, diffDays: 0, expDate: 'Invalid Date' });
+                return;
+            }
+            const diffTime = expDate - today;
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-            const isPremium = expDate > today;
+            const isPremium = diffDays >= 0; // Fixed logic
             
             setSubStatus(isPremium);
-            setProfileData({ ...data, isPremium, diffDays, expDate: expDate.toDateString() });
+            setProfileData({ ...data, isPremium, diffDays: diffDays > 0 ? diffDays : 0, expDate: expDate.toDateString() });
         } else {
             setSubStatus(false);
             setProfileData({ email, isPremium: false, diffDays: 0, expDate: 'N/A' });
@@ -140,6 +146,7 @@ export default function App() {
               .maybeSingle();
           
           if (!error && data) {
+              // Only logout if session ID exists in DB and is different
               if (data.current_session_id && data.current_session_id !== currentSession.access_token) {
                   clearInterval(sessionIntervalRef.current);
                   await supabase.auth.signOut(); 
@@ -148,36 +155,39 @@ export default function App() {
                   setModalMode('sessionError');
               }
           }
-      }, 5000);
+      }, 10000); // Increased interval to reduce load
   };
 
   // --- MAIN INITIALIZATION EFFECT ---
   useEffect(() => {
+    let mounted = true;
+
     const initializeApp = async () => {
         setLoading(true);
-        
-        // 1. Get Session manually first (Avoids Race Condition)
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
-        
-        if (initialSession) {
-            setSession(initialSession);
-            // Critical: Wait for these to finish BEFORE removing loading screen
-            await Promise.all([
-                checkSubscription(initialSession.user.email),
-                updateSessionInDB(initialSession)
-            ]);
-            startMonitor(initialSession);
-        } else {
-            setSession(null);
+        try {
+            const { data: { session: initialSession } } = await supabase.auth.getSession();
+            
+            if (initialSession && mounted) {
+                setSession(initialSession);
+                // Execute checks in parallel but handle errors gracefully
+                await Promise.allSettled([
+                    updateSessionInDB(initialSession),
+                    checkSubscription(initialSession.user.email)
+                ]);
+                startMonitor(initialSession);
+            }
+        } catch (error) {
+            console.error("Init Error:", error);
+        } finally {
+            if (mounted) setLoading(false);
         }
-        
-        setLoading(false); // App is now ready
     };
 
     initializeApp();
 
-    // 2. Set up listener for subsequent changes (Login/Logout/Refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+        if (!mounted) return;
+        
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
             setSession(currentSession);
             await updateSessionInDB(currentSession);
@@ -192,6 +202,7 @@ export default function App() {
     });
 
     return () => {
+        mounted = false;
         subscription.unsubscribe();
         if (sessionIntervalRef.current) clearInterval(sessionIntervalRef.current);
     };
@@ -220,14 +231,15 @@ export default function App() {
                aliasCondition = headnoteChecks + ',' + titleChecks;
             }
 
+            // Sanitize Search Term
+            const safeSearchTerm = searchTerm.replace(/[^\w\s\u0980-\u09FF]/g, ''); // Remove special chars causing crash
+
             if (isExactMatch) {
-               // --- EXACT MATCH LOGIC ---
-               const queryStr = `headnote.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%`;
+               const queryStr = `headnote.ilike.%${safeSearchTerm}%,title.ilike.%${safeSearchTerm}%`;
                if(aliasCondition) queryBuilder = queryBuilder.or(aliasCondition + ',' + queryStr);
                else queryBuilder = queryBuilder.or(queryStr);
             } else {
-               // --- NORMAL SEARCH LOGIC ---
-               const words = searchTerm.split(/\s+/).filter(w => !stopwords.includes(w.toLowerCase()) && w.length > 1);
+               const words = safeSearchTerm.split(/\s+/).filter(w => !stopwords.includes(w.toLowerCase()) && w.length > 1);
                let textCondition = "";
                
                if (words.length > 0) {
@@ -267,7 +279,7 @@ export default function App() {
     } catch (e) {
         console.error("Search Exception:", e);
     } finally {
-        setLoading(false);
+        setLoading(false); // Ensures loading stops even if error occurs
     }
   };
 
@@ -373,6 +385,8 @@ export default function App() {
   };
 
   const handleLogout = async () => {
+      setSession(null); // Clear session locally immediately
+      setSubStatus(false);
       await supabase.auth.signOut();
       window.location.reload();
   };
