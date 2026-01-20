@@ -90,20 +90,27 @@ export default function App() {
   const [modalMode, setModalMode] = useState(null); 
   const [profileData, setProfileData] = useState(null);
 
-  // --- Auth & Session Lock Effects ---
+  // --- Auth & Session Lock Effects (FIXED FOR REFRESH BUG) ---
   useEffect(() => {
     let sessionInterval;
 
-    // 1. Initial Check on Load
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      if(session) {
-          checkSubscription(session.user.email);
-          // Force update DB on initial load to claim session
-          await updateSessionInDB(session);
-          sessionInterval = startSessionMonitor(session); 
-      }
-    });
+    // 1. Initial Check on Load / Refresh
+    const initSession = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+        
+        if (session) {
+            checkSubscription(session.user.email);
+            
+            // CRITICAL FIX: Wait for DB update to complete BEFORE starting monitor
+            // This prevents "race condition" where active device kills itself on refresh
+            await updateSessionInDB(session);
+            
+            sessionInterval = startSessionMonitor(session); 
+        }
+    };
+
+    initSession();
 
     // 2. Auth State Listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -116,16 +123,17 @@ export default function App() {
       if(session) {
           checkSubscription(session.user.email);
           
-          // CRITICAL FIX: Update DB on Sign In OR Token Refresh
           if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+              // Same fix: Update DB first, then restart monitor
               await updateSessionInDB(session);
               
-              // Restart Monitor with NEW token to avoid false positives
               if (sessionInterval) clearInterval(sessionInterval);
               sessionInterval = startSessionMonitor(session);
           }
       } else {
+          // If logged out (manually or via monitor), clear interval
           if (sessionInterval) clearInterval(sessionInterval);
+          setSubStatus(false);
       }
     });
 
@@ -145,12 +153,12 @@ export default function App() {
       } catch (err) { console.error("Session sync failed", err); }
   };
 
-  // --- Session Monitor Logic (FIXED) ---
+  // --- Session Monitor Logic ---
   const startSessionMonitor = (currentSession) => {
+      // Clear any existing intervals first to be safe
       return setInterval(async () => {
           if (!currentSession?.user?.email) return;
 
-          // Fetch the 'current_session_id' from DB
           const { data, error } = await supabase
               .from('members')
               .select('current_session_id')
@@ -158,17 +166,15 @@ export default function App() {
               .maybeSingle();
           
           if (!error && data) {
-              // LOGIC: If DB has a session ID, and it does NOT match my local token,
-              // it means someone else logged in (Device B), so I (Device A) must logout.
+              // If DB has a session ID, and it does NOT match local token
               if (data.current_session_id && data.current_session_id !== currentSession.access_token) {
-                  // Perform Force Logout
                   await supabase.auth.signOut(); 
                   setSession(null);
                   setSubStatus(false);
-                  setModalMode('sessionError'); // Trigger the professional popup
+                  setModalMode('sessionError');
               }
           }
-      }, 5000); // Check every 5 seconds
+      }, 5000); 
   };
 
   const checkSubscription = async (email) => {
@@ -266,7 +272,7 @@ export default function App() {
     }
   };
 
-  // --- MODIFIED LOAD JUDGMENT LOGIC (SMART BLOCK DETECTION) ---
+  // --- MODIFIED LOAD JUDGMENT LOGIC ---
   const loadJudgment = async (item) => {
     if(item.is_premium && !session) { setModalMode('warning'); return; }
     if(item.is_premium && !subStatus) { setModalMode('warning'); return; }
