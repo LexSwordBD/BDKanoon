@@ -90,29 +90,12 @@ export default function App() {
   const [modalMode, setModalMode] = useState(null); 
   const [profileData, setProfileData] = useState(null);
 
-  // --- Auth & Session Lock Effects (FIXED FOR REFRESH BUG) ---
+  // --- Auth & Session Lock Effects (FIXED FOR REFRESH HANG) ---
   useEffect(() => {
     let sessionInterval;
 
-    // 1. Initial Check on Load / Refresh
-    const initSession = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        
-        if (session) {
-            checkSubscription(session.user.email);
-            
-            // CRITICAL FIX: Wait for DB update to complete BEFORE starting monitor
-            // This prevents "race condition" where active device kills itself on refresh
-            await updateSessionInDB(session);
-            
-            sessionInterval = startSessionMonitor(session); 
-        }
-    };
-
-    initSession();
-
-    // 2. Auth State Listener
+    // We only rely on onAuthStateChange to handle ALL scenarios (Load, Login, Refresh)
+    // This prevents the "Race Condition" where manual checks conflicted with auto-checks.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       
@@ -121,19 +104,24 @@ export default function App() {
       }
       
       if(session) {
-          checkSubscription(session.user.email);
-          
-          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-              // Same fix: Update DB first, then restart monitor
+          // Triggered on Login, Token Refresh, AND Page Reload (INITIAL_SESSION)
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+              
+              // 1. First, fetch profile data so "Free Member" doesn't show incorrectly
+              await checkSubscription(session.user.email);
+              
+              // 2. Then, update the DB to claim this session
               await updateSessionInDB(session);
               
+              // 3. Finally, start the monitor to check for OTHER devices
               if (sessionInterval) clearInterval(sessionInterval);
               sessionInterval = startSessionMonitor(session);
           }
       } else {
-          // If logged out (manually or via monitor), clear interval
+          // Handle Logout
           if (sessionInterval) clearInterval(sessionInterval);
           setSubStatus(false);
+          setProfileData(null);
       }
     });
 
@@ -155,7 +143,6 @@ export default function App() {
 
   // --- Session Monitor Logic ---
   const startSessionMonitor = (currentSession) => {
-      // Clear any existing intervals first to be safe
       return setInterval(async () => {
           if (!currentSession?.user?.email) return;
 
@@ -166,7 +153,6 @@ export default function App() {
               .maybeSingle();
           
           if (!error && data) {
-              // If DB has a session ID, and it does NOT match local token
               if (data.current_session_id && data.current_session_id !== currentSession.access_token) {
                   await supabase.auth.signOut(); 
                   setSession(null);
@@ -272,7 +258,7 @@ export default function App() {
     }
   };
 
-  // --- MODIFIED LOAD JUDGMENT LOGIC ---
+  // --- MODIFIED LOAD JUDGMENT LOGIC (SMART BLOCK DETECTION) ---
   const loadJudgment = async (item) => {
     if(item.is_premium && !session) { setModalMode('warning'); return; }
     if(item.is_premium && !subStatus) { setModalMode('warning'); return; }
