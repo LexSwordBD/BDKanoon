@@ -84,7 +84,6 @@ export default function App() {
   // Reader State
   const [currentJudgment, setCurrentJudgment] = useState(null);
   const [judgmentText, setJudgmentText] = useState('');
-  // NEW: State to hold all citations found in the file
   const [parallelCitations, setParallelCitations] = useState([]);
 
   // Modals Control
@@ -95,11 +94,13 @@ export default function App() {
   useEffect(() => {
     let sessionInterval;
 
-    // 1. Initial Check
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // 1. Initial Check on Load
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       if(session) {
           checkSubscription(session.user.email);
+          // Force update DB on initial load to claim session
+          await updateSessionInDB(session);
           sessionInterval = startSessionMonitor(session); 
       }
     });
@@ -115,14 +116,11 @@ export default function App() {
       if(session) {
           checkSubscription(session.user.email);
           
-          if (event === 'SIGNED_IN') {
-              // Update Session ID on Login
-              try {
-                  await supabase.from('members')
-                      .update({ current_session_id: session.access_token })
-                      .eq('email', session.user.email);
-              } catch (err) { console.error("Session update failed", err); }
+          // CRITICAL FIX: Update DB on Sign In OR Token Refresh
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+              await updateSessionInDB(session);
               
+              // Restart Monitor with NEW token to avoid false positives
               if (sessionInterval) clearInterval(sessionInterval);
               sessionInterval = startSessionMonitor(session);
           }
@@ -137,25 +135,40 @@ export default function App() {
     };
   }, []);
 
-  // --- Session Monitor Logic ---
+  // Helper to update session in DB
+  const updateSessionInDB = async (currentSession) => {
+      if (!currentSession?.user?.email) return;
+      try {
+          await supabase.from('members')
+              .update({ current_session_id: currentSession.access_token })
+              .eq('email', currentSession.user.email);
+      } catch (err) { console.error("Session sync failed", err); }
+  };
+
+  // --- Session Monitor Logic (FIXED) ---
   const startSessionMonitor = (currentSession) => {
       return setInterval(async () => {
           if (!currentSession?.user?.email) return;
 
+          // Fetch the 'current_session_id' from DB
           const { data, error } = await supabase
               .from('members')
               .select('current_session_id')
               .eq('email', currentSession.user.email)
-              .single();
+              .maybeSingle();
           
           if (!error && data) {
+              // LOGIC: If DB has a session ID, and it does NOT match my local token,
+              // it means someone else logged in (Device B), so I (Device A) must logout.
               if (data.current_session_id && data.current_session_id !== currentSession.access_token) {
+                  // Perform Force Logout
                   await supabase.auth.signOut(); 
                   setSession(null);
-                  setModalMode('sessionError'); 
+                  setSubStatus(false);
+                  setModalMode('sessionError'); // Trigger the professional popup
               }
           }
-      }, 5000); 
+      }, 5000); // Check every 5 seconds
   };
 
   const checkSubscription = async (email) => {
@@ -270,7 +283,7 @@ export default function App() {
         
         const fullText = await res.text();
         
-        // 1. Find where the requested anchor is (e.g., ===20 BLC...===)
+        // 1. Find where the requested anchor is
         const anchorStr = `===${item.case_anchor}===`;
         const anchorIdx = fullText.indexOf(anchorStr);
         
@@ -278,7 +291,7 @@ export default function App() {
             throw new Error("Case anchor not found in file.");
         }
 
-        // 2. Find the END of this judgment (forward search from anchor)
+        // 2. Find the END of this judgment
         const endMarker = "===End===";
         const endIdx = fullText.indexOf(endMarker, anchorIdx); 
 
@@ -287,8 +300,6 @@ export default function App() {
         }
 
         // 3. Find the START of this judgment BLOCK
-        // We look backwards from anchorIdx to find the *previous* ===End===
-        // If found, the case starts right after that. If not, it starts at 0.
         const previousEndIdx = fullText.lastIndexOf(endMarker, anchorIdx);
         let blockStart = 0;
         if (previousEndIdx !== -1) {
@@ -296,29 +307,22 @@ export default function App() {
         }
 
         // 4. Extract the FULL text block for this case
-        // This includes all parallel citations (even ones before the searched anchor)
         let caseContent = fullText.substring(blockStart, endIdx).trim();
 
         // 5. Smart Loop: Extract ALL citations at the top of the block
         const matches = [];
         
         while (true) {
-            // Regex: checks start of string for ===...=== (ignoring whitespace)
             const headerRegex = /^\s*(===(.*?)===)/;
             const match = headerRegex.exec(caseContent);
 
             if (match) {
-                // match[2] is the citation text (e.g. "75 DLR (AD) 1")
                 const citeText = match[2].trim();
-                
                 if (!matches.includes(citeText)) {
                     matches.push(citeText);
                 }
-                
-                // Remove this citation from the content body
                 caseContent = caseContent.replace(match[1], '').trimStart();
             } else {
-                // No more citations at the top, break loop
                 break;
             }
         }
@@ -431,7 +435,6 @@ export default function App() {
   };
 
   // ================= RENDER =================
-  // Helper to filter citations for display (Removes current one)
   const displayCitations = currentJudgment && parallelCitations.length > 0 
       ? parallelCitations.filter(c => c !== currentJudgment.case_anchor && c !== currentJudgment.citation)
       : [];
@@ -561,7 +564,7 @@ export default function App() {
                 </div>
             )}
 
-            {/* Reader View - MODIFIED FOR PARALLEL CITATIONS */}
+            {/* Reader View */}
             {view === 'reader' && !loading && currentJudgment && (
                 <div id="readerView" className="bg-white p-4 p-md-5 rounded-3 shadow-sm border mb-5">
                     <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
@@ -577,7 +580,7 @@ export default function App() {
                     {/* Primary Citation */}
                     <p className="text-center text-dark fw-bold mb-2 fs-5">{currentJudgment.citation}</p>
                     
-                    {/* NEW: Parallel Citations Display (Conditional) */}
+                    {/* Parallel Citations Display */}
                     {displayCitations.length > 0 && (
                         <div className="text-center mb-4">
                             <span className="text-secondary small fw-bold text-uppercase me-2">Also Reported In:</span>
@@ -740,16 +743,23 @@ export default function App() {
             </div>
         )}
 
-        {/* --- Session Error Modal --- */}
+        {/* --- Session Error Modal (PROFESSIONAL POPUP) --- */}
         {modalMode === 'sessionError' && (
-            <div className="modal d-block" style={{background: 'rgba(0,0,0,0.8)'}}>
+            <div className="modal d-block" style={{background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(3px)'}}>
                 <div className="modal-dialog modal-dialog-centered">
-                    <div className="modal-content text-center p-5 border-0">
-                        <div className="modal-body">
-                            <i className="fas fa-exclamation-triangle fa-4x text-warning mb-4"></i>
-                            <h3 className="fw-bold text-dark">Logged Out</h3>
-                            <p className="text-muted mt-3 mb-4">You have logged in from another device.<br/>For security, this session has been terminated.</p>
-                            <button className="btn btn-dark rounded-pill px-5" onClick={()=>window.location.reload()}>Login Again</button>
+                    <div className="modal-content text-center p-0 border-0 shadow-lg" style={{overflow: 'hidden', borderRadius: '15px'}}>
+                        <div className="bg-danger py-3">
+                             <i className="fas fa-shield-alt fa-3x text-white"></i>
+                        </div>
+                        <div className="modal-body p-5">
+                            <h3 className="fw-bold text-dark mb-3">Session Expired</h3>
+                            <p className="text-muted mb-4" style={{fontSize: '16px', lineHeight: '1.6'}}>
+                                You have logged in from another device.<br/>
+                                For security reasons, this session has been terminated.
+                            </p>
+                            <button className="btn btn-danger rounded-pill px-5 py-2 fw-bold" onClick={()=>window.location.reload()}>
+                                Login Here Again
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -825,7 +835,7 @@ export default function App() {
             </div>
         )}
 
-        {/* --- NEW: Payment Success Modal (Modern Professional UX) --- */}
+        {/* Payment Success Modal */}
         {modalMode === 'paymentSuccess' && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)'}}>
                 <div className="modal-dialog modal-dialog-centered">
