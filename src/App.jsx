@@ -253,7 +253,7 @@ export default function App() {
     }
   };
 
-  // --- MODIFIED LOAD JUDGMENT LOGIC (SAFE VERSION) ---
+  // --- MODIFIED LOAD JUDGMENT LOGIC (SMART BLOCK DETECTION) ---
   const loadJudgment = async (item) => {
     if(item.is_premium && !session) { setModalMode('warning'); return; }
     if(item.is_premium && !subStatus) { setModalMode('warning'); return; }
@@ -270,51 +270,60 @@ export default function App() {
         
         const fullText = await res.text();
         
-        // ১. নির্দিষ্ট জাজমেন্টের শুরু খুঁজে বের করা
-        const startMarker = `===${item.case_anchor}===`;
-        const startIdx = fullText.indexOf(startMarker);
+        // 1. Find where the requested anchor is (e.g., ===20 BLC...===)
+        const anchorStr = `===${item.case_anchor}===`;
+        const anchorIdx = fullText.indexOf(anchorStr);
         
-        if (startIdx === -1) {
+        if (anchorIdx === -1) {
             throw new Error("Case anchor not found in file.");
         }
 
-        // ২. এই শুরুর পর থেকে পরবর্তী ===End=== খুঁজে বের করা
+        // 2. Find the END of this judgment (forward search from anchor)
         const endMarker = "===End===";
-        const endIdx = fullText.indexOf(endMarker, startIdx); 
+        const endIdx = fullText.indexOf(endMarker, anchorIdx); 
 
         if (endIdx === -1) {
              throw new Error("End marker not found for this case.");
         }
 
-        // ৩. শুধু এই নির্দিষ্ট জাজমেন্টের অংশটুকু নেওয়া
-        let caseContent = fullText.substring(startIdx, endIdx);
+        // 3. Find the START of this judgment BLOCK
+        // We look backwards from anchorIdx to find the *previous* ===End===
+        // If found, the case starts right after that. If not, it starts at 0.
+        const previousEndIdx = fullText.lastIndexOf(endMarker, anchorIdx);
+        let blockStart = 0;
+        if (previousEndIdx !== -1) {
+            blockStart = previousEndIdx + endMarker.length;
+        }
 
-        // ৪. স্মার্ট লজিক: শুধু "শুরুতে" থাকা সাইটেশনগুলো খুঁজে বের করা
+        // 4. Extract the FULL text block for this case
+        // This includes all parallel citations (even ones before the searched anchor)
+        let caseContent = fullText.substring(blockStart, endIdx).trim();
+
+        // 5. Smart Loop: Extract ALL citations at the top of the block
         const matches = [];
         
-        // এই লুপটি টেক্সটের শুরু থেকে একটার পর একটা সাইটেশন চেক করবে
-        // এবং শুরুতে থাকা সাইটেশনগুলো মুছে ফেলবে।
-        // যখনই দেখবে সাইটেশন নেই (সাধারণ টেক্সট শুরু), লুপ বন্ধ হয়ে যাবে।
         while (true) {
-            // Regex: শুরুতে (^) স্পেস বা নিউলাইন (\s*) এবং তারপর ===...=== আছে কিনা
+            // Regex: checks start of string for ===...=== (ignoring whitespace)
             const headerRegex = /^\s*(===(.*?)===)/;
             const match = headerRegex.exec(caseContent);
 
             if (match) {
-                // match[2] হলো সাইটেশনের নাম
-                if (!matches.includes(match[2])) {
-                    matches.push(match[2]);
+                // match[2] is the citation text (e.g. "75 DLR (AD) 1")
+                const citeText = match[2].trim();
+                
+                if (!matches.includes(citeText)) {
+                    matches.push(citeText);
                 }
                 
-                // মূল টেক্সট থেকে এই সাইটেশনটি মুছে ফেলব
+                // Remove this citation from the content body
                 caseContent = caseContent.replace(match[1], '').trimStart();
             } else {
-                // শুরুতে আর কোনো সাইটেশন পাওয়া না গেলে লুপ ব্রেক
+                // No more citations at the top, break loop
                 break;
             }
         }
 
-        // ৫. স্টেট আপডেট
+        // 6. Update State
         setParallelCitations(matches); 
         setJudgmentText(caseContent); 
 
@@ -422,6 +431,11 @@ export default function App() {
   };
 
   // ================= RENDER =================
+  // Helper to filter citations for display (Removes current one)
+  const displayCitations = currentJudgment && parallelCitations.length > 0 
+      ? parallelCitations.filter(c => c !== currentJudgment.case_anchor && c !== currentJudgment.citation)
+      : [];
+
   return (
     <div>
         {/* Navbar */}
@@ -563,11 +577,11 @@ export default function App() {
                     {/* Primary Citation */}
                     <p className="text-center text-dark fw-bold mb-2 fs-5">{currentJudgment.citation}</p>
                     
-                    {/* NEW: Parallel Citations Display */}
-                    {parallelCitations.length > 0 && (
+                    {/* NEW: Parallel Citations Display (Conditional) */}
+                    {displayCitations.length > 0 && (
                         <div className="text-center mb-4">
                             <span className="text-secondary small fw-bold text-uppercase me-2">Also Reported In:</span>
-                            {parallelCitations.filter(c => c !== currentJudgment.citation).map((cite, index) => (
+                            {displayCitations.map((cite, index) => (
                                 <span key={index} className="badge bg-light text-secondary border me-1">{cite}</span>
                             ))}
                         </div>
