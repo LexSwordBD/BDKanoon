@@ -66,10 +66,11 @@ const HighlightedText = ({ text, highlight }) => {
 };
 
 export default function App() {
+  const [appReady, setAppReady] = useState(false); // FIX-1: New state for initial load
   const [session, setSession] = useState(null);
   const [subStatus, setSubStatus] = useState(false);
   const [view, setView] = useState('home'); 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Internal loading (Search/Fetch)
   
   // Search States
   const [results, setResults] = useState([]);
@@ -103,32 +104,37 @@ export default function App() {
       } catch (err) { console.error("Session sync failed", err); }
   };
 
-  // --- HELPER: Check Subscription ---
+  // --- HELPER: Check Subscription (FIX-2) ---
   const checkSubscription = async (email) => {
     try {
         const { data, error } = await supabase.from('members').select('*').eq('email', email).single();
-        if(data) {
+        
+        let isPremium = false;
+        let diffDays = 0;
+        let expDateStr = 'N/A';
+
+        if(data && data.expiry_date) {
             const expDate = new Date(data.expiry_date);
             const today = new Date();
-            // Fix invalid date issue
-            if (isNaN(expDate.getTime())) {
-                setSubStatus(false);
-                setProfileData({ ...data, isPremium: false, diffDays: 0, expDate: 'Invalid Date' });
-                return;
-            }
-            const diffTime = expDate - today;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-            const isPremium = diffDays >= 0; // Fixed logic
             
-            setSubStatus(isPremium);
-            setProfileData({ ...data, isPremium, diffDays: diffDays > 0 ? diffDays : 0, expDate: expDate.toDateString() });
-        } else {
-            setSubStatus(false);
-            setProfileData({ email, isPremium: false, diffDays: 0, expDate: 'N/A' });
+            if (!isNaN(expDate.getTime())) {
+                const diffTime = expDate - today;
+                diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                isPremium = diffDays >= 0; 
+                expDateStr = expDate.toDateString();
+            }
         }
+        
+        // Update State
+        setSubStatus(isPremium);
+        setProfileData({ ...data, isPremium, diffDays: diffDays > 0 ? diffDays : 0, expDate: expDateStr });
+        
+        return isPremium; // Return status for await
     } catch(e) {
+        console.error("Subscription Check Error:", e);
         setSubStatus(false);
         setProfileData({ email, isPremium: false, diffDays: 0, expDate: 'N/A' });
+        return false;
     }
   };
 
@@ -146,7 +152,6 @@ export default function App() {
               .maybeSingle();
           
           if (!error && data) {
-              // Only logout if session ID exists in DB and is different
               if (data.current_session_id && data.current_session_id !== currentSession.access_token) {
                   clearInterval(sessionIntervalRef.current);
                   await supabase.auth.signOut(); 
@@ -155,43 +160,45 @@ export default function App() {
                   setModalMode('sessionError');
               }
           }
-      }, 10000); // Increased interval to reduce load
+      }, 10000); 
   };
 
-  // --- MAIN INITIALIZATION EFFECT ---
+  // --- MAIN INITIALIZATION EFFECT (FIXED) ---
   useEffect(() => {
-    let mounted = true;
+    let isMounted = true;
 
     const initializeApp = async () => {
-        setLoading(true);
         try {
             const { data: { session: initialSession } } = await supabase.auth.getSession();
             
-            if (initialSession && mounted) {
+            if (initialSession && isMounted) {
                 setSession(initialSession);
-                // Execute checks in parallel but handle errors gracefully
-                await Promise.allSettled([
-                    updateSessionInDB(initialSession),
-                    checkSubscription(initialSession.user.email)
-                ]);
+                await updateSessionInDB(initialSession);
+                // FIX-2: Await logic to prevent race condition
+                const premium = await checkSubscription(initialSession.user.email);
+                setSubStatus(premium);
                 startMonitor(initialSession);
             }
         } catch (error) {
             console.error("Init Error:", error);
         } finally {
-            if (mounted) setLoading(false);
+            if (isMounted) {
+                setLoading(false); 
+                setAppReady(true); // FIX-1: App is now ready to render
+            }
         }
     };
 
     initializeApp();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-        if (!mounted) return;
-        
+        if (!isMounted) return;
+
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
             setSession(currentSession);
             await updateSessionInDB(currentSession);
-            await checkSubscription(currentSession.user.email);
+            const premium = await checkSubscription(currentSession.user.email);
+            setSubStatus(premium);
             startMonitor(currentSession);
         } else if (event === 'SIGNED_OUT') {
             setSession(null);
@@ -202,13 +209,13 @@ export default function App() {
     });
 
     return () => {
-        mounted = false;
+        isMounted = false;
         subscription.unsubscribe();
         if (sessionIntervalRef.current) clearInterval(sessionIntervalRef.current);
     };
   }, []);
 
-  // --- Search Functions ---
+  // --- Search Functions (FIX-3) ---
   const handleSearch = async (page = 1, type = 'simple') => {
     setLoading(true);
     setCurrentPage(page);
@@ -219,7 +226,11 @@ export default function App() {
 
         if (type === 'advanced') {
             const { journal, vol, div, page: pg } = advFields;
-            if (!journal || !vol || !div || !pg) { alert("Fill all fields."); setLoading(false); return; }
+            if (!journal || !vol || !div || !pg) { 
+                alert("Fill all fields."); 
+                setLoading(false); 
+                return; 
+            }
             queryBuilder = queryBuilder.eq('journal', journal).eq('volume', vol).eq('division', div).eq('page_number', pg);
         } else {
             // --- LAW FILTER ---
@@ -231,13 +242,14 @@ export default function App() {
                aliasCondition = headnoteChecks + ',' + titleChecks;
             }
 
-            // Sanitize Search Term
-            const safeSearchTerm = searchTerm.replace(/[^\w\s\u0980-\u09FF]/g, ''); // Remove special chars causing crash
+            // --- SANITIZE SEARCH TERM ---
+            const safeSearchTerm = searchTerm.replace(/['"]/g, "");
 
             if (isExactMatch) {
                const queryStr = `headnote.ilike.%${safeSearchTerm}%,title.ilike.%${safeSearchTerm}%`;
-               if(aliasCondition) queryBuilder = queryBuilder.or(aliasCondition + ',' + queryStr);
-               else queryBuilder = queryBuilder.or(queryStr);
+               // FIX-3: Correct Parentheses Syntax
+               if(aliasCondition) queryBuilder = queryBuilder.or(`(${aliasCondition},${queryStr})`);
+               else queryBuilder = queryBuilder.or(`(${queryStr})`);
             } else {
                const words = safeSearchTerm.split(/\s+/).filter(w => !stopwords.includes(w.toLowerCase()) && w.length > 1);
                let textCondition = "";
@@ -247,15 +259,16 @@ export default function App() {
                }
                
                if (textCondition === "" && !aliasCondition) {
-                   setLoading(false);
                    setResults([]);
                    setTotalCount(0);
+                   setLoading(false); 
                    return; 
                }
 
-               if(aliasCondition && textCondition) queryBuilder = queryBuilder.or(aliasCondition + ',' + textCondition);
-               else if (aliasCondition) queryBuilder = queryBuilder.or(aliasCondition);
-               else if (textCondition) queryBuilder = queryBuilder.or(textCondition);
+               // FIX-3: Correct Parentheses Syntax for OR logic
+               if(aliasCondition && textCondition) queryBuilder = queryBuilder.or(`(${aliasCondition},${textCondition})`);
+               else if (aliasCondition) queryBuilder = queryBuilder.or(`(${aliasCondition})`);
+               else if (textCondition) queryBuilder = queryBuilder.or(`(${textCondition})`);
             }
         }
 
@@ -279,7 +292,7 @@ export default function App() {
     } catch (e) {
         console.error("Search Exception:", e);
     } finally {
-        setLoading(false); // Ensures loading stops even if error occurs
+        setLoading(false); 
     }
   };
 
@@ -384,11 +397,17 @@ export default function App() {
       setLoading(false);
   };
 
+  // FIX-4: Logout Logic Change
   const handleLogout = async () => {
-      setSession(null); // Clear session locally immediately
+      setSession(null);
       setSubStatus(false);
-      await supabase.auth.signOut();
-      window.location.reload();
+      setProfileData(null);
+      setView('home');
+      try {
+        await supabase.auth.signOut();
+      } catch (e) {
+        console.error("Sign out error", e);
+      }
   };
 
   const toggleBookmark = async (item) => {
@@ -450,8 +469,8 @@ export default function App() {
       ? parallelCitations.filter(c => c !== currentJudgment.case_anchor && c !== currentJudgment.citation)
       : [];
 
-  // FULL SCREEN LOADING STATE FOR INITIAL SYNC
-  if (loading && !session && view === 'home') {
+  // FIX-1: FULL SCREEN LOADING STATE (Use appReady instead of loading)
+  if (!appReady) {
       return (
           <div className="d-flex justify-content-center align-items-center vh-100 bg-white">
               <div className="spinner-border text-primary" role="status">
