@@ -91,7 +91,7 @@ export default function App() {
   const [modalMode, setModalMode] = useState(null); 
   const [profileData, setProfileData] = useState(null);
 
-  // --- Auth & Session Lock Effects ---
+  // --- Auth & Session Lock Effects (FIXED) ---
   useEffect(() => {
     let sessionInterval;
 
@@ -127,7 +127,10 @@ export default function App() {
               sessionInterval = startSessionMonitor(session);
           }
       } else {
+          // Force clear everything if signed out
           if (sessionInterval) clearInterval(sessionInterval);
+          setSubStatus(false);
+          setProfileData(null);
       }
     });
 
@@ -137,25 +140,42 @@ export default function App() {
     };
   }, []);
 
-  // --- Session Monitor Logic ---
+  // --- Session Monitor Logic (FIXED FOR HANGING ISSUE) ---
   const startSessionMonitor = (currentSession) => {
-      return setInterval(async () => {
+      // Clear any existing interval to prevent duplicates
+      const intervalId = setInterval(async () => {
           if (!currentSession?.user?.email) return;
 
-          const { data, error } = await supabase
-              .from('members')
-              .select('current_session_id')
-              .eq('email', currentSession.user.email)
-              .single();
-          
-          if (!error && data) {
-              if (data.current_session_id && data.current_session_id !== currentSession.access_token) {
-                  await supabase.auth.signOut(); 
-                  setSession(null);
-                  setModalMode('sessionError'); 
+          try {
+              const { data, error } = await supabase
+                  .from('members')
+                  .select('current_session_id')
+                  .eq('email', currentSession.user.email)
+                  .single();
+              
+              if (!error && data) {
+                  // If mismatch found
+                  if (data.current_session_id && data.current_session_id !== currentSession.access_token) {
+                      // 1. Stop checking immediately to prevent freeze
+                      clearInterval(intervalId);
+                      
+                      // 2. Force local signout (ignore server errors)
+                      await supabase.auth.signOut().catch(err => console.log("Force signout", err));
+                      
+                      // 3. Clear Local State
+                      setSession(null);
+                      setSubStatus(false);
+                      setLoading(false); // Fix loading stuck issue
+                      
+                      // 4. Show Error Modal
+                      setModalMode('sessionError'); 
+                  }
               }
+          } catch (err) {
+              console.error("Monitor Error", err);
           }
       }, 5000); 
+      return intervalId;
   };
 
   const checkSubscription = async (email) => {
@@ -287,8 +307,6 @@ export default function App() {
         }
 
         // 3. Find the START of this judgment BLOCK
-        // We look backwards from anchorIdx to find the *previous* ===End===
-        // If found, the case starts right after that. If not, it starts at 0.
         const previousEndIdx = fullText.lastIndexOf(endMarker, anchorIdx);
         let blockStart = 0;
         if (previousEndIdx !== -1) {
@@ -296,29 +314,22 @@ export default function App() {
         }
 
         // 4. Extract the FULL text block for this case
-        // This includes all parallel citations (even ones before the searched anchor)
         let caseContent = fullText.substring(blockStart, endIdx).trim();
 
         // 5. Smart Loop: Extract ALL citations at the top of the block
         const matches = [];
         
         while (true) {
-            // Regex: checks start of string for ===...=== (ignoring whitespace)
             const headerRegex = /^\s*(===(.*?)===)/;
             const match = headerRegex.exec(caseContent);
 
             if (match) {
-                // match[2] is the citation text (e.g. "75 DLR (AD) 1")
                 const citeText = match[2].trim();
-                
                 if (!matches.includes(citeText)) {
                     matches.push(citeText);
                 }
-                
-                // Remove this citation from the content body
                 caseContent = caseContent.replace(match[1], '').trimStart();
             } else {
-                // No more citations at the top, break loop
                 break;
             }
         }
@@ -370,9 +381,21 @@ export default function App() {
       setLoading(false);
   };
 
+  // --- LOGOUT LOGIC (FIXED FOR STUCK LOADING) ---
   const handleLogout = async () => {
-      await supabase.auth.signOut();
-      window.location.reload();
+      setLoading(true);
+      try {
+          // Attempt server sign out
+          await supabase.auth.signOut();
+      } catch (error) {
+          console.error("Sign out error:", error);
+      } finally {
+          // FORCE Refresh/Reset regardless of error
+          setSession(null);
+          setSubStatus(false);
+          setLoading(false);
+          window.location.reload();
+      }
   };
 
   const toggleBookmark = async (item) => {
