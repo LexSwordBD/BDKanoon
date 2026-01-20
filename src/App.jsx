@@ -90,12 +90,22 @@ export default function App() {
   const [modalMode, setModalMode] = useState(null); 
   const [profileData, setProfileData] = useState(null);
 
-  // --- Auth & Session Lock Effects (FIXED FOR REFRESH HANG) ---
+  // --- Auth & Session Lock Effects ---
   useEffect(() => {
     let sessionInterval;
 
-    // We only rely on onAuthStateChange to handle ALL scenarios (Load, Login, Refresh)
-    // This prevents the "Race Condition" where manual checks conflicted with auto-checks.
+    // 1. Initial Check on Load
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      setSession(session);
+      if(session) {
+          checkSubscription(session.user.email);
+          // Force update DB on initial load to claim session
+          await updateSessionInDB(session);
+          sessionInterval = startSessionMonitor(session); 
+      }
+    });
+
+    // 2. Auth State Listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       
@@ -104,24 +114,18 @@ export default function App() {
       }
       
       if(session) {
-          // Triggered on Login, Token Refresh, AND Page Reload (INITIAL_SESSION)
-          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
-              
-              // 1. First, fetch profile data so "Free Member" doesn't show incorrectly
-              await checkSubscription(session.user.email);
-              
-              // 2. Then, update the DB to claim this session
+          checkSubscription(session.user.email);
+          
+          // CRITICAL FIX: Update DB on Sign In OR Token Refresh
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
               await updateSessionInDB(session);
               
-              // 3. Finally, start the monitor to check for OTHER devices
+              // Restart Monitor with NEW token to avoid false positives
               if (sessionInterval) clearInterval(sessionInterval);
               sessionInterval = startSessionMonitor(session);
           }
       } else {
-          // Handle Logout
           if (sessionInterval) clearInterval(sessionInterval);
-          setSubStatus(false);
-          setProfileData(null);
       }
     });
 
@@ -141,11 +145,12 @@ export default function App() {
       } catch (err) { console.error("Session sync failed", err); }
   };
 
-  // --- Session Monitor Logic ---
+  // --- Session Monitor Logic (FIXED) ---
   const startSessionMonitor = (currentSession) => {
       return setInterval(async () => {
           if (!currentSession?.user?.email) return;
 
+          // Fetch the 'current_session_id' from DB
           const { data, error } = await supabase
               .from('members')
               .select('current_session_id')
@@ -153,14 +158,17 @@ export default function App() {
               .maybeSingle();
           
           if (!error && data) {
+              // LOGIC: If DB has a session ID, and it does NOT match my local token,
+              // it means someone else logged in (Device B), so I (Device A) must logout.
               if (data.current_session_id && data.current_session_id !== currentSession.access_token) {
+                  // Perform Force Logout
                   await supabase.auth.signOut(); 
                   setSession(null);
                   setSubStatus(false);
-                  setModalMode('sessionError');
+                  setModalMode('sessionError'); // Trigger the professional popup
               }
           }
-      }, 5000); 
+      }, 5000); // Check every 5 seconds
   };
 
   const checkSubscription = async (email) => {
