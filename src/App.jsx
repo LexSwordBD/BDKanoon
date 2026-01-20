@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 
 // --- Constants & Data ---
@@ -66,11 +66,10 @@ const HighlightedText = ({ text, highlight }) => {
 };
 
 export default function App() {
-  const [appReady, setAppReady] = useState(false); // FIX-1: New state for initial load
   const [session, setSession] = useState(null);
   const [subStatus, setSubStatus] = useState(false);
   const [view, setView] = useState('home'); 
-  const [loading, setLoading] = useState(true); // Internal loading (Search/Fetch)
+  const [loading, setLoading] = useState(false);
   
   // Search States
   const [results, setResults] = useState([]);
@@ -85,137 +84,102 @@ export default function App() {
   // Reader State
   const [currentJudgment, setCurrentJudgment] = useState(null);
   const [judgmentText, setJudgmentText] = useState('');
+  // NEW: State to hold all citations found in the file
   const [parallelCitations, setParallelCitations] = useState([]);
 
   // Modals Control
   const [modalMode, setModalMode] = useState(null); 
   const [profileData, setProfileData] = useState(null);
 
-  // Ref to track interval
-  const sessionIntervalRef = useRef(null);
+  // --- Auth & Session Lock Effects ---
+  useEffect(() => {
+    let sessionInterval;
 
-  // --- HELPER: Update Session in DB ---
-  const updateSessionInDB = async (currentSession) => {
-      if (!currentSession?.user?.email) return;
-      try {
-          await supabase.from('members')
-              .update({ current_session_id: currentSession.access_token })
-              .eq('email', currentSession.user.email);
-      } catch (err) { console.error("Session sync failed", err); }
-  };
+    // 1. Initial Check
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if(session) {
+          checkSubscription(session.user.email);
+          sessionInterval = startSessionMonitor(session); 
+      }
+    });
 
-  // --- HELPER: Check Subscription (FIX-2) ---
-  const checkSubscription = async (email) => {
-    try {
-        const { data, error } = await supabase.from('members').select('*').eq('email', email).single();
-        
-        let isPremium = false;
-        let diffDays = 0;
-        let expDateStr = 'N/A';
-
-        if(data && data.expiry_date) {
-            const expDate = new Date(data.expiry_date);
-            const today = new Date();
-            
-            if (!isNaN(expDate.getTime())) {
-                const diffTime = expDate - today;
-                diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                isPremium = diffDays >= 0; 
-                expDateStr = expDate.toDateString();
-            }
-        }
-        
-        // Update State
-        setSubStatus(isPremium);
-        setProfileData({ ...data, isPremium, diffDays: diffDays > 0 ? diffDays : 0, expDate: expDateStr });
-        
-        return isPremium; // Return status for await
-    } catch(e) {
-        console.error("Subscription Check Error:", e);
-        setSubStatus(false);
-        setProfileData({ email, isPremium: false, diffDays: 0, expDate: 'N/A' });
-        return false;
-    }
-  };
-
-  // --- HELPER: Start Monitor ---
-  const startMonitor = (currentSession) => {
-      if (sessionIntervalRef.current) clearInterval(sessionIntervalRef.current);
+    // 2. Auth State Listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setSession(session);
       
-      sessionIntervalRef.current = setInterval(async () => {
+      if (event === 'PASSWORD_RECOVERY') {
+          setModalMode('resetPassword');
+      }
+      
+      if(session) {
+          checkSubscription(session.user.email);
+          
+          if (event === 'SIGNED_IN') {
+              // Update Session ID on Login
+              try {
+                  await supabase.from('members')
+                      .update({ current_session_id: session.access_token })
+                      .eq('email', session.user.email);
+              } catch (err) { console.error("Session update failed", err); }
+              
+              if (sessionInterval) clearInterval(sessionInterval);
+              sessionInterval = startSessionMonitor(session);
+          }
+      } else {
+          if (sessionInterval) clearInterval(sessionInterval);
+      }
+    });
+
+    return () => {
+        subscription.unsubscribe();
+        if (sessionInterval) clearInterval(sessionInterval);
+    };
+  }, []);
+
+  // --- Session Monitor Logic ---
+  const startSessionMonitor = (currentSession) => {
+      return setInterval(async () => {
           if (!currentSession?.user?.email) return;
 
           const { data, error } = await supabase
               .from('members')
               .select('current_session_id')
               .eq('email', currentSession.user.email)
-              .maybeSingle();
+              .single();
           
           if (!error && data) {
               if (data.current_session_id && data.current_session_id !== currentSession.access_token) {
-                  clearInterval(sessionIntervalRef.current);
                   await supabase.auth.signOut(); 
                   setSession(null);
-                  setSubStatus(false);
-                  setModalMode('sessionError');
+                  setModalMode('sessionError'); 
               }
           }
-      }, 10000); 
+      }, 5000); 
   };
 
-  // --- MAIN INITIALIZATION EFFECT (FIXED) ---
-  useEffect(() => {
-    let isMounted = true;
-
-    const initializeApp = async () => {
-        try {
-            const { data: { session: initialSession } } = await supabase.auth.getSession();
-            
-            if (initialSession && isMounted) {
-                setSession(initialSession);
-                await updateSessionInDB(initialSession);
-                // FIX-2: Await logic to prevent race condition
-                const premium = await checkSubscription(initialSession.user.email);
-                setSubStatus(premium);
-                startMonitor(initialSession);
-            }
-        } catch (error) {
-            console.error("Init Error:", error);
-        } finally {
-            if (isMounted) {
-                setLoading(false); 
-                setAppReady(true); // FIX-1: App is now ready to render
-            }
-        }
-    };
-
-    initializeApp();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-        if (!isMounted) return;
-
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-            setSession(currentSession);
-            await updateSessionInDB(currentSession);
-            const premium = await checkSubscription(currentSession.user.email);
-            setSubStatus(premium);
-            startMonitor(currentSession);
-        } else if (event === 'SIGNED_OUT') {
-            setSession(null);
+  const checkSubscription = async (email) => {
+    try {
+        const { data, error } = await supabase.from('members').select('*').eq('email', email).single();
+        if(data) {
+            const expDate = new Date(data.expiry_date);
+            const today = new Date();
+            const diffTime = Math.abs(expDate - today);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            const isPremium = expDate > today;
+            setSubStatus(isPremium);
+            setProfileData({ ...data, isPremium, diffDays, expDate: expDate.toDateString() });
+        } else {
             setSubStatus(false);
-            setProfileData(null);
-            if (sessionIntervalRef.current) clearInterval(sessionIntervalRef.current);
+            setProfileData({ email, isPremium: false, diffDays: 0, expDate: 'N/A' });
         }
-    });
+    } catch(e) {
+        setSubStatus(false);
+        setProfileData({ email, isPremium: false, diffDays: 0, expDate: 'N/A' });
+    }
+  };
 
-    return () => {
-        isMounted = false;
-        subscription.unsubscribe();
-        if (sessionIntervalRef.current) clearInterval(sessionIntervalRef.current);
-    };
-  }, []);
-
-  // --- Search Functions (FIX-3) ---
+  // --- Search Functions ---
   const handleSearch = async (page = 1, type = 'simple') => {
     setLoading(true);
     setCurrentPage(page);
@@ -226,11 +190,7 @@ export default function App() {
 
         if (type === 'advanced') {
             const { journal, vol, div, page: pg } = advFields;
-            if (!journal || !vol || !div || !pg) { 
-                alert("Fill all fields."); 
-                setLoading(false); 
-                return; 
-            }
+            if (!journal || !vol || !div || !pg) { alert("Fill all fields."); setLoading(false); return; }
             queryBuilder = queryBuilder.eq('journal', journal).eq('volume', vol).eq('division', div).eq('page_number', pg);
         } else {
             // --- LAW FILTER ---
@@ -242,16 +202,14 @@ export default function App() {
                aliasCondition = headnoteChecks + ',' + titleChecks;
             }
 
-            // --- SANITIZE SEARCH TERM ---
-            const safeSearchTerm = searchTerm.replace(/['"]/g, "");
-
             if (isExactMatch) {
-               const queryStr = `headnote.ilike.%${safeSearchTerm}%,title.ilike.%${safeSearchTerm}%`;
-               // FIX-3: Correct Parentheses Syntax
-               if(aliasCondition) queryBuilder = queryBuilder.or(`(${aliasCondition},${queryStr})`);
-               else queryBuilder = queryBuilder.or(`(${queryStr})`);
+               // --- EXACT MATCH LOGIC ---
+               const queryStr = `headnote.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%`;
+               if(aliasCondition) queryBuilder = queryBuilder.or(aliasCondition + ',' + queryStr);
+               else queryBuilder = queryBuilder.or(queryStr);
             } else {
-               const words = safeSearchTerm.split(/\s+/).filter(w => !stopwords.includes(w.toLowerCase()) && w.length > 1);
+               // --- NORMAL SEARCH LOGIC ---
+               const words = searchTerm.split(/\s+/).filter(w => !stopwords.includes(w.toLowerCase()) && w.length > 1);
                let textCondition = "";
                
                if (words.length > 0) {
@@ -259,16 +217,15 @@ export default function App() {
                }
                
                if (textCondition === "" && !aliasCondition) {
+                   setLoading(false);
                    setResults([]);
                    setTotalCount(0);
-                   setLoading(false); 
                    return; 
                }
 
-               // FIX-3: Correct Parentheses Syntax for OR logic
-               if(aliasCondition && textCondition) queryBuilder = queryBuilder.or(`(${aliasCondition},${textCondition})`);
-               else if (aliasCondition) queryBuilder = queryBuilder.or(`(${aliasCondition})`);
-               else if (textCondition) queryBuilder = queryBuilder.or(`(${textCondition})`);
+               if(aliasCondition && textCondition) queryBuilder = queryBuilder.or(aliasCondition + ',' + textCondition);
+               else if (aliasCondition) queryBuilder = queryBuilder.or(aliasCondition);
+               else if (textCondition) queryBuilder = queryBuilder.or(textCondition);
             }
         }
 
@@ -292,11 +249,11 @@ export default function App() {
     } catch (e) {
         console.error("Search Exception:", e);
     } finally {
-        setLoading(false); 
+        setLoading(false);
     }
   };
 
-  // --- LOAD JUDGMENT LOGIC ---
+  // --- MODIFIED LOAD JUDGMENT LOGIC (SMART BLOCK DETECTION) ---
   const loadJudgment = async (item) => {
     if(item.is_premium && !session) { setModalMode('warning'); return; }
     if(item.is_premium && !subStatus) { setModalMode('warning'); return; }
@@ -313,6 +270,7 @@ export default function App() {
         
         const fullText = await res.text();
         
+        // 1. Find where the requested anchor is (e.g., ===20 BLC...===)
         const anchorStr = `===${item.case_anchor}===`;
         const anchorIdx = fullText.indexOf(anchorStr);
         
@@ -320,6 +278,7 @@ export default function App() {
             throw new Error("Case anchor not found in file.");
         }
 
+        // 2. Find the END of this judgment (forward search from anchor)
         const endMarker = "===End===";
         const endIdx = fullText.indexOf(endMarker, anchorIdx); 
 
@@ -327,30 +286,44 @@ export default function App() {
              throw new Error("End marker not found for this case.");
         }
 
+        // 3. Find the START of this judgment BLOCK
+        // We look backwards from anchorIdx to find the *previous* ===End===
+        // If found, the case starts right after that. If not, it starts at 0.
         const previousEndIdx = fullText.lastIndexOf(endMarker, anchorIdx);
         let blockStart = 0;
         if (previousEndIdx !== -1) {
             blockStart = previousEndIdx + endMarker.length;
         }
 
+        // 4. Extract the FULL text block for this case
+        // This includes all parallel citations (even ones before the searched anchor)
         let caseContent = fullText.substring(blockStart, endIdx).trim();
 
+        // 5. Smart Loop: Extract ALL citations at the top of the block
         const matches = [];
+        
         while (true) {
+            // Regex: checks start of string for ===...=== (ignoring whitespace)
             const headerRegex = /^\s*(===(.*?)===)/;
             const match = headerRegex.exec(caseContent);
 
             if (match) {
+                // match[2] is the citation text (e.g. "75 DLR (AD) 1")
                 const citeText = match[2].trim();
+                
                 if (!matches.includes(citeText)) {
                     matches.push(citeText);
                 }
+                
+                // Remove this citation from the content body
                 caseContent = caseContent.replace(match[1], '').trimStart();
             } else {
+                // No more citations at the top, break loop
                 break;
             }
         }
 
+        // 6. Update State
         setParallelCitations(matches); 
         setJudgmentText(caseContent); 
 
@@ -397,17 +370,9 @@ export default function App() {
       setLoading(false);
   };
 
-  // FIX-4: Logout Logic Change
   const handleLogout = async () => {
-      setSession(null);
-      setSubStatus(false);
-      setProfileData(null);
-      setView('home');
-      try {
-        await supabase.auth.signOut();
-      } catch (e) {
-        console.error("Sign out error", e);
-      }
+      await supabase.auth.signOut();
+      window.location.reload();
   };
 
   const toggleBookmark = async (item) => {
@@ -436,6 +401,7 @@ export default function App() {
       }
   };
 
+  // --- Payment Submission Logic ---
   const handlePaymentSubmit = async (e) => {
       e.preventDefault();
       const form = e.target;
@@ -465,20 +431,10 @@ export default function App() {
   };
 
   // ================= RENDER =================
+  // Helper to filter citations for display (Removes current one)
   const displayCitations = currentJudgment && parallelCitations.length > 0 
       ? parallelCitations.filter(c => c !== currentJudgment.case_anchor && c !== currentJudgment.citation)
       : [];
-
-  // FIX-1: FULL SCREEN LOADING STATE (Use appReady instead of loading)
-  if (!appReady) {
-      return (
-          <div className="d-flex justify-content-center align-items-center vh-100 bg-white">
-              <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">Loading...</span>
-              </div>
-          </div>
-      );
-  }
 
   return (
     <div>
@@ -605,7 +561,7 @@ export default function App() {
                 </div>
             )}
 
-            {/* Reader View */}
+            {/* Reader View - MODIFIED FOR PARALLEL CITATIONS */}
             {view === 'reader' && !loading && currentJudgment && (
                 <div id="readerView" className="bg-white p-4 p-md-5 rounded-3 shadow-sm border mb-5">
                     <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
@@ -621,7 +577,7 @@ export default function App() {
                     {/* Primary Citation */}
                     <p className="text-center text-dark fw-bold mb-2 fs-5">{currentJudgment.citation}</p>
                     
-                    {/* Parallel Citations Display */}
+                    {/* NEW: Parallel Citations Display (Conditional) */}
                     {displayCitations.length > 0 && (
                         <div className="text-center mb-4">
                             <span className="text-secondary small fw-bold text-uppercase me-2">Also Reported In:</span>
@@ -784,23 +740,16 @@ export default function App() {
             </div>
         )}
 
-        {/* --- Session Error Modal (PROFESSIONAL POPUP) --- */}
+        {/* --- Session Error Modal --- */}
         {modalMode === 'sessionError' && (
-            <div className="modal d-block" style={{background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(3px)'}}>
+            <div className="modal d-block" style={{background: 'rgba(0,0,0,0.8)'}}>
                 <div className="modal-dialog modal-dialog-centered">
-                    <div className="modal-content text-center p-0 border-0 shadow-lg" style={{overflow: 'hidden', borderRadius: '15px'}}>
-                        <div className="bg-danger py-3">
-                             <i className="fas fa-shield-alt fa-3x text-white"></i>
-                        </div>
-                        <div className="modal-body p-5">
-                            <h3 className="fw-bold text-dark mb-3">Session Expired</h3>
-                            <p className="text-muted mb-4" style={{fontSize: '16px', lineHeight: '1.6'}}>
-                                You have logged in from another device.<br/>
-                                For security reasons, this session has been terminated.
-                            </p>
-                            <button className="btn btn-danger rounded-pill px-5 py-2 fw-bold" onClick={()=>window.location.reload()}>
-                                Login Here Again
-                            </button>
+                    <div className="modal-content text-center p-5 border-0">
+                        <div className="modal-body">
+                            <i className="fas fa-exclamation-triangle fa-4x text-warning mb-4"></i>
+                            <h3 className="fw-bold text-dark">Logged Out</h3>
+                            <p className="text-muted mt-3 mb-4">You have logged in from another device.<br/>For security, this session has been terminated.</p>
+                            <button className="btn btn-dark rounded-pill px-5" onClick={()=>window.location.reload()}>Login Again</button>
                         </div>
                     </div>
                 </div>
@@ -876,7 +825,7 @@ export default function App() {
             </div>
         )}
 
-        {/* Payment Success Modal */}
+        {/* --- NEW: Payment Success Modal (Modern Professional UX) --- */}
         {modalMode === 'paymentSuccess' && (
             <div className="modal d-block" style={{background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)'}}>
                 <div className="modal-dialog modal-dialog-centered">
