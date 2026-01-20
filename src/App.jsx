@@ -253,7 +253,7 @@ export default function App() {
     }
   };
 
-  // --- MODIFIED LOAD JUDGMENT LOGIC FOR PARALLEL CITATIONS ---
+  // --- MODIFIED LOAD JUDGMENT LOGIC (SAFE VERSION) ---
   const loadJudgment = async (item) => {
     if(item.is_premium && !session) { setModalMode('warning'); return; }
     if(item.is_premium && !subStatus) { setModalMode('warning'); return; }
@@ -261,41 +261,66 @@ export default function App() {
     setLoading(true);
     setView('reader');
     setCurrentJudgment(item);
-    setParallelCitations([]); // Reset citations
+    setParallelCitations([]); 
 
     try {
         const url = `https://raw.githubusercontent.com/${githubUser}/${repoName}/main/judgments/${item.github_filename}`;
         const res = await fetch(url);
         if(!res.ok) throw new Error("File not found");
         
-        let fullText = await res.text();
+        const fullText = await res.text();
         
-        // 1. Cut text at ===End=== if it exists
+        // ১. নির্দিষ্ট জাজমেন্টের শুরু খুঁজে বের করা
+        const startMarker = `===${item.case_anchor}===`;
+        const startIdx = fullText.indexOf(startMarker);
+        
+        if (startIdx === -1) {
+            throw new Error("Case anchor not found in file.");
+        }
+
+        // ২. এই শুরুর পর থেকে পরবর্তী ===End=== খুঁজে বের করা
         const endMarker = "===End===";
-        const endIdx = fullText.indexOf(endMarker);
-        if (endIdx !== -1) {
-            fullText = fullText.substring(0, endIdx);
+        const endIdx = fullText.indexOf(endMarker, startIdx); 
+
+        if (endIdx === -1) {
+             throw new Error("End marker not found for this case.");
         }
 
-        // 2. Find ALL citations using Regex (===Something===)
-        const citationRegex = /===(.*?)===/g;
-        let matches = [];
-        let match;
-        while ((match = citationRegex.exec(fullText)) !== null) {
-            // match[1] contains the text inside ===...===
-            matches.push(match[1]);
+        // ৩. শুধু এই নির্দিষ্ট জাজমেন্টের অংশটুকু নেওয়া
+        let caseContent = fullText.substring(startIdx, endIdx);
+
+        // ৪. স্মার্ট লজিক: শুধু "শুরুতে" থাকা সাইটেশনগুলো খুঁজে বের করা
+        const matches = [];
+        
+        // এই লুপটি টেক্সটের শুরু থেকে একটার পর একটা সাইটেশন চেক করবে
+        // এবং শুরুতে থাকা সাইটেশনগুলো মুছে ফেলবে।
+        // যখনই দেখবে সাইটেশন নেই (সাধারণ টেক্সট শুরু), লুপ বন্ধ হয়ে যাবে।
+        while (true) {
+            // Regex: শুরুতে (^) স্পেস বা নিউলাইন (\s*) এবং তারপর ===...=== আছে কিনা
+            const headerRegex = /^\s*(===(.*?)===)/;
+            const match = headerRegex.exec(caseContent);
+
+            if (match) {
+                // match[2] হলো সাইটেশনের নাম
+                if (!matches.includes(match[2])) {
+                    matches.push(match[2]);
+                }
+                
+                // মূল টেক্সট থেকে এই সাইটেশনটি মুছে ফেলব
+                caseContent = caseContent.replace(match[1], '').trimStart();
+            } else {
+                // শুরুতে আর কোনো সাইটেশন পাওয়া না গেলে লুপ ব্রেক
+                break;
+            }
         }
 
-        // 3. Remove ALL ===Tags=== from the body text to make it clean
-        // We replace the tags with an empty string
-        const cleanContent = fullText.replace(citationRegex, '').trim();
-
-        // 4. Update States
-        setParallelCitations(matches); // Store all citations found in file
-        setJudgmentText(cleanContent); // Store clean text without tags
+        // ৫. স্টেট আপডেট
+        setParallelCitations(matches); 
+        setJudgmentText(caseContent); 
 
     } catch(e) {
         setJudgmentText("Error loading judgment text: " + e.message);
+        setParallelCitations([]);
     } finally {
         setLoading(false);
     }
