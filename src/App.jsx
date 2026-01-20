@@ -84,6 +84,8 @@ export default function App() {
   // Reader State
   const [currentJudgment, setCurrentJudgment] = useState(null);
   const [judgmentText, setJudgmentText] = useState('');
+  // NEW: State to hold all citations found in the file
+  const [parallelCitations, setParallelCitations] = useState([]);
 
   // Modals Control
   const [modalMode, setModalMode] = useState(null); 
@@ -185,13 +187,11 @@ export default function App() {
 
     try {
         let queryBuilder = supabase.from('cases').select('*', { count: 'exact' });
-        let highlightTerm = "";
 
         if (type === 'advanced') {
             const { journal, vol, div, page: pg } = advFields;
             if (!journal || !vol || !div || !pg) { alert("Fill all fields."); setLoading(false); return; }
             queryBuilder = queryBuilder.eq('journal', journal).eq('volume', vol).eq('division', div).eq('page_number', pg);
-            highlightTerm = `${journal} ${vol} ${pg}`;
         } else {
             // --- LAW FILTER ---
             let aliasCondition = "";
@@ -204,18 +204,11 @@ export default function App() {
 
             if (isExactMatch) {
                // --- EXACT MATCH LOGIC ---
-               // This searches for the exact phrase "A B C" side-by-side.
                const queryStr = `headnote.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%`;
-               
                if(aliasCondition) queryBuilder = queryBuilder.or(aliasCondition + ',' + queryStr);
                else queryBuilder = queryBuilder.or(queryStr);
-               
-               highlightTerm = searchTerm;
             } else {
                // --- NORMAL SEARCH LOGIC ---
-               // 1. Split words
-               // 2. Remove stop words
-               // 3. Match ANY valid word (OR logic)
                const words = searchTerm.split(/\s+/).filter(w => !stopwords.includes(w.toLowerCase()) && w.length > 1);
                let textCondition = "";
                
@@ -223,8 +216,6 @@ export default function App() {
                    textCondition = words.map(w => `headnote.ilike.%${w}%,title.ilike.%${w}%`).join(',');
                }
                
-               // STRICT: If only stop words were typed (words array is empty) and no law is selected, 
-               // return NO results immediately. Do NOT run query.
                if (textCondition === "" && !aliasCondition) {
                    setLoading(false);
                    setResults([]);
@@ -235,8 +226,6 @@ export default function App() {
                if(aliasCondition && textCondition) queryBuilder = queryBuilder.or(aliasCondition + ',' + textCondition);
                else if (aliasCondition) queryBuilder = queryBuilder.or(aliasCondition);
                else if (textCondition) queryBuilder = queryBuilder.or(textCondition);
-               
-               highlightTerm = words.join('|');
             }
         }
 
@@ -264,6 +253,7 @@ export default function App() {
     }
   };
 
+  // --- MODIFIED LOAD JUDGMENT LOGIC FOR PARALLEL CITATIONS ---
   const loadJudgment = async (item) => {
     if(item.is_premium && !session) { setModalMode('warning'); return; }
     if(item.is_premium && !subStatus) { setModalMode('warning'); return; }
@@ -271,25 +261,39 @@ export default function App() {
     setLoading(true);
     setView('reader');
     setCurrentJudgment(item);
+    setParallelCitations([]); // Reset citations
 
     try {
         const url = `https://raw.githubusercontent.com/${githubUser}/${repoName}/main/judgments/${item.github_filename}`;
         const res = await fetch(url);
         if(!res.ok) throw new Error("File not found");
         
-        const fullText = await res.text();
-        const start = `===${item.case_anchor}===`;
-        const end = `===End===`;
-        const sIdx = fullText.indexOf(start);
+        let fullText = await res.text();
         
-        let content;
-        if (sIdx !== -1) {
-            content = fullText.substring(sIdx + start.length, fullText.indexOf(end, sIdx));
-        } else {
-            content = "Content Error: Anchor not found in file.";
+        // 1. Cut text at ===End=== if it exists
+        const endMarker = "===End===";
+        const endIdx = fullText.indexOf(endMarker);
+        if (endIdx !== -1) {
+            fullText = fullText.substring(0, endIdx);
         }
-        
-        setJudgmentText(content); 
+
+        // 2. Find ALL citations using Regex (===Something===)
+        const citationRegex = /===(.*?)===/g;
+        let matches = [];
+        let match;
+        while ((match = citationRegex.exec(fullText)) !== null) {
+            // match[1] contains the text inside ===...===
+            matches.push(match[1]);
+        }
+
+        // 3. Remove ALL ===Tags=== from the body text to make it clean
+        // We replace the tags with an empty string
+        const cleanContent = fullText.replace(citationRegex, '').trim();
+
+        // 4. Update States
+        setParallelCitations(matches); // Store all citations found in file
+        setJudgmentText(cleanContent); // Store clean text without tags
+
     } catch(e) {
         setJudgmentText("Error loading judgment text: " + e.message);
     } finally {
@@ -518,7 +522,7 @@ export default function App() {
                 </div>
             )}
 
-            {/* Reader View */}
+            {/* Reader View - MODIFIED FOR PARALLEL CITATIONS */}
             {view === 'reader' && !loading && currentJudgment && (
                 <div id="readerView" className="bg-white p-4 p-md-5 rounded-3 shadow-sm border mb-5">
                     <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
@@ -528,8 +532,22 @@ export default function App() {
                             <button className="btn btn-sm btn-outline-dark" onClick={()=>window.print()}><i className="fas fa-print"></i> Print</button>
                         </div>
                     </div>
+                    
                     <h3 className="fw-bold text-center text-primary mb-2" style={{fontFamily:'Playfair Display'}}>{currentJudgment.title}</h3>
-                    <p className="text-center text-muted fw-bold mb-4">{currentJudgment.citation}</p>
+                    
+                    {/* Primary Citation */}
+                    <p className="text-center text-dark fw-bold mb-2 fs-5">{currentJudgment.citation}</p>
+                    
+                    {/* NEW: Parallel Citations Display */}
+                    {parallelCitations.length > 0 && (
+                        <div className="text-center mb-4">
+                            <span className="text-secondary small fw-bold text-uppercase me-2">Also Reported In:</span>
+                            {parallelCitations.filter(c => c !== currentJudgment.citation).map((cite, index) => (
+                                <span key={index} className="badge bg-light text-secondary border me-1">{cite}</span>
+                            ))}
+                        </div>
+                    )}
+
                     <div className="mt-4 text-justify" style={{whiteSpace: 'pre-wrap', fontFamily:'Merriweather', textAlign: 'justify'}}>
                         {judgmentText}
                     </div>
