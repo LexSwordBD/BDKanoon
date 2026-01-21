@@ -90,6 +90,27 @@ export default function App() {
   const [modalMode, setModalMode] = useState(null); 
   const [profileData, setProfileData] = useState(null);
 
+  // --- Helper: hard local signout (for stubborn sessions) ---
+  const hardClearAuthStorage = () => {
+    try {
+      const keys = Object.keys(localStorage || {});
+      keys.forEach((k) => {
+        // Supabase v2 typically stores like: sb-<project-ref>-auth-token
+        if (k.startsWith('sb-') && k.endsWith('-auth-token')) {
+          localStorage.removeItem(k);
+        }
+      });
+    } catch (e) {}
+    try {
+      const skeys = Object.keys(sessionStorage || {});
+      skeys.forEach((k) => {
+        if (k.startsWith('sb-') && k.endsWith('-auth-token')) {
+          sessionStorage.removeItem(k);
+        }
+      });
+    } catch (e) {}
+  };
+
   // --- Helper: safe member fetch (id -> email fallback) ---
   const fetchMemberRow = async (user) => {
     if (!user) return { data: null, error: null };
@@ -98,7 +119,6 @@ export default function App() {
     try {
       const resById = await supabase.from('members').select('*').eq('id', user.id).maybeSingle();
       if (resById?.data) return resById;
-      // If table id type mismatch (bigint) or RLS error, fallback to email
       if (resById?.error) {
         // continue to email fallback
       }
@@ -106,9 +126,8 @@ export default function App() {
       // continue to email fallback
     }
 
-    // 2) Fallback by Email (works even if members table uses bigint id)
+    // 2) Fallback by Email
     try {
-      // Try with ordering if created_at exists
       const resByEmailOrdered = await supabase
         .from('members')
         .select('*')
@@ -119,7 +138,6 @@ export default function App() {
 
       if (resByEmailOrdered?.data || resByEmailOrdered?.error === null) return resByEmailOrdered;
 
-      // If created_at column missing, try without order
       const resByEmail = await supabase.from('members').select('*').eq('email', user.email).maybeSingle();
       return resByEmail;
     } catch (e) {
@@ -135,18 +153,16 @@ export default function App() {
     const initSession = async () => {
         setLoading(true);
         try {
-            const { data, error } = await supabase.auth.getSession();
+            const { data } = await supabase.auth.getSession();
             const current = data?.session || null;
 
             if (isMounted) {
                 setSession(current);
 
-                // IMPORTANT FIX:
-                // UI কে DB কলের জন্য আটকে রাখবো না (রিফ্রেশে লোডিং ইনফিনিট হওয়া বন্ধ হবে)
+                // UI unblock fast
                 setLoading(false);
 
                 if(current) {
-                    // background tasks (no await)
                     Promise.resolve().then(() => checkSubscription(current.user)).catch(()=>{});
                     Promise.resolve().then(() => updateSessionInDB(current)).catch(()=>{});
 
@@ -170,9 +186,6 @@ export default function App() {
       if (!isMounted) return;
 
       setSession(session);
-
-      // IMPORTANT FIX:
-      // auth event এও UI ব্লক না করে দ্রুত loading false
       setLoading(false);
       
       if (event === 'PASSWORD_RECOVERY') {
@@ -180,7 +193,6 @@ export default function App() {
       }
       
       if(session) {
-          // background subscription check
           Promise.resolve().then(() => checkSubscription(session.user)).catch(()=>{});
           
           if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
@@ -209,7 +221,6 @@ export default function App() {
       const user = currentSession.user;
 
       try {
-          // 1) Try update by UUID id (expected design)
           const res1 = await supabase
             .from('members')
             .update({ current_session_id: token })
@@ -217,7 +228,6 @@ export default function App() {
 
           if (!res1?.error) return;
 
-          // 2) Fallback: update by email (if members.id is bigint or mapping differs)
           await supabase
             .from('members')
             .update({ current_session_id: token })
@@ -235,7 +245,6 @@ export default function App() {
           const user = currentSession.user;
 
           try {
-            // 1) Try fetch by id
             const resById = await supabase
               .from('members')
               .select('current_session_id')
@@ -245,6 +254,7 @@ export default function App() {
             if (!resById?.error && resById?.data) {
               if (resById.data.current_session_id && resById.data.current_session_id !== currentSession.access_token) {
                   await supabase.auth.signOut(); 
+                  hardClearAuthStorage();
                   setSession(null);
                   setSubStatus(false);
                   setModalMode('sessionError'); 
@@ -252,7 +262,6 @@ export default function App() {
               return;
             }
 
-            // 2) Fallback by email
             const resByEmail = await supabase
               .from('members')
               .select('current_session_id')
@@ -262,13 +271,14 @@ export default function App() {
             if (!resByEmail?.error && resByEmail?.data) {
               if (resByEmail.data.current_session_id && resByEmail.data.current_session_id !== currentSession.access_token) {
                   await supabase.auth.signOut(); 
+                  hardClearAuthStorage();
                   setSession(null);
                   setSubStatus(false);
                   setModalMode('sessionError'); 
               }
             }
           } catch (e) {
-            // don't lock UI
+            // ignore
           }
       }, 5000); 
   };
@@ -276,7 +286,7 @@ export default function App() {
   const checkSubscription = async (user) => {
     if (!user || !user.email) return;
     try {
-        const { data, error } = await fetchMemberRow(user);
+        const { data } = await fetchMemberRow(user);
         
         if(data && data.expiry_date) {
             const expDate = new Date(data.expiry_date);
@@ -433,8 +443,26 @@ export default function App() {
       setLoading(true);
       if (isSignUp) {
           const { data, error } = await supabase.auth.signUp({ email: email, password: password });
-          if (error) alert(error.message);
-          else alert("Account created successfully! You are now logged in.");
+          if (error) {
+            alert(error.message);
+            setLoading(false);
+            return;
+          }
+
+          // IMPORTANT: After signup, ensure user is NOT kept signed-in locally.
+          try {
+            await supabase.auth.signOut();
+          } catch (e) {}
+          hardClearAuthStorage();
+
+          setSession(null);
+          setSubStatus(false);
+          setProfileData(null);
+
+          // Professional popup
+          setModalMode('signupSuccess');
+          setLoading(false);
+          return;
       } else {
           const { data, error } = await supabase.auth.signInWithPassword({ email: email, password: password });
           if (error) alert(error.message);
@@ -467,14 +495,22 @@ export default function App() {
   const handleLogout = async () => {
       setLoading(true);
       try {
-          // IMPORTANT FIX: signOut hang হলেও নিশ্চিতভাবে রিলোড হবে
-          supabase.auth.signOut().catch(()=>{});
+          // IMPORTANT FIX: wait for real sign out (no reload before signOut finishes)
+          try {
+            await supabase.auth.signOut();
+          } catch (e) {
+            // even if signOut fails, clear local storage so session is definitely gone
+          }
+          hardClearAuthStorage();
+
           setSession(null);
           setSubStatus(false);
           setProfileData(null);
+          setModalMode(null);
       } catch (error) {
           console.error("Logout error", error);
       } finally {
+          setLoading(false);
           window.location.reload(); 
       }
   };
@@ -815,6 +851,34 @@ export default function App() {
                                         <button className="btn btn-success text-white w-100 py-2">Create Account</button>
                                     </form>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* --- Signup Success Professional Modal --- */}
+        {modalMode === 'signupSuccess' && (
+            <div className="modal d-block" style={{background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)'}}>
+                <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content border-0 shadow-lg" style={{borderRadius: '20px', overflow: 'hidden'}}>
+                        <div className="modal-body p-5 text-center">
+                            <div className="mb-4" style={{width:'80px', height:'80px', background:'#28a74520', borderRadius:'50%', margin:'0 auto', display:'flex', alignItems:'center', justifyContent:'center'}}>
+                                <i className="fas fa-user-check fa-3x text-success"></i>
+                            </div>
+                            <h2 className="fw-bold mb-3" style={{color:'#333'}}>Account Created!</h2>
+                            <p className="text-muted mb-4" style={{fontSize:'16px', lineHeight:'1.6'}}>
+                                Your account has been created successfully.<br/>
+                                Please login to continue.
+                            </p>
+                            <div className="d-grid gap-2">
+                                <button className="btn btn-success rounded-pill py-3 fw-bold" onClick={()=>setModalMode('login')}>
+                                    Go to Login
+                                </button>
+                                <button className="btn btn-light rounded-pill py-2" onClick={()=>setModalMode(null)}>
+                                    Close
+                                </button>
                             </div>
                         </div>
                     </div>
