@@ -90,6 +90,43 @@ export default function App() {
   const [modalMode, setModalMode] = useState(null); 
   const [profileData, setProfileData] = useState(null);
 
+  // --- Helper: safe member fetch (id -> email fallback) ---
+  const fetchMemberRow = async (user) => {
+    if (!user) return { data: null, error: null };
+
+    // 1) Try by ID (works when members.id is UUID = auth.users.id)
+    try {
+      const resById = await supabase.from('members').select('*').eq('id', user.id).maybeSingle();
+      if (resById?.data) return resById;
+      // If table id type mismatch (bigint) or RLS error, fallback to email
+      if (resById?.error) {
+        // continue to email fallback
+      }
+    } catch (e) {
+      // continue to email fallback
+    }
+
+    // 2) Fallback by Email (works even if members table uses bigint id)
+    try {
+      // Try with ordering if created_at exists
+      const resByEmailOrdered = await supabase
+        .from('members')
+        .select('*')
+        .eq('email', user.email)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (resByEmailOrdered?.data || resByEmailOrdered?.error === null) return resByEmailOrdered;
+
+      // If created_at column missing, try without order
+      const resByEmail = await supabase.from('members').select('*').eq('email', user.email).maybeSingle();
+      return resByEmail;
+    } catch (e) {
+      return { data: null, error: e };
+    }
+  };
+
   // --- Auth & Session Lock Effects ---
   useEffect(() => {
     let sessionInterval;
@@ -98,23 +135,32 @@ export default function App() {
     const initSession = async () => {
         setLoading(true);
         try {
-            const { data } = await supabase.auth.getSession();
-const session = data?.session ?? null;
+            const { data, error } = await supabase.auth.getSession();
+            const current = data?.session || null;
 
             if (isMounted) {
-                setSession(session);
-                if(session) {
-                    await Promise.all([
-                        checkSubscription(session.user), // Passing user object
-                        updateSessionInDB(session)
-                    ]);
-                    sessionInterval = startSessionMonitor(session); 
+                setSession(current);
+
+                // IMPORTANT FIX:
+                // UI কে DB কলের জন্য আটকে রাখবো না (রিফ্রেশে লোডিং ইনফিনিট হওয়া বন্ধ হবে)
+                setLoading(false);
+
+                if(current) {
+                    // background tasks (no await)
+                    Promise.resolve().then(() => checkSubscription(current.user)).catch(()=>{});
+                    Promise.resolve().then(() => updateSessionInDB(current)).catch(()=>{});
+
+                    if (sessionInterval) clearInterval(sessionInterval);
+                    sessionInterval = startSessionMonitor(current); 
+                } else {
+                    setSubStatus(false);
+                    setProfileData(null);
+                    if (sessionInterval) clearInterval(sessionInterval);
                 }
             }
         } catch (error) {
             console.error("Session Init Error:", error);
-        } finally {
-            if (isMounted) setLoading(false); 
+            if (isMounted) setLoading(false);
         }
     };
 
@@ -122,17 +168,23 @@ const session = data?.session ?? null;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted) return;
+
       setSession(session);
+
+      // IMPORTANT FIX:
+      // auth event এও UI ব্লক না করে দ্রুত loading false
+      setLoading(false);
       
       if (event === 'PASSWORD_RECOVERY') {
           setModalMode('resetPassword');
       }
       
       if(session) {
-          await checkSubscription(session.user); // Passing user object
+          // background subscription check
+          Promise.resolve().then(() => checkSubscription(session.user)).catch(()=>{});
           
           if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-              await updateSessionInDB(session);
+              Promise.resolve().then(() => updateSessionInDB(session)).catch(()=>{});
               if (sessionInterval) clearInterval(sessionInterval);
               sessionInterval = startSessionMonitor(session);
           }
@@ -141,7 +193,6 @@ const session = data?.session ?? null;
           setProfileData(null);
           if (sessionInterval) clearInterval(sessionInterval);
       }
-      setLoading(false);
     });
 
     return () => {
@@ -152,32 +203,72 @@ const session = data?.session ?? null;
   }, []);
 
   const updateSessionInDB = async (currentSession) => {
-      if (!currentSession?.user?.id) return;
+      if (!currentSession?.user) return;
+
+      const token = currentSession.access_token;
+      const user = currentSession.user;
+
       try {
-          await supabase.from('members')
-              .update({ current_session_id: currentSession.access_token })
-              .eq('id', currentSession.user.id);
-      } catch (err) { console.error("Session sync failed", err); }
+          // 1) Try update by UUID id (expected design)
+          const res1 = await supabase
+            .from('members')
+            .update({ current_session_id: token })
+            .eq('id', user.id);
+
+          if (!res1?.error) return;
+
+          // 2) Fallback: update by email (if members.id is bigint or mapping differs)
+          await supabase
+            .from('members')
+            .update({ current_session_id: token })
+            .eq('email', user.email);
+
+      } catch (err) { 
+        console.error("Session sync failed", err); 
+      }
   };
 
   const startSessionMonitor = (currentSession) => {
       return setInterval(async () => {
-          if (!currentSession?.user?.id) return;
+          if (!currentSession?.user) return;
 
-          const { data, error } = await supabase
-             .from('members')
-.select('email, expiry_date')
-.eq('id', user.id)
-.single();
+          const user = currentSession.user;
 
-          
-          if (!error && data) {
-              if (data.current_session_id && data.current_session_id !== currentSession.access_token) {
+          try {
+            // 1) Try fetch by id
+            const resById = await supabase
+              .from('members')
+              .select('current_session_id')
+              .eq('id', user.id)
+              .maybeSingle();
+
+            if (!resById?.error && resById?.data) {
+              if (resById.data.current_session_id && resById.data.current_session_id !== currentSession.access_token) {
                   await supabase.auth.signOut(); 
                   setSession(null);
                   setSubStatus(false);
                   setModalMode('sessionError'); 
               }
+              return;
+            }
+
+            // 2) Fallback by email
+            const resByEmail = await supabase
+              .from('members')
+              .select('current_session_id')
+              .eq('email', user.email)
+              .maybeSingle();
+
+            if (!resByEmail?.error && resByEmail?.data) {
+              if (resByEmail.data.current_session_id && resByEmail.data.current_session_id !== currentSession.access_token) {
+                  await supabase.auth.signOut(); 
+                  setSession(null);
+                  setSubStatus(false);
+                  setModalMode('sessionError'); 
+              }
+            }
+          } catch (e) {
+            // don't lock UI
           }
       }, 5000); 
   };
@@ -185,8 +276,7 @@ const session = data?.session ?? null;
   const checkSubscription = async (user) => {
     if (!user || !user.email) return;
     try {
-        // Use maybeSingle and filter by ID to ensure mapping
-        const { data, error } = await supabase.from('members').select('*').eq('id', user.id).maybeSingle();
+        const { data, error } = await fetchMemberRow(user);
         
         if(data && data.expiry_date) {
             const expDate = new Date(data.expiry_date);
@@ -215,13 +305,7 @@ const session = data?.session ?? null;
   };
 
   const handleSearch = async (page = 1, type = 'simple') => {
-    
-      if (!session && type !== 'simple') {
-  setLoading(false);
-  return;
-}
-
-      setLoading(true);
+    setLoading(true);
     setCurrentPage(page);
     setView('results'); 
 
@@ -383,20 +467,15 @@ const session = data?.session ?? null;
   const handleLogout = async () => {
       setLoading(true);
       try {
-          await supabase.auth.signOut();
+          // IMPORTANT FIX: signOut hang হলেও নিশ্চিতভাবে রিলোড হবে
+          supabase.auth.signOut().catch(()=>{});
           setSession(null);
           setSubStatus(false);
           setProfileData(null);
       } catch (error) {
           console.error("Logout error", error);
       } finally {
-          setSession(null);
-setSubStatus(false);
-setProfileData(null);
-setView('home');
-setResults([]);
-setLoading(false);
-
+          window.location.reload(); 
       }
   };
 
@@ -604,10 +683,10 @@ setLoading(false);
                     <p className="text-center text-dark fw-bold mb-2 fs-5">{currentJudgment.citation}</p>
                     
                     {/* Parallel Citations Display */}
-                    {displayCitations.length > 0 && (
+                    {parallelCitations.length > 0 && (
                         <div className="text-center mb-4">
                             <span className="text-secondary small fw-bold text-uppercase me-2">Also Reported In:</span>
-                            {displayCitations.map((cite, index) => (
+                            {parallelCitations.map((cite, index) => (
                                 <span key={index} className="badge bg-light text-secondary border me-1">{cite}</span>
                             ))}
                         </div>
