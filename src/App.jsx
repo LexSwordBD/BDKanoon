@@ -98,7 +98,9 @@ export default function App() {
     const initSession = async () => {
         setLoading(true);
         try {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data } = await supabase.auth.getSession();
+const session = data?.session ?? null;
+
             if (isMounted) {
                 setSession(session);
                 if(session) {
@@ -163,10 +165,11 @@ export default function App() {
           if (!currentSession?.user?.id) return;
 
           const { data, error } = await supabase
-              .from('members')
-              .select('current_session_id')
-              .eq('id', currentSession.user.id)
-              .maybeSingle(); 
+             .from('members')
+.select('email, expiry_date')
+.eq('id', user.id)
+.single();
+
           
           if (!error && data) {
               if (data.current_session_id && data.current_session_id !== currentSession.access_token) {
@@ -212,7 +215,13 @@ export default function App() {
   };
 
   const handleSearch = async (page = 1, type = 'simple') => {
-    setLoading(true);
+    
+      if (!session && type !== 'simple') {
+  setLoading(false);
+  return;
+}
+
+      setLoading(true);
     setCurrentPage(page);
     setView('results'); 
 
@@ -381,7 +390,13 @@ export default function App() {
       } catch (error) {
           console.error("Logout error", error);
       } finally {
-          window.location.reload(); 
+          setSession(null);
+setSubStatus(false);
+setProfileData(null);
+setView('home');
+setResults([]);
+setLoading(false);
+
       }
   };
 
