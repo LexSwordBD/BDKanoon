@@ -69,7 +69,7 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [subStatus, setSubStatus] = useState(false);
   const [view, setView] = useState('home'); 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); 
   
   // Search States
   const [results, setResults] = useState([]);
@@ -93,20 +93,33 @@ export default function App() {
   // --- Auth & Session Lock Effects ---
   useEffect(() => {
     let sessionInterval;
+    let isMounted = true;
 
-    // 1. Initial Check on Load
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      if(session) {
-          checkSubscription(session.user.email);
-          // Force update DB on initial load to claim session
-          await updateSessionInDB(session);
-          sessionInterval = startSessionMonitor(session); 
-      }
-    });
+    const initSession = async () => {
+        setLoading(true);
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (isMounted) {
+                setSession(session);
+                if(session) {
+                    await Promise.all([
+                        checkSubscription(session.user), // Passing user object
+                        updateSessionInDB(session)
+                    ]);
+                    sessionInterval = startSessionMonitor(session); 
+                }
+            }
+        } catch (error) {
+            console.error("Session Init Error:", error);
+        } finally {
+            if (isMounted) setLoading(false); 
+        }
+    };
 
-    // 2. Auth State Listener
+    initSession();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!isMounted) return;
       setSession(session);
       
       if (event === 'PASSWORD_RECOVERY') {
@@ -114,85 +127,90 @@ export default function App() {
       }
       
       if(session) {
-          checkSubscription(session.user.email);
+          await checkSubscription(session.user); // Passing user object
           
-          // CRITICAL FIX: Update DB on Sign In OR Token Refresh
           if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
               await updateSessionInDB(session);
-              
-              // Restart Monitor with NEW token to avoid false positives
               if (sessionInterval) clearInterval(sessionInterval);
               sessionInterval = startSessionMonitor(session);
           }
       } else {
+          setSubStatus(false);
+          setProfileData(null);
           if (sessionInterval) clearInterval(sessionInterval);
       }
+      setLoading(false);
     });
 
     return () => {
+        isMounted = false;
         subscription.unsubscribe();
         if (sessionInterval) clearInterval(sessionInterval);
     };
   }, []);
 
-  // Helper to update session in DB
   const updateSessionInDB = async (currentSession) => {
-      if (!currentSession?.user?.email) return;
+      if (!currentSession?.user?.id) return;
       try {
           await supabase.from('members')
               .update({ current_session_id: currentSession.access_token })
-              .eq('email', currentSession.user.email);
+              .eq('id', currentSession.user.id);
       } catch (err) { console.error("Session sync failed", err); }
   };
 
-  // --- Session Monitor Logic (FIXED) ---
   const startSessionMonitor = (currentSession) => {
       return setInterval(async () => {
-          if (!currentSession?.user?.email) return;
+          if (!currentSession?.user?.id) return;
 
-          // Fetch the 'current_session_id' from DB
           const { data, error } = await supabase
               .from('members')
               .select('current_session_id')
-              .eq('email', currentSession.user.email)
-              .maybeSingle();
+              .eq('id', currentSession.user.id)
+              .maybeSingle(); 
           
           if (!error && data) {
-              // LOGIC: If DB has a session ID, and it does NOT match my local token,
-              // it means someone else logged in (Device B), so I (Device A) must logout.
               if (data.current_session_id && data.current_session_id !== currentSession.access_token) {
-                  // Perform Force Logout
                   await supabase.auth.signOut(); 
                   setSession(null);
                   setSubStatus(false);
-                  setModalMode('sessionError'); // Trigger the professional popup
+                  setModalMode('sessionError'); 
               }
           }
-      }, 5000); // Check every 5 seconds
+      }, 5000); 
   };
 
-  const checkSubscription = async (email) => {
+  const checkSubscription = async (user) => {
+    if (!user || !user.email) return;
     try {
-        const { data, error } = await supabase.from('members').select('*').eq('email', email).single();
-        if(data) {
+        // Use maybeSingle and filter by ID to ensure mapping
+        const { data, error } = await supabase.from('members').select('*').eq('id', user.id).maybeSingle();
+        
+        if(data && data.expiry_date) {
             const expDate = new Date(data.expiry_date);
             const today = new Date();
-            const diffTime = Math.abs(expDate - today);
+            
+            if (isNaN(expDate.getTime())) {
+                setSubStatus(false);
+                setProfileData({ ...data, isPremium: false, diffDays: 0, expDate: 'N/A' });
+                return;
+            }
+
+            const diffTime = expDate - today;
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-            const isPremium = expDate > today;
+            const isPremium = diffDays >= 0; 
+            
             setSubStatus(isPremium);
-            setProfileData({ ...data, isPremium, diffDays, expDate: expDate.toDateString() });
+            setProfileData({ ...data, isPremium, diffDays: diffDays > 0 ? diffDays : 0, expDate: expDate.toDateString() });
         } else {
             setSubStatus(false);
-            setProfileData({ email, isPremium: false, diffDays: 0, expDate: 'N/A' });
+            setProfileData({ email: user.email, isPremium: false, diffDays: 0, expDate: 'Free Plan' });
         }
     } catch(e) {
         setSubStatus(false);
-        setProfileData({ email, isPremium: false, diffDays: 0, expDate: 'N/A' });
+        setProfileData({ email: user.email, isPremium: false, diffDays: 0, expDate: 'N/A' });
     }
   };
 
-  // --- Search Functions ---
   const handleSearch = async (page = 1, type = 'simple') => {
     setLoading(true);
     setCurrentPage(page);
@@ -206,7 +224,6 @@ export default function App() {
             if (!journal || !vol || !div || !pg) { alert("Fill all fields."); setLoading(false); return; }
             queryBuilder = queryBuilder.eq('journal', journal).eq('volume', vol).eq('division', div).eq('page_number', pg);
         } else {
-            // --- LAW FILTER ---
             let aliasCondition = "";
             if(selectedLaw) {
                const aliases = lawAliases[selectedLaw] || [selectedLaw];
@@ -215,14 +232,14 @@ export default function App() {
                aliasCondition = headnoteChecks + ',' + titleChecks;
             }
 
+            const safeSearchTerm = searchTerm.replace(/[^\w\s\u0980-\u09FF-]/g, "");
+
             if (isExactMatch) {
-               // --- EXACT MATCH LOGIC ---
-               const queryStr = `headnote.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%`;
+               const queryStr = `headnote.ilike.%${safeSearchTerm}%,title.ilike.%${safeSearchTerm}%`;
                if(aliasCondition) queryBuilder = queryBuilder.or(aliasCondition + ',' + queryStr);
                else queryBuilder = queryBuilder.or(queryStr);
             } else {
-               // --- NORMAL SEARCH LOGIC ---
-               const words = searchTerm.split(/\s+/).filter(w => !stopwords.includes(w.toLowerCase()) && w.length > 1);
+               const words = safeSearchTerm.split(/\s+/).filter(w => !stopwords.includes(w.toLowerCase()) && w.length > 1);
                let textCondition = "";
                
                if (words.length > 0) {
@@ -266,7 +283,6 @@ export default function App() {
     }
   };
 
-  // --- MODIFIED LOAD JUDGMENT LOGIC (SMART BLOCK DETECTION) ---
   const loadJudgment = async (item) => {
     if(item.is_premium && !session) { setModalMode('warning'); return; }
     if(item.is_premium && !subStatus) { setModalMode('warning'); return; }
@@ -283,51 +299,32 @@ export default function App() {
         
         const fullText = await res.text();
         
-        // 1. Find where the requested anchor is
         const anchorStr = `===${item.case_anchor}===`;
         const anchorIdx = fullText.indexOf(anchorStr);
         
-        if (anchorIdx === -1) {
-            throw new Error("Case anchor not found in file.");
-        }
+        if (anchorIdx === -1) { throw new Error("Case anchor not found in file."); }
 
-        // 2. Find the END of this judgment
         const endMarker = "===End===";
         const endIdx = fullText.indexOf(endMarker, anchorIdx); 
+        if (endIdx === -1) { throw new Error("End marker not found for this case."); }
 
-        if (endIdx === -1) {
-             throw new Error("End marker not found for this case.");
-        }
-
-        // 3. Find the START of this judgment BLOCK
         const previousEndIdx = fullText.lastIndexOf(endMarker, anchorIdx);
         let blockStart = 0;
-        if (previousEndIdx !== -1) {
-            blockStart = previousEndIdx + endMarker.length;
-        }
+        if (previousEndIdx !== -1) { blockStart = previousEndIdx + endMarker.length; }
 
-        // 4. Extract the FULL text block for this case
         let caseContent = fullText.substring(blockStart, endIdx).trim();
 
-        // 5. Smart Loop: Extract ALL citations at the top of the block
         const matches = [];
-        
         while (true) {
             const headerRegex = /^\s*(===(.*?)===)/;
             const match = headerRegex.exec(caseContent);
-
             if (match) {
                 const citeText = match[2].trim();
-                if (!matches.includes(citeText)) {
-                    matches.push(citeText);
-                }
+                if (!matches.includes(citeText)) { matches.push(citeText); }
                 caseContent = caseContent.replace(match[1], '').trimStart();
-            } else {
-                break;
-            }
+            } else { break; }
         }
 
-        // 6. Update State
         setParallelCitations(matches); 
         setJudgmentText(caseContent); 
 
@@ -375,8 +372,17 @@ export default function App() {
   };
 
   const handleLogout = async () => {
-      await supabase.auth.signOut();
-      window.location.reload();
+      setLoading(true);
+      try {
+          await supabase.auth.signOut();
+          setSession(null);
+          setSubStatus(false);
+          setProfileData(null);
+      } catch (error) {
+          console.error("Logout error", error);
+      } finally {
+          window.location.reload(); 
+      }
   };
 
   const toggleBookmark = async (item) => {
@@ -405,7 +411,6 @@ export default function App() {
       }
   };
 
-  // --- Payment Submission Logic ---
   const handlePaymentSubmit = async (e) => {
       e.preventDefault();
       const form = e.target;
@@ -416,9 +421,7 @@ export default function App() {
           const response = await fetch("https://formspree.io/f/xgookqen", {
               method: "POST",
               body: data,
-              headers: {
-                  'Accept': 'application/json'
-              }
+              headers: { 'Accept': 'application/json' }
           });
           
           if (response.ok) {
@@ -434,10 +437,15 @@ export default function App() {
       }
   };
 
-  // ================= RENDER =================
-  const displayCitations = currentJudgment && parallelCitations.length > 0 
-      ? parallelCitations.filter(c => c !== currentJudgment.case_anchor && c !== currentJudgment.citation)
-      : [];
+  if (loading && !session && view === 'home' && !results.length) {
+      return (
+          <div className="d-flex justify-content-center align-items-center vh-100 bg-white">
+              <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">Loading...</span>
+              </div>
+          </div>
+      );
+  }
 
   return (
     <div>
