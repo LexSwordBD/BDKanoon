@@ -103,7 +103,7 @@ export default function App() {
                 setSession(session);
                 if(session) {
                     await Promise.all([
-                        checkSubscription(session.user),
+                        checkSubscription(session.user), // Passing user object
                         updateSessionInDB(session)
                     ]);
                     sessionInterval = startSessionMonitor(session); 
@@ -112,7 +112,7 @@ export default function App() {
         } catch (error) {
             console.error("Session Init Error:", error);
         } finally {
-            if (isMounted) setLoading(false); // CRITICAL: Ensure loading stops
+            if (isMounted) setLoading(false); 
         }
     };
 
@@ -127,7 +127,7 @@ export default function App() {
       }
       
       if(session) {
-          await checkSubscription(session.user);
+          await checkSubscription(session.user); // Passing user object
           
           if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
               await updateSessionInDB(session);
@@ -139,7 +139,7 @@ export default function App() {
           setProfileData(null);
           if (sessionInterval) clearInterval(sessionInterval);
       }
-      setLoading(false); // CRITICAL: Stop loading on auth change
+      setLoading(false);
     });
 
     return () => {
@@ -182,7 +182,7 @@ export default function App() {
   const checkSubscription = async (user) => {
     if (!user || !user.email) return;
     try {
-        // Corrected: Filter by ID (UUID), not email
+        // Use maybeSingle and filter by ID to ensure mapping
         const { data, error } = await supabase.from('members').select('*').eq('id', user.id).maybeSingle();
         
         if(data && data.expiry_date) {
@@ -202,7 +202,6 @@ export default function App() {
             setSubStatus(isPremium);
             setProfileData({ ...data, isPremium, diffDays: diffDays > 0 ? diffDays : 0, expDate: expDate.toDateString() });
         } else {
-            // New user not in DB yet - treat as free
             setSubStatus(false);
             setProfileData({ email: user.email, isPremium: false, diffDays: 0, expDate: 'Free Plan' });
         }
@@ -280,7 +279,7 @@ export default function App() {
     } catch (e) {
         console.error("Search Exception:", e);
     } finally {
-        setLoading(false); // CRITICAL: Ensure loading stops
+        setLoading(false);
     }
   };
 
@@ -372,20 +371,16 @@ export default function App() {
       setLoading(false);
   };
 
-  // Fixed Logout Logic
   const handleLogout = async () => {
       setLoading(true);
       try {
-          // Clear session locally first
+          await supabase.auth.signOut();
           setSession(null);
           setSubStatus(false);
           setProfileData(null);
-          // Then call Supabase
-          await supabase.auth.signOut();
       } catch (error) {
           console.error("Logout error", error);
       } finally {
-          // Force reload to clear all states
           window.location.reload(); 
       }
   };
@@ -402,7 +397,6 @@ export default function App() {
   const fetchBookmarks = async () => {
       if(!session) { setModalMode('login'); return; }
       setLoading(true);
-      // Removed user_id dependency for bookmarks to match SQL
       const { data } = await supabase.from('bookmarks').select('*').eq('email', session.user.email);
       setLoading(false);
       if(data) {
@@ -443,7 +437,6 @@ export default function App() {
       }
   };
 
-  // Render Loading Screen only on initial check
   if (loading && !session && view === 'home' && !results.length) {
       return (
           <div className="d-flex justify-content-center align-items-center vh-100 bg-white">
