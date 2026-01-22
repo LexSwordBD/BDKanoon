@@ -1141,7 +1141,7 @@ export default function App() {
               <div className="adv-search-panel" style={{ display: 'block' }}>
                 <h6 className="small fw-bold text-uppercase text-secondary mb-3">Citation Search</h6>
                 <div className="row g-2">
-                  <div className="col-6 col-md-3"><select className="form-select form-select-sm" onChange={e => setAdvFields({ ...advFields, journal: e.target.value })}><option value="">Journal</option><option>DLR</option><option>BLD</option><option>ADC</option><option>MLR</option><option>BLC</option></select></div>
+                  <div className="col-6 col-md-3"><select className="form-select form-select-sm" onChange={e => setAdvFields({ ...advFields, journal: e.target.value })}><option value="">Journal</option><option>ADC</option> <option>ALR</option> <option>BCR</option> <option>BLC</option> <option>BLD</option> <option>BLT</option> <option>CLR</option><option>DLR</option> <option>LM</option> <option>MLR</option> <option>SCOB</option></select></div>
                   <div className="col-6 col-md-2"><input type="text" className="form-control form-control-sm" placeholder="Vol" onChange={e => setAdvFields({ ...advFields, vol: e.target.value })} /></div>
                   <div className="col-6 col-md-3"><select className="form-select form-select-sm" onChange={e => setAdvFields({ ...advFields, div: e.target.value })}><option value="">Division</option><option>AD</option><option>HCD</option></select></div>
                   <div className="col-6 col-md-2"><input type="text" className="form-control form-control-sm" placeholder="Page" onChange={e => setAdvFields({ ...advFields, page: e.target.value })} /></div>
