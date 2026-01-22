@@ -168,7 +168,7 @@ export default function App() {
   };
 
   // =========================
-  // 5) Disable copy / selection (print allowed)
+  // Disable copy / selection (print allowed)
   // =========================
   useEffect(() => {
     const styleId = 'no-copy-style';
@@ -422,7 +422,7 @@ export default function App() {
     try {
       const { data } = await fetchMemberRow(user);
 
-      // NEW: if not registered in members, sign out (admin deleted or not registered)
+      // If not registered in members, sign out
       if (!data) {
         await forceSignOut({
           title: 'Not Registered',
@@ -455,7 +455,6 @@ export default function App() {
           isExpired
         });
       } else {
-        // registered but no expiry -> treat as Free Member
         setSubStatus(false);
         setProfileData({ ...data, email: data.email || user.email, isPremium: false, diffDays: 0, expDate: 'Free Plan', isExpired: false });
       }
@@ -638,8 +637,7 @@ export default function App() {
         return;
       }
 
-      // NEW: Try to register user into members table (best-effort).
-      // If RLS blocks, admin can insert manually; but this supports "new user added again" in many setups.
+      // Try to register user into members table (best-effort)
       try {
         const newUser = data?.user;
         if (newUser?.id) {
@@ -651,9 +649,7 @@ export default function App() {
         } else {
           await supabase.from('members').insert([{ email: email, expiry_date: null }]);
         }
-      } catch (e) {
-        // ignore (in case of RLS)
-      }
+      } catch (e) { }
 
       // Ensure user is NOT kept signed-in locally after signup
       try { await supabase.auth.signOut(); } catch (e) { }
@@ -667,35 +663,47 @@ export default function App() {
       setLoading(false);
       return;
     } else {
-      // NEW: If email is not registered in members table -> show message and stop.
+      // ✅ FIX: robust registered-email check (avoid false "not registered" on duplicates)
+      let isRegistered = false;
       try {
-        const { data: exists } = await supabase
+        const { data: m, error: mErr } = await supabase
           .from('members')
           .select('id')
           .eq('email', email)
+          .order('created_at', { ascending: false })
+          .limit(1)
           .maybeSingle();
 
-        if (!exists) {
-          openNotice({
-            type: 'warning',
-            title: 'Not Registered',
-            message: 'Please sign up. This email is not registered.',
-            primaryText: 'OK',
-            onPrimary: closeNotice
-          });
-          setLoading(false);
-          return;
+        if (!mErr && m) isRegistered = true;
+
+        // If permission error / any error: allow auth attempt, and post-login check will enforce registration
+        if (mErr) {
+          // do nothing; fallback to auth attempt
+        } else {
+          if (!isRegistered) {
+            openNotice({
+              type: 'warning',
+              title: 'Not Registered',
+              message: 'Please sign up. This email is not registered.',
+              primaryText: 'OK',
+              onPrimary: closeNotice
+            });
+            setLoading(false);
+            return;
+          }
         }
       } catch (e) {
-        // if members check fails, allow auth attempt (fallback)
+        // fallback to auth attempt
       }
 
       const { data, error } = await supabase.auth.signInWithPassword({ email: email, password: password });
+
       if (error) {
+        // ✅ FIX: Wrong password/email professional notice (and appears over login modal)
         openNotice({
           type: 'error',
-          title: 'Login Failed',
-          message: error.message,
+          title: 'Wrong Email or Password',
+          message: 'The email or password you entered is incorrect. Please try again.',
           primaryText: 'OK',
           onPrimary: closeNotice
         });
@@ -703,7 +711,7 @@ export default function App() {
         return;
       }
 
-      // NEW: After successful auth, confirm still registered (admin may have deleted)
+      // After successful auth, confirm still registered (admin may have deleted)
       try {
         const u = data?.user || data?.session?.user;
         if (u) {
@@ -902,43 +910,6 @@ export default function App() {
 
   return (
     <div>
-      {/* Modern Notice Modal (replaces alert) */}
-      {notice && (
-        <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '18px', overflow: 'hidden' }}>
-              <div className="modal-body p-5 text-center">
-                <div className="mb-3">{noticeIcon(notice.type)}</div>
-                <h4 className="fw-bold mb-2" style={{ color: '#222' }}>{notice.title}</h4>
-                <p className="text-muted mb-4" style={{ fontSize: '15px', lineHeight: '1.7' }}>{notice.message}</p>
-                <div className="d-grid gap-2">
-                  <button
-                    className={`btn rounded-pill py-2 fw-bold ${notice.type === 'error' ? 'btn-danger' : notice.type === 'warning' ? 'btn-warning' : notice.type === 'success' ? 'btn-success' : 'btn-primary'}`}
-                    onClick={() => {
-                      if (notice.onPrimary) notice.onPrimary();
-                      else closeNotice();
-                    }}
-                  >
-                    {notice.primaryText || 'OK'}
-                  </button>
-                  {(notice.secondaryText) && (
-                    <button
-                      className="btn btn-light rounded-pill py-2"
-                      onClick={() => {
-                        if (notice.onSecondary) notice.onSecondary();
-                        else closeNotice();
-                      }}
-                    >
-                      {notice.secondaryText}
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Navbar */}
       <nav className="navbar navbar-expand-lg fixed-top">
         <div className="container">
@@ -1074,11 +1045,8 @@ export default function App() {
             </div>
 
             <h3 className="fw-bold text-center text-primary mb-2" style={{ fontFamily: 'Playfair Display' }}>{currentJudgment.title}</h3>
-
-            {/* Primary Citation */}
             <p className="text-center text-dark fw-bold mb-2 fs-5">{currentJudgment.citation}</p>
 
-            {/* Parallel Citations Display */}
             {parallelCitations.length > 0 && (
               <div className="text-center mb-4">
                 <span className="text-secondary small fw-bold text-uppercase me-2">Also Reported In:</span>
@@ -1151,10 +1119,9 @@ export default function App() {
 
       {/* --- MODALS --- */}
       {modalMode === 'login' && (
-        <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.5)' }}>
+        <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
-              {/* NEW: Fix Welcome padding/alignment */}
               <div className="modal-header border-0 justify-content-center position-relative py-3">
                 <h5 className="modal-title fw-bold m-0">Welcome</h5>
                 <button className="btn-close position-absolute end-0 me-3" onClick={() => setModalMode(null)}></button>
@@ -1182,7 +1149,6 @@ export default function App() {
                         <input name="email" type="email" className="form-control" required />
                       </div>
 
-                      {/* Password eye icon */}
                       <div className="mb-3">
                         <label className="form-label small text-muted">Password</label>
                         <div className="input-group">
@@ -1221,7 +1187,6 @@ export default function App() {
                         <input name="email" type="email" className="form-control" required />
                       </div>
 
-                      {/* Password eye icon */}
                       <div className="mb-3">
                         <label className="form-label small text-muted">Create Password</label>
                         <div className="input-group">
@@ -1250,9 +1215,8 @@ export default function App() {
         </div>
       )}
 
-      {/* --- Signup Success Professional Modal --- */}
       {modalMode === 'signupSuccess' && (
-        <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)' }}>
+        <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)', zIndex: 1050 }}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '20px', overflow: 'hidden' }}>
               <div className="modal-body p-5 text-center">
@@ -1278,9 +1242,8 @@ export default function App() {
         </div>
       )}
 
-      {/* --- Reset Password Modal --- */}
       {modalMode === 'resetPassword' && (
-        <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.5)' }}>
+        <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header"><h5 className="modal-title">Set New Password</h5></div>
@@ -1312,9 +1275,8 @@ export default function App() {
         </div>
       )}
 
-      {/* --- Session Error Modal --- */}
       {modalMode === 'sessionError' && (
-        <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(3px)' }}>
+        <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(3px)', zIndex: 1050 }}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content text-center p-0 border-0 shadow-lg" style={{ overflow: 'hidden', borderRadius: '15px' }}>
               <div className="bg-danger py-3">
@@ -1335,9 +1297,8 @@ export default function App() {
         </div>
       )}
 
-      {/* Profile Modal */}
       {modalMode === 'profile' && (
-        <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.5)' }}>
+        <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content overflow-hidden p-0">
               <div className="modal-header border-0 position-relative d-flex justify-content-center align-items-center py-3 bg-dark text-white">
@@ -1392,9 +1353,8 @@ export default function App() {
         </div>
       )}
 
-      {/* App Modal */}
       {modalMode === 'app' && (
-        <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.5)' }}>
+        <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content text-center p-5 border-0">
               <div className="modal-body">
@@ -1408,9 +1368,8 @@ export default function App() {
         </div>
       )}
 
-      {/* Payment Confirmation Modal */}
       {modalMode === 'payment' && (
-        <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.5)' }}>
+        <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header"><h5 className="modal-title">Payment Verification</h5><button className="btn-close" onClick={() => setModalMode(null)}></button></div>
@@ -1429,9 +1388,8 @@ export default function App() {
         </div>
       )}
 
-      {/* Payment Success Modal */}
       {modalMode === 'paymentSuccess' && (
-        <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)' }}>
+        <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)', zIndex: 1050 }}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '20px', overflow: 'hidden' }}>
               <div className="modal-body p-5 text-center">
@@ -1459,9 +1417,8 @@ export default function App() {
         </div>
       )}
 
-      {/* Modern Premium Gate Modal */}
       {modalMode === 'warning' && (
-        <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)' }}>
+        <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', zIndex: 1050 }}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '20px', overflow: 'hidden' }}>
               <div className="modal-body p-5 text-center">
@@ -1493,9 +1450,8 @@ export default function App() {
         </div>
       )}
 
-      {/* Gate Modal */}
       {modalMode === 'gate' && (
-        <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.5)' }}>
+        <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content text-center p-5 border-0 shadow">
               <div className="modal-body">
@@ -1528,6 +1484,44 @@ export default function App() {
         </div>
       </footer>
       <a href="https://wa.me/8801911008518" className="whatsapp-float" target="_blank" rel="noreferrer"><i className="fab fa-whatsapp"></i></a>
+
+      {/* ✅ NOTICE MODAL MUST BE LAST (ON TOP OF ALL) */}
+      {notice && (
+        <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 2000 }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '18px', overflow: 'hidden' }}>
+              <div className="modal-body p-5 text-center">
+                <div className="mb-3">{noticeIcon(notice.type)}</div>
+                <h4 className="fw-bold mb-2" style={{ color: '#222' }}>{notice.title}</h4>
+                <p className="text-muted mb-4" style={{ fontSize: '15px', lineHeight: '1.7' }}>{notice.message}</p>
+                <div className="d-grid gap-2">
+                  <button
+                    className={`btn rounded-pill py-2 fw-bold ${notice.type === 'error' ? 'btn-danger' : notice.type === 'warning' ? 'btn-warning' : notice.type === 'success' ? 'btn-success' : 'btn-primary'}`}
+                    onClick={() => {
+                      if (notice.onPrimary) notice.onPrimary();
+                      else closeNotice();
+                    }}
+                  >
+                    {notice.primaryText || 'OK'}
+                  </button>
+                  {(notice.secondaryText) && (
+                    <button
+                      className="btn btn-light rounded-pill py-2"
+                      onClick={() => {
+                        if (notice.onSecondary) notice.onSecondary();
+                        else closeNotice();
+                      }}
+                    >
+                      {notice.secondaryText}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
