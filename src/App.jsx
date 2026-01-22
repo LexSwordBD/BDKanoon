@@ -138,33 +138,113 @@ export default function App() {
     });
   };
 
-  // --- Helper: safe member fetch (id -> email fallback) ---
+  // =========================
+  // ✅ NEW HELPERS: Email/Mobile detection + phone normalization
+  // =========================
+  const looksLikeEmail = (v) => {
+    const s = (v || '').trim();
+    return s.includes('@');
+  };
+
+  const normalizePhoneCandidates = (raw) => {
+    let s = (raw || '').trim();
+    // keep digits and plus
+    s = s.replace(/[^\d+]/g, '');
+    if (!s) return [];
+
+    // Convert 00 prefix to +
+    if (s.startsWith('00')) s = '+' + s.slice(2);
+
+    const candidates = new Set();
+    candidates.add(s);
+
+    // Bangladesh common: 01XXXXXXXXX
+    if (/^01\d{9}$/.test(s)) {
+      candidates.add('+88' + s);     // +8801...
+      candidates.add('88' + s);      // 8801...
+      candidates.add(s);             // 01...
+    }
+
+    // If 8801...
+    if (/^8801\d{9}$/.test(s)) {
+      candidates.add('+' + s);       // +8801...
+      candidates.add(s);             // 8801...
+      candidates.add(s.replace(/^88/, '')); // 01...
+    }
+
+    // If +8801...
+    if (/^\+8801\d{9}$/.test(s)) {
+      candidates.add(s);             // +8801...
+      candidates.add(s.replace(/^\+/, '')); // 8801...
+      candidates.add(s.replace(/^\+88/, '')); // 01...
+    }
+
+    // If user types just digits without + but country included
+    if (/^880\d{10}$/.test(s)) {
+      candidates.add('+' + s);
+    }
+
+    return Array.from(candidates);
+  };
+
+  const parseLoginIdentifier = (input) => {
+    const v = (input || '').trim();
+    if (looksLikeEmail(v)) return { type: 'email', value: v.toLowerCase() };
+    return { type: 'phone', value: v };
+  };
+
+  // --- Helper: safe member fetch (id -> email -> phone/mobile fallback) ---
   const fetchMemberRow = async (user) => {
     if (!user) return { data: null, error: null };
 
     // 1) Try by ID (works when members.id is UUID = auth.users.id)
     try {
-      const resById = await supabase.from('members').select('*').eq('id', user.id).maybeSingle();
+      const resById = await supabase
+        .from('members')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
       if (resById?.data) return resById;
     } catch (e) { }
 
-    // 2) Fallback by Email
-    try {
-      const resByEmailOrdered = await supabase
-        .from('members')
-        .select('*')
-        .eq('email', user.email)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+    // 2) Try by Email
+    if (user.email) {
+      try {
+        const resByEmailOrdered = await supabase
+          .from('members')
+          .select('*')
+          .eq('email', user.email)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      if (resByEmailOrdered?.data || resByEmailOrdered?.error === null) return resByEmailOrdered;
-
-      const resByEmail = await supabase.from('members').select('*').eq('email', user.email).maybeSingle();
-      return resByEmail;
-    } catch (e) {
-      return { data: null, error: e };
+        if (resByEmailOrdered?.data) return resByEmailOrdered;
+      } catch (e) { }
     }
+
+    // 3) Try by Phone (Supabase auth user may have user.phone)
+    const phoneVal = user.phone || null;
+    if (phoneVal) {
+      const candidates = normalizePhoneCandidates(phoneVal);
+      const phoneColumnsToTry = ['phone', 'mobile', 'mobile_number', 'phone_number'];
+
+      for (const col of phoneColumnsToTry) {
+        try {
+          const res = await supabase
+            .from('members')
+            .select('*')
+            .in(col, candidates)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (res?.data) return res;
+        } catch (e) {
+          // column might not exist / RLS etc -> ignore & try next
+        }
+      }
+    }
+
+    return { data: null, error: null };
   };
 
   // =========================
@@ -344,6 +424,7 @@ export default function App() {
     const user = currentSession.user;
 
     try {
+      // 1) by id
       const res1 = await supabase
         .from('members')
         .update({ current_session_id: token })
@@ -351,11 +432,33 @@ export default function App() {
 
       if (!res1?.error) return;
 
-      await supabase
-        .from('members')
-        .update({ current_session_id: token })
-        .eq('email', user.email);
+      // 2) by email
+      if (user.email) {
+        const res2 = await supabase
+          .from('members')
+          .update({ current_session_id: token })
+          .eq('email', user.email);
 
+        if (!res2?.error) return;
+      }
+
+      // 3) by phone/mobile
+      const phoneVal = user.phone || null;
+      if (phoneVal) {
+        const candidates = normalizePhoneCandidates(phoneVal);
+        const phoneColumnsToTry = ['phone', 'mobile', 'mobile_number', 'phone_number'];
+
+        for (const col of phoneColumnsToTry) {
+          try {
+            const res3 = await supabase
+              .from('members')
+              .update({ current_session_id: token })
+              .in(col, candidates);
+
+            if (!res3?.error) return;
+          } catch (e) { }
+        }
+      }
     } catch (err) {
       console.error("Session sync failed", err);
     }
@@ -396,19 +499,53 @@ export default function App() {
           return;
         }
 
-        const resByEmail = await supabase
-          .from('members')
-          .select('current_session_id')
-          .eq('email', user.email)
-          .maybeSingle();
+        // fallback: by email
+        if (user.email) {
+          const resByEmail = await supabase
+            .from('members')
+            .select('current_session_id')
+            .eq('email', user.email)
+            .maybeSingle();
 
-        if (!resByEmail?.error && resByEmail?.data) {
-          if (resByEmail.data.current_session_id && resByEmail.data.current_session_id !== currentSession.access_token) {
-            await supabase.auth.signOut();
-            hardClearAuthStorage();
-            setSession(null);
-            setSubStatus(false);
-            setModalMode('sessionError');
+          if (!resByEmail?.error && resByEmail?.data) {
+            if (resByEmail.data.current_session_id && resByEmail.data.current_session_id !== currentSession.access_token) {
+              await supabase.auth.signOut();
+              hardClearAuthStorage();
+              setSession(null);
+              setSubStatus(false);
+              setModalMode('sessionError');
+            }
+            return;
+          }
+        }
+
+        // fallback: by phone/mobile (best effort)
+        const phoneVal = user.phone || null;
+        if (phoneVal) {
+          const candidates = normalizePhoneCandidates(phoneVal);
+          const phoneColumnsToTry = ['phone', 'mobile', 'mobile_number', 'phone_number'];
+
+          for (const col of phoneColumnsToTry) {
+            try {
+              const resByPhone = await supabase
+                .from('members')
+                .select('current_session_id')
+                .in(col, candidates)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+              if (!resByPhone?.error && resByPhone?.data) {
+                if (resByPhone.data.current_session_id && resByPhone.data.current_session_id !== currentSession.access_token) {
+                  await supabase.auth.signOut();
+                  hardClearAuthStorage();
+                  setSession(null);
+                  setSubStatus(false);
+                  setModalMode('sessionError');
+                }
+                return;
+              }
+            } catch (e) { }
           }
         }
       } catch (e) {
@@ -418,7 +555,8 @@ export default function App() {
   };
 
   const checkSubscription = async (user) => {
-    if (!user || !user.email) return;
+    if (!user) return;
+
     try {
       const { data } = await fetchMemberRow(user);
 
@@ -426,7 +564,7 @@ export default function App() {
       if (!data) {
         await forceSignOut({
           title: 'Not Registered',
-          message: 'Please sign up. This email is not registered.'
+          message: 'Please sign up. This account is not registered.'
         });
         return;
       }
@@ -455,12 +593,14 @@ export default function App() {
           isExpired
         });
       } else {
+        const displayId = data.email || data.phone || data.mobile || user.email || user.phone || 'Account';
         setSubStatus(false);
-        setProfileData({ ...data, email: data.email || user.email, isPremium: false, diffDays: 0, expDate: 'Free Plan', isExpired: false });
+        setProfileData({ ...data, email: displayId, isPremium: false, diffDays: 0, expDate: 'Free Plan', isExpired: false });
       }
     } catch (e) {
+      const displayId = user.email || user.phone || 'Account';
       setSubStatus(false);
-      setProfileData({ email: user.email, isPremium: false, diffDays: 0, expDate: 'N/A', isExpired: false });
+      setProfileData({ email: displayId, isPremium: false, diffDays: 0, expDate: 'N/A', isExpired: false });
     }
   };
 
@@ -620,11 +760,14 @@ export default function App() {
     }
   };
 
-  const handleAuth = async (email, password, isSignUp) => {
+  // ✅ FIXED: Login supports Email or Mobile; no false "Not Registered" pre-check
+  const handleAuth = async (identifierInput, password, isSignUp) => {
     setLoading(true);
 
     if (isSignUp) {
-      const { data, error } = await supabase.auth.signUp({ email: email, password: password });
+      // (Keeping signup as email-based as your original)
+      const email = (identifierInput || '').trim().toLowerCase();
+      const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) {
         openNotice({
           type: 'error',
@@ -643,11 +786,11 @@ export default function App() {
         if (newUser?.id) {
           await supabase.from('members').insert([{
             id: newUser.id,
-            email: email,
+            email,
             expiry_date: null
           }]);
         } else {
-          await supabase.from('members').insert([{ email: email, expiry_date: null }]);
+          await supabase.from('members').insert([{ email, expiry_date: null }]);
         }
       } catch (e) { }
 
@@ -663,47 +806,40 @@ export default function App() {
       setLoading(false);
       return;
     } else {
-      // ✅ FIX: robust registered-email check (avoid false "not registered" on duplicates)
-      let isRegistered = false;
+      const parsed = parseLoginIdentifier(identifierInput);
+
+      // 1) Attempt Supabase auth FIRST (prevents false "Not registered")
+      let authRes;
       try {
-        const { data: m, error: mErr } = await supabase
-          .from('members')
-          .select('id')
-          .eq('email', email)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (!mErr && m) isRegistered = true;
-
-        // If permission error / any error: allow auth attempt, and post-login check will enforce registration
-        if (mErr) {
-          // do nothing; fallback to auth attempt
+        if (parsed.type === 'email') {
+          authRes = await supabase.auth.signInWithPassword({ email: parsed.value, password });
         } else {
-          if (!isRegistered) {
-            openNotice({
-              type: 'warning',
-              title: 'Not Registered',
-              message: 'Please sign up. This email is not registered.',
-              primaryText: 'OK',
-              onPrimary: closeNotice
-            });
-            setLoading(false);
-            return;
+          // phone login
+          // Try multiple candidate formats for best success
+          const candidates = normalizePhoneCandidates(parsed.value);
+          let success = null;
+          let lastErr = null;
+
+          for (const p of candidates) {
+            const r = await supabase.auth.signInWithPassword({ phone: p, password });
+            if (!r?.error && (r?.data?.session || r?.data?.user)) {
+              success = r;
+              break;
+            }
+            lastErr = r?.error || lastErr;
           }
+
+          authRes = success || { data: null, error: lastErr || { message: 'Login failed.' } };
         }
       } catch (e) {
-        // fallback to auth attempt
+        authRes = { data: null, error: e };
       }
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email: email, password: password });
-
-      if (error) {
-        // ✅ FIX: Wrong password/email professional notice (and appears over login modal)
+      if (authRes?.error) {
         openNotice({
           type: 'error',
-          title: 'Wrong Email or Password',
-          message: 'The email or password you entered is incorrect. Please try again.',
+          title: 'Wrong Email/Mobile or Password',
+          message: 'The information you entered is incorrect. Please try again.',
           primaryText: 'OK',
           onPrimary: closeNotice
         });
@@ -711,15 +847,15 @@ export default function App() {
         return;
       }
 
-      // After successful auth, confirm still registered (admin may have deleted)
+      // 2) After successful auth, confirm still registered in members (admin may have deleted)
       try {
-        const u = data?.user || data?.session?.user;
+        const u = authRes?.data?.user || authRes?.data?.session?.user;
         if (u) {
           const { data: memberRow } = await fetchMemberRow(u);
           if (!memberRow) {
             await forceSignOut({
               title: 'Not Registered',
-              message: 'Please sign up. This email is not registered.'
+              message: 'Please sign up. This account is not registered.'
             });
             setLoading(false);
             return;
@@ -732,8 +868,9 @@ export default function App() {
     setModalMode(null);
   };
 
-  const handlePasswordReset = async (email) => {
-    if (!email) {
+  const handlePasswordReset = async (identifierInput) => {
+    const raw = (identifierInput || '').trim();
+    if (!raw) {
       openNotice({
         type: 'warning',
         title: 'Email Required',
@@ -743,8 +880,20 @@ export default function App() {
       });
       return;
     }
+
+    if (!looksLikeEmail(raw)) {
+      openNotice({
+        type: 'info',
+        title: 'Reset by Email',
+        message: 'Password reset link is sent by email. Please enter your registered email to reset password.',
+        primaryText: 'OK',
+        onPrimary: closeNotice
+      });
+      return;
+    }
+
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: siteLink });
+    const { error } = await supabase.auth.resetPasswordForEmail(raw.toLowerCase(), { redirectTo: siteLink });
     if (error) {
       openNotice({
         type: 'error',
@@ -812,10 +961,16 @@ export default function App() {
 
   const toggleBookmark = async (item) => {
     if (!session) { setModalMode('login'); return; }
+
+    const identity = session.user.email || session.user.phone || 'unknown';
     const { error } = await supabase.from('bookmarks').insert([{
-      email: session.user.email, case_title: item.title, case_citation: item.citation,
-      case_anchor: item.case_anchor, github_filename: item.github_filename
+      email: identity,
+      case_title: item.title,
+      case_citation: item.citation,
+      case_anchor: item.case_anchor,
+      github_filename: item.github_filename
     }]);
+
     if (error) {
       openNotice({
         type: 'warning',
@@ -838,7 +993,10 @@ export default function App() {
   const fetchBookmarks = async () => {
     if (!session) { setModalMode('login'); return; }
     setLoading(true);
-    const { data } = await supabase.from('bookmarks').select('*').eq('email', session.user.email);
+
+    const identity = session.user.email || session.user.phone || 'unknown';
+    const { data } = await supabase.from('bookmarks').select('*').eq('email', identity);
+
     setLoading(false);
     if (data) {
       setResults(data.map(b => ({
@@ -1142,11 +1300,11 @@ export default function App() {
                   <div className="tab-pane fade show active" id="pills-login">
                     <form onSubmit={(e) => {
                       e.preventDefault();
-                      handleAuth(e.target.email.value, e.target.password.value, false);
+                      handleAuth(e.target.identifier.value, e.target.password.value, false);
                     }}>
                       <div className="mb-3">
-                        <label className="form-label small text-muted">Email</label>
-                        <input name="email" type="email" className="form-control" required />
+                        <label className="form-label small text-muted">Email / Mobile</label>
+                        <input name="identifier" type="text" className="form-control" required />
                       </div>
 
                       <div className="mb-3">
@@ -1168,8 +1326,8 @@ export default function App() {
                       <div className="text-end mb-3">
                         <a href="#" className="text-decoration-none small text-muted" onClick={(e) => {
                           e.preventDefault();
-                          const email = e.target.closest('form').querySelector('input[name="email"]').value;
-                          handlePasswordReset(email);
+                          const identifier = e.target.closest('form').querySelector('input[name="identifier"]').value;
+                          handlePasswordReset(identifier);
                         }}>Forgot Password?</a>
                       </div>
                       <button className="btn btn-dark w-100 py-2">Login</button>
@@ -1307,7 +1465,7 @@ export default function App() {
               </div>
               <div className="modal-body text-center p-4">
                 <i className="fas fa-user-circle fa-4x text-secondary mb-3"></i>
-                <h5 className="fw-bold mb-1">{profileData?.email || session?.user?.email || "Loading..."}</h5>
+                <h5 className="fw-bold mb-1">{profileData?.email || session?.user?.email || session?.user?.phone || "Loading..."}</h5>
                 <span className={`badge mb-3 ${profileData?.isPremium ? 'bg-success' : 'bg-secondary'}`}>
                   {profileData?.isPremium ? 'Premium Member' : 'Free Member'}
                 </span>
