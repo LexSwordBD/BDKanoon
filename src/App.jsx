@@ -647,7 +647,7 @@ export default function App() {
           {view === 'home' && (
             <>
               <h1 className="hero-title">Intelligent Legal Research.</h1>
-              <p className="hero-subtitle">Search over 50,000+ judgments from the Supreme Court of Bangladesh.</p>
+              <p className="hero-subtitle">Search over 20,000+ judgments from the Supreme Court of Bangladesh.</p>
             </>
           )}
           <div className="search-container">
