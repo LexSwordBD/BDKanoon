@@ -755,7 +755,7 @@ export default function App() {
         <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
-              <div className="modal-header border-0 pb-0 justify-content-center position-relative py-3">
+             <div className="modal-header border-0 justify-content-center position-relative py-3">
                 <h5 className="modal-title fw-bold m-0">Welcome</h5><button className="btn-close position-absolute end-0 me-3" onClick={() => setModalMode(null)}></button>
               </div>
               <div className="modal-body p-4 pt-3">
