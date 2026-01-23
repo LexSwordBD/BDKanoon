@@ -481,7 +481,7 @@ End.
 "Please note that while every effort has been made to provide accurate case references, there may be some unintentional errors. We encourage users to verify the information from official sources for complete accuracy."
 ===End===
 
-===9 CLR (AD) 71=== ===19 ADC (AD) 157=== ===29 BLT (AD) 298=== 26 ALR (AD) 72=== ===74 DLR (AD) 25===
+===9 CLR (AD) 71=== ===19 ADC (AD) 157=== ===29 BLT (AD) 298=== ===26 ALR (AD) 72=== ===74 DLR (AD) 25===
 Appellate Division 
 (Criminal)
 
