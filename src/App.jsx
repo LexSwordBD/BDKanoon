@@ -71,7 +71,10 @@ export default function App() {
   const [view, setView] = useState('home');
   const [loading, setLoading] = useState(true);
 
-  // ✅ ১. অ্যাপ ইনস্টল অফার রাখার জন্য স্টেট (নতুন যোগ করা হলো)
+  // ✅ নতুন ১: স্প্ল্যাশ স্ক্রিন স্টেট
+  const [showSplash, setShowSplash] = useState(true);
+
+  // ✅ ২. অ্যাপ ইনস্টল অফার রাখার জন্য স্টেট
   const [deferredPrompt, setDeferredPrompt] = useState(null);
 
   // Search States
@@ -103,7 +106,15 @@ export default function App() {
   const openNotice = (payload) => setNotice(payload);
   const closeNotice = () => setNotice(null);
 
-  // ✅ ২. ব্রাউজার থেকে ইনস্টল অফার ধরার জন্য useEffect (নতুন যোগ করা হলো)
+  // ✅ নতুন ২: স্প্ল্যাশ স্ক্রিন টাইমার (৩ সেকেন্ড)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 3000); // ৩ সেকেন্ড পর বন্ধ হবে
+    return () => clearTimeout(timer);
+  }, []);
+
+  // ব্রাউজার থেকে ইনস্টল অফার ধরার জন্য useEffect
   useEffect(() => {
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault(); // অটোমেটিক পপ-আপ বন্ধ রাখা হলো
@@ -404,7 +415,7 @@ export default function App() {
     }
   };
 
-  // ✅ ৩. বাটনে ক্লিক করলে যা হবে সেই ফাংশন (নতুন যোগ করা হলো)
+  // বাটনে ক্লিক করলে যা হবে সেই ফাংশন
   const handleInstallClick = async () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
@@ -596,13 +607,7 @@ export default function App() {
     } catch (error) { openNotice({ type: 'error', title: 'Error', message: 'Network error.', primaryText: 'OK', onPrimary: closeNotice }); } finally { setLoading(false); }
   };
 
-  if (loading && !session && view === 'home' && !results.length) {
-    return (
-      <div className="d-flex justify-content-center align-items-center vh-100 bg-white">
-        <div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div>
-      </div>
-    );
-  }
+  // ❌ আগের লোডিং স্পিনারটি সরিয়ে দেওয়া হয়েছে কারণ এখন স্প্ল্যাশ স্ক্রিন থাকবে।
 
   const noticeIcon = (type) => {
     if (type === 'success') return <i className="fas fa-check-circle fa-3x text-success"></i>;
@@ -613,6 +618,30 @@ export default function App() {
 
   return (
     <div>
+      {/* ✅ নতুন ৩: আপনার ফুল স্ক্রিন ইমেজ স্প্ল্যাশ স্ক্রিন */}
+      {showSplash && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100vh',
+          zIndex: 99999,
+          backgroundColor: '#ffffff' // লোড হওয়ার আগে সাদা দেখাবে
+        }}>
+          <img 
+            src="/splash_bg.png" 
+            alt="Welcome to BDKanoon" 
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover', // এটি ইমেজকে পুরো স্ক্রিনে ছড়িয়ে দিবে, ফাটবে না
+              objectPosition: 'center'
+            }} 
+          />
+        </div>
+      )}
+
       <nav className="navbar navbar-expand-lg fixed-top">
         <div className="container">
           <a className="navbar-brand" href="#" onClick={() => window.location.reload()}>BD<span>Kanoon</span></a>
@@ -623,7 +652,7 @@ export default function App() {
               <li className="nav-item"><a className="nav-link nav-link-close" href="#" onClick={fetchBookmarks}>Bookmarks</a></li>
               <li className="nav-item"><a className="nav-link nav-link-close" href="#packages">Pricing</a></li>
               
-              {/* ✅ ৪. আপডেট করা "Get App" বাটন */}
+              {/* আপডেট করা "Get App" বাটন */}
               <li className="nav-item">
                 <button className="btn-app ms-lg-3 mt-3 mt-lg-0 border-0" onClick={handleInstallClick}>
                   <i className="fab fa-android"></i> {deferredPrompt ? 'Install App' : 'Get App'}
@@ -879,7 +908,6 @@ export default function App() {
         </div>
       )}
 
-      {/* ✅ ৫. অ্যাপ ইনস্টল পপ-আপ মডাল */}
       {modalMode === 'app' && (
         <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
           <div className="modal-dialog modal-dialog-centered">
