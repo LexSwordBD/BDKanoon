@@ -43,15 +43,27 @@ const lawAliases = {
 
 const stopwords = ['a', 'an', 'the', 'of', 'in', 'and', 'or', 'is', 'are', 'was', 'were', 'be', 'to', 'for', 'with', 'on', 'at', 'by', 'from', 'shall', 'will', 'am'];
 
-const HighlightedText = ({ text, highlight }) => {
+// ✅ ১. হাইলাইটেড টেক্সট কম্পোনেন্ট ফিক্স করা হয়েছে Exact Match এর জন্য
+const HighlightedText = ({ text, highlight, isExactMatch }) => {
   if (!text) return null;
   if (!highlight) return <span>{text}</span>;
 
   try {
     const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const words = highlight.split(/\s+/).filter(w => w.length > 0).map(escapeRegExp);
-    if (words.length === 0) return <span>{text}</span>;
-    const regex = new RegExp(`(${words.join('|')})`, 'gi');
+    let regex;
+
+    if (isExactMatch) {
+      // যদি Exact Match হয়, তাহলে পুরো ফ্রেজটা খুঁজবে (যেমন: "Criminal Trial")
+      // কোনো স্পেস দিয়ে আলাদা করবে না
+      const exactPhrase = escapeRegExp(highlight.trim());
+      regex = new RegExp(`(${exactPhrase})`, 'gi');
+    } else {
+      // যদি Normal Search হয়, আগের মতো স্পেস দিয়ে শব্দ আলাদা করে খুঁজবে
+      const words = highlight.split(/\s+/).filter(w => w.length > 0).map(escapeRegExp);
+      if (words.length === 0) return <span>{text}</span>;
+      regex = new RegExp(`(${words.join('|')})`, 'gi');
+    }
+
     const parts = text.toString().split(regex);
     return (
       <span>
@@ -71,7 +83,7 @@ export default function App() {
   const [view, setView] = useState('home');
   const [loading, setLoading] = useState(true);
 
-  // ✅ ১. অ্যাপ ইনস্টল অফার রাখার জন্য স্টেট
+  // অ্যাপ ইনস্টল অফার রাখার জন্য স্টেট
   const [deferredPrompt, setDeferredPrompt] = useState(null);
 
   // Search States
@@ -103,11 +115,11 @@ export default function App() {
   const openNotice = (payload) => setNotice(payload);
   const closeNotice = () => setNotice(null);
 
-  // ✅ ২. ব্রাউজার থেকে ইনস্টল অফার ধরার জন্য useEffect
+  // ব্রাউজার থেকে ইনস্টল অফার ধরার জন্য useEffect
   useEffect(() => {
     window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault(); // অটোমেটিক পপ-আপ বন্ধ রাখা হলো
-      setDeferredPrompt(e); // অফারটি স্টেটে রাখা হলো
+      e.preventDefault();
+      setDeferredPrompt(e);
     });
   }, []);
 
@@ -404,7 +416,6 @@ export default function App() {
     }
   };
 
-  // ✅ ৩. বাটনে ক্লিক করলে যা হবে সেই ফাংশন
   const handleInstallClick = async () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
@@ -458,15 +469,15 @@ export default function App() {
       const { data, error, count } = await queryBuilder.range(from, to).order('page_number', { ascending: true });
       
       if (data) { 
-        // ✅ ডুপ্লিকেট হেডনোট ফিল্টার (নতুন যোগ করা অংশ)
+        // ডুপ্লিকেট হেডনোট ফিল্টার
         const seenHeadnotes = new Set();
         const uniqueData = data.filter(item => {
-          if (!item.headnote) return true; // হেডনোট না থাকলে রেখে দাও
+          if (!item.headnote) return true;
           const cleanHeadnote = item.headnote.trim();
           if (seenHeadnotes.has(cleanHeadnote)) {
-            return false; // যদি আগে দেখে থাকি, বাদ দাও
+            return false;
           }
-          seenHeadnotes.add(cleanHeadnote); // নতুন হলে সেটে যোগ করো
+          seenHeadnotes.add(cleanHeadnote);
           return true;
         });
 
@@ -587,7 +598,6 @@ export default function App() {
     if (!session) { setModalMode('login'); return; }
     const identity = session.user.email || session.user.phone || 'unknown';
 
-    // ✅ ১. আগে চেক করি সেভ করা আছে কিনা
     const { data: existingBookmark } = await supabase
       .from('bookmarks')
       .select('id')
@@ -596,7 +606,6 @@ export default function App() {
       .eq('case_anchor', item.case_anchor);
 
     if (existingBookmark && existingBookmark.length > 0) {
-      // ✅ যদি সেভ করা থাকে, তাহলে ডিলিট করো (Unsave)
       const { error } = await supabase
         .from('bookmarks')
         .delete()
@@ -606,7 +615,6 @@ export default function App() {
       else openNotice({ type: 'info', title: 'Removed', message: 'Bookmark removed.', primaryText: 'OK', onPrimary: closeNotice });
 
     } else {
-      // ✅ যদি সেভ না করা থাকে, তাহলে সেভ করো (Save)
       const { error } = await supabase
         .from('bookmarks')
         .insert([{ email: identity, case_title: item.title, case_citation: item.citation, case_anchor: item.case_anchor, github_filename: item.github_filename }]);
@@ -664,7 +672,6 @@ export default function App() {
               <li className="nav-item"><a className="nav-link nav-link-close" href="#" onClick={fetchBookmarks}>Bookmarks</a></li>
               <li className="nav-item"><a className="nav-link nav-link-close" href="#packages">Pricing</a></li>
                
-              {/* ✅ ৪. আপডেট করা "Get App" বাটন */}
               <li className="nav-item">
                 <button className="btn-app ms-lg-3 mt-3 mt-lg-0 border-0" onClick={handleInstallClick}>
                   <i className="fab fa-android"></i> {deferredPrompt ? 'Install App' : 'Get App'}
@@ -734,7 +741,10 @@ export default function App() {
                 <div className="mb-2">
                   {(session && subStatus) ? <><span className="badge bg-light text-dark border">{item.citation}</span> <span className="text-muted small ms-2">{item.division}</span></> : <span className="badge bg-secondary text-white"><i className="fas fa-lock"></i> Premium</span>}
                 </div>
-                <div className="headnote-text" style={{ whiteSpace: 'pre-wrap', textAlign: 'justify' }}><HighlightedText text={item.headnote || ""} highlight={searchTerm || selectedLaw} /></div>
+                {/* ✅ ২. HighlightedText এ isExactMatch পাঠানো হচ্ছে */}
+                <div className="headnote-text" style={{ whiteSpace: 'pre-wrap', textAlign: 'justify' }}>
+                    <HighlightedText text={item.headnote || ""} highlight={searchTerm || selectedLaw} isExactMatch={isExactMatch} />
+                </div>
               </div>
             ))}
             {totalCount > 20 && (
@@ -920,7 +930,6 @@ export default function App() {
         </div>
       )}
 
-      {/* ✅ ৫. অ্যাপ ইনস্টল পপ-আপ মডাল */}
       {modalMode === 'app' && (
         <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
           <div className="modal-dialog modal-dialog-centered">
