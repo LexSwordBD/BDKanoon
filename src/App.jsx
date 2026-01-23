@@ -70,7 +70,9 @@ export default function App() {
   const [subStatus, setSubStatus] = useState(false);
   const [view, setView] = useState('home');
   const [loading, setLoading] = useState(true);
-
+// ✅ নতুন কোড: ইনস্টল অফার রাখার বাক্স
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  
   // Search States
   const [results, setResults] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -81,6 +83,13 @@ export default function App() {
   const [showAdvSearch, setShowAdvSearch] = useState(false);
   const [advFields, setAdvFields] = useState({ journal: '', vol: '', div: '', page: '' });
 
+  // ✅ নতুন কোড: ব্রাউজারের অফার ধরার জন্য
+  useEffect(() => {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault(); // অটোমেটিক পপ-আপ বন্ধ করলাম
+      setDeferredPrompt(e); // অফারটি আমাদের বাক্সে রাখলাম
+    });
+  }, []);
   // Reader State
   const [currentJudgment, setCurrentJudgment] = useState(null);
   const [judgmentText, setJudgmentText] = useState('');
@@ -102,6 +111,18 @@ export default function App() {
   const openNotice = (payload) => setNotice(payload);
   const closeNotice = () => setNotice(null);
 
+  // ✅ নতুন কোড: ইনস্টল বাটনের কাজ
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt(); // পপ-আপ শো করো
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null); // কাজ শেষ, বাক্স খালি করো
+      }
+    } else {
+      setModalMode('app'); // অফার না থাকলে ম্যানুয়াল নিয়ম দেখাও
+    }
+  };
   // --- Helper: hard local signout (for stubborn sessions) ---
   const hardClearAuthStorage = () => {
     try {
@@ -1081,10 +1102,11 @@ export default function App() {
               <li className="nav-item"><a className="nav-link nav-link-close" href="#" onClick={fetchBookmarks}>Bookmarks</a></li>
               <li className="nav-item"><a className="nav-link nav-link-close" href="#packages">Pricing</a></li>
               <li className="nav-item">
-                <button className="btn-app ms-lg-3 mt-3 mt-lg-0 border-0" onClick={() => setModalMode('app')}>
-                  <i className="fab fa-android"></i> Get App
-                </button>
-              </li>
+  {/* ✅ নতুন কোড: বাটন এখন স্মার্ট */}
+  <button className="btn-app ms-lg-3 mt-3 mt-lg-0 border-0" onClick={handleInstallClick}>
+    <i className="fab fa-android"></i> {deferredPrompt ? 'Install App' : 'Get App'}
+  </button>
+</li>
               <li className="nav-item ms-lg-3 mt-3 mt-lg-0">
                 {session ? (
                   <button className="btn btn-outline-dark rounded-pill px-3 btn-sm" onClick={() => setModalMode('profile')}>
