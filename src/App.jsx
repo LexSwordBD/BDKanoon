@@ -585,7 +585,7 @@ function AppContent() {
     }
   };
 
-  // ✅ আপডেটেড handleSearch: এখন এটি ৩য় আর্গুমেন্ট হিসেবে termOverride গ্রহণ করে
+  // ✅ আপডেটেড handleSearch: এখন এটি ৩য় আর্গুমেন্ট হিসেবে termOverride গ্রহণ করে
   const handleSearch = async (page = 1, type = 'simple', termOverride = null) => {
     setLoading(true); setCurrentPage(page); setView('results');
     setShowSuggestions(false); 
@@ -841,7 +841,7 @@ function AppContent() {
               <li className="nav-item"><a className="nav-link nav-link-close" href="#" onClick={() => { setView('home'); setResults([]); }}>Home</a></li>
               <li className="nav-item"><a className="nav-link nav-link-close" href="#" onClick={fetchBookmarks}>Bookmarks</a></li>
               <li className="nav-item"><a className="nav-link nav-link-close" href="#packages">Pricing</a></li>
-               
+                
               <li className="nav-item">
                 <button className="btn-app ms-lg-3 mt-3 mt-lg-0 border-0" onClick={handleInstallClick}>
                   <i className="fab fa-android"></i> {deferredPrompt ? 'Install App' : 'Get App'}
@@ -984,7 +984,9 @@ function AppContent() {
                 {parallelCitations.map((cite, index) => <span key={index} className="badge bg-light text-secondary border me-1">{cite}</span>)}
               </div>
             )}
-            <div className="mt-4 text-justify" style={{ whiteSpace: 'pre-wrap', fontFamily: 'Merriweather', textAlign: 'justify' }}>{judgmentText}</div>
+            
+            {/* ✅ পরিবর্তন করা হয়েছে: এখানে dangerouslySetInnerHTML যোগ করা হয়েছে */}
+            <div className="mt-4 text-justify" style={{ whiteSpace: 'pre-wrap', fontFamily: 'Merriweather', textAlign: 'justify' }} dangerouslySetInnerHTML={{ __html: judgmentText }} />
             
             {!judgmentText.includes("Please note that while every effort") && (
               <div className="mt-5 p-3 border-top border-secondary text-muted small fst-italic bg-light rounded text-center">
