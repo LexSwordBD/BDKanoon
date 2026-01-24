@@ -3636,3 +3636,119 @@ Communicate a copy of the judgment to the Court concerned and send down the lowe
 
 End.
 ===End===
+
+===75 DLR (HCD) 33===
+High Court Division
+(Special Original Jurisdiciton)
+Present:
+Mr. Justice Zafar Ahmed
+
+Writ Petition No. 6796 of 2022.
+
+Abdul Khaleque (Md)
+-------------- Petitioner
+VS
+Election Commission and others
+--------------- Respondents
+
+Judgement Date : August 11, 2022
+
+Counsels:
+Md Momtaz Uddin Fakir with Shah Monjurul Hoque and M. Sayed Ahmed, Advocates
+-For the Petitioner
+
+Tawhidul Islam, Advocate
+--For the Respondent No.1
+
+Fida M. Kamal, with Yousuf Hossain Humayun, Murad Reza, Robiul Alam and BM Elias, Advocates
+---For the Respondent No.7.
+
+Judgment
+Zafar Ahmed, J:
+
+1. In the instant writ petition, the petitioner has challenged the Notification dated 2-6-2022 (Annexure-G) issued under the purported signature of the respondent No. 3 on the instruction of the respondent No. 1 cancelling the candidature of the petitioner for the post of Mayor of Jhenaidah Paurashava General Election, 2022, which was scheduled to be held on 15-6-2022.
+
+2. This Court, on 8-6-2022, issued a Rule Nisi and passed an interim order staying operation of the Notification dated 2-6-2022 (Annexure-G) for a period of 1(one) month.
+
+3. Challenging the interim order of stay, the respondent Nos. 1 and 7 filed two separate Civil Petition For Leave To Appeal (CPLA) being Nos.1650 of 2022 and 1652 of 2022 respectively, which were dismissed by the Appellate Division on 12-6-2022. On the same day, the respondent No. 1, the Election Commission (in short, the 'EC') issued a Memo dated 12-6-2022 suspending the election. In the said Memo, the orders passed by this Division in the Writ Petition and the Appellate Division in CPLA were referred. Challenging the said Memo suspending the Election, the petitioner filed an application for issuance of supplementary Rule. This Court, on 19-6-222, issued a supplementary Rule Nisi.
+
+4. The respondent No.1 (EC) contested the Rule by filing an affidavit-in-opposition. The respondent No. 7, namely, Md Qaiyum Shahriar Zahedee, who was another contesting candidate for the post of Mayor of Jhenaidah Pourashava, filed a power.
+
+5. The Notification dated 2-6-2022 (Annexure-G) cancelling the candidature of the petitioner, which is the subject matter of the Rule, is reproduced below:
+
+" গণপ্রজাতন্ত্রী বাংলাদেশ সরকার
+বাংলাদেশ নির্বাচন কমিশন সচিবালয়
+আইন শাখা
+
+ज्ञापन
+১৯ জ্যৈষ্ঠ ১৪২৯ বঙ্গাব্দ / ২ জুন ২০২২ খ্রিস্টাব্দ
+
+নির্বাচন কমিশন ঘোষিত সময়সূচি অনুসারে ১৫ জুন ২০২২ তারিখে অনুষ্ঠিতব্য ঝিনাইদহ পৌরসভার নির্বাচনে মেয়র পদে একজন প্রতিদ্বন্দী প্রার্থী জনাব মোঃ আব্দুল খালেক ও তার সমর্থক কর্তৃক-
+
+যেহেতু, মিছিল-শোভাযাত্রা করে ১৮ মে ২০২২ তারিখে প্রতিদ্বন্দী প্রার্থী জনাব মোঃ কাইয়ুম শাহরিয়ার জাহেদী এর ব্যবসা প্রতিষ্ঠানে ভাংচুর করার ঘটনা ঘটেছে, যা ইলেকট্রনিক ও প্রিন্ট মিডিয়া এবং বিভিন্ন সামাজিক যোগাযোগমাধ্যমে প্রকাশিত হয়েছে;
+
+যেহেতু, জনাব মোঃ আব্দুল খালেক অপর প্রতিদ্বন্দী প্রার্থী জনাব মোঃ কাইয়ুম শাহরিয়ার জাহেদীর প্রচারাভিযানে বাধা প্রদান করেছেন;
+
+যেহেতু, জনাব মোঃ আব্দুল খালেকের বিরুদ্ধে আচরণবিধি লংঘনের বাখা চাওয়ার পর তিনি ক্ষমা প্রার্থনা করেন এবং ভবিষ্যতে নির্বাচন আচরণ বিধিমালা মেনে চলবেন বলে অঙ্গীকার করেন;
+
+যেহেতু, একজন মাননীয় নির্বাচন কমিশনার গত ২৯ মে ২০২২ তারিখে জেলা শিল্পকলা একাডেমী মিলনায়তনে উপস্থিত থেকে সকল প্রার্থীগণকে নির্বাচনী আচরণ মেনে চলার বিষয়ে মৌখিক অঙ্গীকার গ্রহণ করেন এতদসত্বেও জনাব মোঃ আব্দুল খালেকের সমর্থকগণ ১ জুন ২০২২ তারিখে অপর প্রার্থী জনাব মোঃ কাইয়ুম শাহরিয়ার জাহেদী ও তার সমর্থকগণকে আক্রমণ করে আহত করেন যা বিভিন্ন পত্রিকা ও সামাজিক মাধ্যমে ভিডিওতে প্রকাশ পায়;
+
+যেহেতু, উল্লিখিত কার্যক্রম পৌরসভা (নির্বাচন আচরণ) বিধিমালা, ২০১৫ এর লংঘন একাধিকবার হয়েছে এবং উল্লিখিত ঘটনাসমূহ তদন্তের মাধ্যমে প্রমাণিত হয়েছে;
+
+যেহেতু, প্রতিদ্বন্দী প্রার্থী হিসেবে পৌরসভা (নির্বাচন আচরণ) বিধিমালা, ২০১৫ এ বিধান লংঘন করেছেন;
+
+সেহেতু, এক্ষণে, পৌরসভা নির্বাচন আচরণ) বিধিমালা ২০১৫ এর বিধি ৩২ অনুসারে মাননীয় নির্বাচন কমিশন ঝিনাইদহ পৌরসভার নির্বাচনের মেয়র পদে প্রতিদ্বন্দী প্রার্থী জনাব মোঃ আব্দুল খালেক এর প্রার্থীতা এতদ্বারা বাতিল করলেন। "
+6. It is apparent for the Notification that the candidature of the petitioner was cancelled by the EC invoking the power given to it under Rule 32 of পৌরসভা (নির্বাচন আচরণ) বিধিমালা, ২০১৫ [Pourashava (Election Conduct) Rules, 2015, hereinafter referred to as ‘Rules, 2015’].
+
+7. Rule 32 is quoted below:
+
+"৩২। কমিশন কর্তৃক প্রার্থীতা বাতিল -(১) বিধিমালার অন্যান্য বিধানে যাহা কিছুই থাকুক না কেন, যদি কোন উৎস হইতে প্রাপ্ত রেকর্ড কিংবা লিখিত রিপোর্ট হইতে কমিশনের নিকট প্রতীয়মান হয় যে, মেয়র বা কাউন্সিলর পদে প্রতিদ্বন্দী কোন প্রার্থী বা তাহার নির্বাচনী এজেন্ট এই বিধিমালার কোন বিধান লংঘন করিয়াছেন বা লংঘনের চেষ্টা করিয়াছেন এবং অনুরূপ লংঘন বা লংঘনের চেষ্টার জন তিনি মেয়র, বা ক্ষেত্রমত, কাউন্সিলর নির্বাচিত হইবার অযোগ্য হইতে পারেন, তাহা হইলে কমিশন বিষয়টি সম্পর্কে তাৎক্ষণিক তদন্তের নির্দেশ প্রদান করিতে পারিবে।
+
+(২) উপ-বিধি (১) এর অধীন তদন্ত রিপোর্ট প্রাপ্তির পর কমিশন যদি এই মর্মে সন্তুষ্ট হয় যে, কোন প্রতিদব্ন্দী প্রার্থী বা তাহার নির্বাচনী এজেন্ট বা তাহার নির্দেশে বা তাহার পক্ষে তাহার প্রত্যক্ষ বা পরোক্ষ সম্মতিতে অন্য কোন ব্যক্তি, সংস্থা বা প্রতিষ্ঠান এই বিধিমালার কোন বিধান লংঘন করিয়াছেন বা লংঘনের চেষ্টা করিয়াছেন এবং অনুরূপ লংঘন বা লংঘনের চেষ্টার জন তিনি মেয়র বা কাউন্সিলর নির্বাচিত হইবার অযোগ্য হইতে পারেন, তাহা হইলে কমিশন, তাৎক্ষণিকভাবে লিখিত আদেশ দ্বারা, উক্ত প্রতিদ্বন্দী প্রার্থীর প্রার্থীতা বাতিল করিতে পারিবেন।
+
+(৩) উপ-বিধি (২) এর অধীন প্রদত্ত কোন আদেশ কমিশন, যথা শীঘ্র সম্ভব, সংশ্লিষ্ট প্রতিদ্বন্দী প্রার্থী বা তাহার নির্বাচনী এজেন্টকে এবং সংশ্লিষ্ট রিটার্নিং অফিসারকে অবহিত করিবে।
+
+(৪) উপ-বিধি(২) এর অধীন প্রদত্ত আদেশ কমিশন সরকারি গেজেটে প্রকাশের ব্যবস্থা গ্রহণ করিবে।"
+8. The words "প্রতিদ্বন্দী প্রার্থী" (contesting candidate) have been used in Rule 32. 'Contesting candidate' means a candidate who has been validly nominated for contesting the election for the post of Mayor or Councilor and who has not withdrawn his candidature [Rule 2(10) of Rules, 2015].
+
+9. Rule 32 requires that the EC must pass an order, which could be made instantly, upon obtaining record from any source or written report, to enquire into the alleged violation of any provision of Rules, 2015 or attempt to do so by a contesting candidate or his election agent. Once the EC obtains the enquiry report and is satisfied to the effect that the contesting candidate or his election agent had violated any provision of Election Rules, 2015 or had attempted to do so which may disqualify him to be elected as Mayor or Councilor, the EC may cancel his candidature instantly by a written order. Rule 32 contains a non-obstante clause. The condition precedent to cancel the candidature of a contesting candidate under Rule 32 is to direct an enquiry to be conducted in respect of the alleged violation of Rules, 2015 and satisfaction of the EC based on the enquiry report.
+
+10. Reverting back to the case in hand, the impugned notification refers to some incidents taken place on different dates including those taken place on 1-6-2022 as grounds for cancellation of candidature of the petitioner. It is stated in the said Notification that those incidents were proved through enquiry, but there is no reference of any specific enquiry report in the Notification.
+
+11. In the affidavit-in-opposition filed by the EC, an enquiry report dated 17-5-2022 has been annexed as Annexure-2. The said report relates to incidents occurred on 15-5-2022 which was not mentioned in the impugned Notification. It further appears from the affidavit-in-opposition that (MI-6-2022, the Deputy Commissioner, Jhenaidah and Police Super, District Special Branch, Jhenaidah sent separate written reports to the EC in respect of the incident that occurred on 1-6-2022. The District Election Officer, Magura, who was the Returning Officer of Jhenaidah Pourashava General Election, 2022 sent 2(two) separate written reports, both dated 2-6-2022, to the EC regarding the same incident. However, those written reports were not the outcome of any enquiry ordered by the EC as contemplated in Rule 32. Hence, those cannot be treated as enquiry report.
+
+12. The question remains whether the EC ordered any enquiry to be conducted in respect of the incident that took place on 1-6-2022. In order to get the answer, this Court, on 1-8-2022, directed the EC to transmit the original records to the Court which was complied with. Upon perusal of the original records, we did not find any order of enquiry as envisaged under Rule 32(1) passed by the EC. Rather, we found that the EC took the decision to cancel the candidature of the petitioner in an informal meeting based on the written reports referred to above which is not at all permitted under Rule 32.
+
+13. At this juncture, Mr Fida M. Kamal, who appeared in the case on behalf of the respondent No. 7, refers to Section 23 of “স্থানীয় সরকার (পৌরসভা) আইন, ২০১৯ (in short, the 'Ain, 2009'), Rule 53(1) of “স্থানীয় সরকার (পৌরসভা) নির্বাচন বিধিমালা, ২০১০ (in short, 'Rules, 2010') and the case of AFM Shah Alam vs Mujibul Huq and others, 41 DLR (AD) 68 and submits that since the petitioner has statutory right under Section 23 of the Ain, 2009 read with Rule 53 of Rules, 2010 to challenge the impugned Notification before the Election Tribunal, the instant writ petition is not maintainable.
+
+14. Section 23(1) of the Ain, 2009 states, “এই আইনের অধীন অনুষ্ঠিত কোন নির্বাচন বা গৃহীত নির্বাচনী কার্যক্রম বিষয়ে নির্বাচন ট্রাইব্যুনাল ব্যতীত কোন আদালত বা অন্য কোন কর্তৃপক্ষের নিকট আপত্তি উত্থাপন করা যাইবে না।” Rule 53(1) of Rules, 2010 provides, “ধারা ২৩ এর বিধান সাপেক্ষে, উপ-বিধি (২) এর অধীন নির্বাচনী দরখাস্ত দাখিল ব্যতীত, নির্বাচন সম্পর্কে কোন প্রশ্ন উত্থাপন করা যাইবে না।” Rule 53(2) provides, “কোন প্রতিদ্বন্দী প্রার্থী যে নির্বাচনে প্রার্থী ছিলেন সেই নির্বাচন চ্যালেঞ্জ করিয়া দরখাস্ত করিতে পারিবেন।”
+
+15. In AFM Shah Alam, it was held, inter alia, that under Rule 70 of the Union Parishads (Election) Rules, 1983 read with Section 24 of the Local Government (Union Parishads) Ordinance, 1983 the EC has been vested with plenary, supervisory and discretionary jurisdiction to oversee that an election is conducted honestly, justly and fairly and in accordance with the provisions of the Ordinance and the Rules. In so doing it may pass any order, unless specifically barred, including an order for re-poll, acceptance/ consolidation of result, review etc. on the basis of materials before it. The nine appeals in Shah Alam were decided essentially on the question of nature and extent of the power of the EC under the Rule 70. On consideration of facts of the cases, the apex Court did not interfere with the direction for re-poll given by the EC.
+
+16. In the instant case, the EC obtained written reports. The next step under Rule 32(1) of the Rules, 2015 was to direct an enquiry which was not done. Therefore, according to Rule 32 the matter ends there and the EC had no jurisdiction under the law to proceed further and cancel the candidature of the petitioner based on written reports and allegations contained therein, no matter how grave those allegations were. In this regard, we note that in respect of the incident occurred on 1-6-2022, the brother of the respondent No.7 (rival contesting candidate) lodged an FIR on 2-6-2022 with the concerned Police Station accusing 23 persons. However, the petitioner was not named as an accused in the said FIR. Be that as it may, the EC acted beyond jurisdiction which confers jurisdiction upon this judicial review Court to declare the action of the EC to have done without any lawful authority. This power is exclusively given to this judicial review Court under Article 102 of the Constitution. Since the EC violated the law which rendered the impugned Notification dated 2-6-2022 (Annexure-G) void in law, we hold that the same was passed without any lawful authority and is of no legal effect.
+
+17. Rule 32 of Rules, 2015 has given the power to the EC to pass an instant order of enquiry (তাৎক্ষণিক তদন্তের নির্দেশ) and to cancel the candidature instantly (তাৎক্ষণিকভাবে ----- প্রার্থীতা বাতিল করিতে পারিবেন). Rule 32 has not incorporated the principle of `audi alteram partem' (hear the other side). In other words, Rule 32 does require the EC to give any notice to the contesting candidate before cancellation of his candidature, the rationale, as it appears, to address urgent circumstances to hold the election peacefully, which is one of the paramount considerations.
+
+18. The basic principle of fair procedure, which includes the principle of audi alteram partem, requirers that before taking any action against a man, the authority should give him notice of the case and afford him fair opportunity to answer the case against him and to put his own case. In our constitutional scheme, a man has a right to his reputation which is protected by Article 31 of the Constitution. An order containing serious allegations casting stigma entitles the person affected to a notice and opportunity of being heard before the order is made (Barkatullah Khan vs Bangladesh, 57 DLR 302). Even when a statute is silent, notice has to be given if any person is sought to be affected in his right, interest, property or character (HFDM de Silva vs Bangladesh, 2 BLC 179).
+
+19. The principle of audi alteram partem has given rise to many refinements and complexities. The principle is after all "no unruly horse, no lurking land mine". It cannot be placed in a strait-jacket. It does vary from case to case and from one fact-situation to another. There may be exceptional situations when the Court may ignore the non-service of the notice. For example, in UP Singh vs Board of Governor; AIR 1982 MP 59 where some students were guilty of gross violence against other students which called for immediate action as it created tension in the area, but notice could not be served in spite of the best efforts of the authority as they had absconded.
+
+20. Sometimes it is argued that the case against a man is of such incontrovertible nature that it would have made no difference and the same conclusion would have to be reached even if notice and hearing would be given. This argument was decisively rejected by the House of Lords in Ridge vs Baldwin, [1964] AC 40. Professor Wade observed in Administrative Law, 9th ed. P. 718-19 that—
+
+"in principle it is vital that the procedure and the merits should be kept strictly apart, since otherwise the merits may be prejudiced unfairly".
+21. In view of the above discussions on the principle of audi alteram partem, we have no hesitation to hold that the contesting candidate against whom an enquiry is held under Rule 32 of Rules, 2015 should be given a notice before the final decision is made and giving the notice has to be read into the Rule, subject to exception which falls within the category of UP Singh vs Board of Governor (supra) scenario viz. notice cannot be served practically. No particular form of notice is the demand of law. All will depend on facts and circumstances of the case.
+
+22. Rules, 2015 are silent as to who will conduct the inquiry under Rule 32 so far as it relates to candidate for the post of Mayor. Considering the position, responsibilities, honour and dignity attached to the post of Mayor, we are of the view that an officer, preferably drawn from the EC, whose rank and status commensurate with those of Pourashava Mayor, should be given the task of holding the enquiry under Rule 32.
+
+23. In view of the foregoing discussions, the following orders are passed:
+
+The Notification dated 2-6-2022 (Annexure-G) cancelling the candidature of the petitioner is set-aside as being made without any lawful autority.
+So far as the supplementary Rule regarding suspension of election, vide Memo dated 12-6-2022 (Annexure-J) is concerned, the EC (respondent No. 1) is directed to hold the general election of Jhenaidah Pourashava, 2022 within the second week of September, 2022.
+After obtaining the enquiry report under Rule 32 of Rules, 2015, if the EC decides to proceed with the matter further, it must give a show cause notice to the contesting candidate before final decision is made, save and except in the situation indicated in the body of this judgment.
+The enquiry envisaged in Rule 32 so far as it relates to the contesting candidate for the post of Pourashava Mayor should be conducted by an officer, preferably drawn from the EC, whose rank and status commensurate with the post of Pourashava Mayor.
+24. With the above observations and directions the Rule and the supplementary Rule are disposed of.
+
+Communicate the judgment at once.
+
+End.
+===End===
