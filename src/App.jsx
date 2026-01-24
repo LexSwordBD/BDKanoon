@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 
 // --- Error Boundary Component (For White Screen Fix) ---
@@ -115,7 +115,7 @@ const HighlightedText = ({ text, highlight, isExactMatch }) => {
       const exactPhrase = escapeRegExp(highlight.trim());
       regex = new RegExp(`(${exactPhrase})`, 'gi');
     } else {
-      // ✅ Stopwords ফিল্টার করা হয়েছে
+      // ✅ Stopwords ফিল্টার করা হয়েছে, যাতে শুধু গুরুত্বপূর্ণ শব্দ হাইলাইট হয়
       const words = highlight.split(/\s+/)
         .filter(w => w.length > 0 && !stopwords.includes(w.toLowerCase()))
         .map(escapeRegExp);
@@ -156,8 +156,11 @@ function AppContent() {
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [suggestions, setSuggestions] = useState([]); // ✅ সাজেশনের জন্য স্টেট
-  const [showSuggestions, setShowSuggestions] = useState(false); // ✅ সাজেশন দেখাবে কিনা
+  
+  // ✅ ১. কিওয়ার্ড সাজেশনের জন্য স্টেট
+  const [suggestions, setSuggestions] = useState([]); 
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
   const [selectedLaw, setSelectedLaw] = useState('');
   const [isExactMatch, setIsExactMatch] = useState(false);
   const [showAdvSearch, setShowAdvSearch] = useState(false);
@@ -467,37 +470,54 @@ function AppContent() {
     };
   }, []);
 
-  // ✅ নতুন ১. অটো-সাজেশন লজিক (useEffect দিয়ে)
+  // ✅ নতুন ১. কিওয়ার্ড সাজেশন লজিক (Headnote থেকে)
   useEffect(() => {
     const fetchSuggestions = async () => {
       const trimmedTerm = searchTerm.trim();
-      if (trimmedTerm.length < 2) { // ২ অক্ষরের কম হলে সাজেশন দেখাবে না
+      if (trimmedTerm.length < 2) { 
         setSuggestions([]);
         setShowSuggestions(false);
         return;
       }
 
-      // সুপাবেজ থেকে ডাটা আনা (Title বা Headnote এ মিল থাকলে)
+      // সুপাবেজ থেকে হেডনোট আনা
       const { data, error } = await supabase
         .from('cases')
-        .select('title') // আমরা শুধু টাইটেল দেখাবো সাজেশন হিসেবে
-        .or(`title.ilike.%${trimmedTerm}%,headnote.ilike.%${trimmedTerm}%`)
-        .limit(5); // সর্বোচ্চ ৫টি সাজেশন
+        .select('headnote')
+        .ilike('headnote', `%${trimmedTerm}%`)
+        .limit(30);
 
       if (!error && data) {
-        setSuggestions(data);
+        const phraseSet = new Set();
+        
+        // হেডনোট থেকে কিওয়ার্ড বা ফ্রেজ এক্সট্রাক্ট করা (Google-এর মতো)
+        data.forEach(item => {
+          if (!item.headnote) return;
+          // রেজেক্স: সার্চ টার্ম দিয়ে শুরু হওয়া শব্দ + পরবর্তী ২-৩টি শব্দ
+          const match = item.headnote.match(new RegExp(`\\b${trimmedTerm}[\\w]*(\\s+[\\w]+){0,3}`, 'i'));
+          
+          if (match) {
+             let phrase = match[0].replace(/[.,;:"()]/g, '').trim();
+             // প্রথম অক্ষর বড় হাতের করা
+             if(phrase.length > 2) {
+               phrase = phrase.charAt(0).toUpperCase() + phrase.slice(1).toLowerCase();
+               phraseSet.add(phrase);
+             }
+          }
+        });
+
+        // ১০টি ইউনিক সাজেশন সেট করা
+        setSuggestions(Array.from(phraseSet).slice(0, 10));
         setShowSuggestions(true);
       }
     };
 
-    // Debounce: টাইপ করার ৩০০ms পর কল হবে, যাতে বারবার রিকোয়েস্ট না যায়
     const debounceTimer = setTimeout(() => {
       fetchSuggestions();
     }, 300);
 
     return () => clearTimeout(debounceTimer);
   }, [searchTerm]);
-
 
   const updateSessionInDB = async (currentSession) => {
     if (!currentSession?.user) return;
@@ -598,8 +618,7 @@ function AppContent() {
 
   const handleSearch = async (page = 1, type = 'simple') => {
     setLoading(true); setCurrentPage(page); setView('results');
-    // সার্চ শুরু হলে সাজেশন বন্ধ করে দিব
-    setShowSuggestions(false); 
+    setShowSuggestions(false); // সার্চ করার পর সাজেশন হাইড হবে
     try {
       let queryBuilder = supabase.from('cases').select('*', { count: 'exact' });
       if (type === 'advanced') {
@@ -877,6 +896,7 @@ function AppContent() {
             </>
           )}
           <div className="search-container">
+            {/* ✅ ৩. সার্চ বক্স এবং সাজেশন UI আপডেট করা হয়েছে */}
             <div className="search-container-box" style={{ position: 'relative' }}>
               <div className="law-select-wrapper">
                 <input className="law-input" list="lawList" placeholder="Select Law..." onChange={(e) => setSelectedLaw(e.target.value)} />
@@ -894,7 +914,7 @@ function AppContent() {
               <button className="btn btn-link text-secondary" onClick={() => setShowAdvSearch(!showAdvSearch)}><i className="fas fa-sliders-h"></i></button>
               <button className="btn-search-hero" onClick={() => handleSearch(1)}><i className="fas fa-arrow-right"></i></button>
 
-              {/* ✅ নতুন ৩. অটো-সাজেশন UI */}
+              {/* সাজেশন ড্রপডাউন */}
               {showSuggestions && suggestions.length > 0 && (
                 <div style={{
                   position: 'absolute', top: '100%', left: '0', right: '0',
@@ -906,9 +926,9 @@ function AppContent() {
                     <div 
                       key={index}
                       onClick={() => {
-                        setSearchTerm(item.title); // সাজেশনে ক্লিক করলে ইনপুট বক্সে সেট হবে
+                        setSearchTerm(item); // ফ্রেজটি সার্চ বক্সে বসবে
                         setShowSuggestions(false);
-                        handleSearch(1); // অটোমেটিক সার্চ ট্রিগার হবে
+                        handleSearch(1);
                       }}
                       style={{
                         padding: '12px 20px', cursor: 'pointer',
@@ -918,7 +938,7 @@ function AppContent() {
                       onMouseOver={(e) => e.target.style.background = '#f8fafc'}
                       onMouseOut={(e) => e.target.style.background = 'white'}
                     >
-                      <i className="fas fa-search text-secondary me-3 small"></i> {item.title}
+                      <i className="fas fa-search text-secondary me-3 small"></i> {item}
                     </div>
                   ))}
                 </div>
@@ -993,8 +1013,6 @@ function AppContent() {
             )}
             <div className="mt-4 text-justify" style={{ whiteSpace: 'pre-wrap', fontFamily: 'Merriweather', textAlign: 'justify' }}>{judgmentText}</div>
             
-            {/* ✅ DISCLAIMER SECTION ADDED HERE */}
-            {/* যদি জাজমেন্ট টেক্সটের মধ্যে অলরেডি ডিসক্লেইমার না থাকে, তবেই এটি দেখাবে */}
             {!judgmentText.includes("Please note that while every effort") && (
               <div className="mt-5 p-3 border-top border-secondary text-muted small fst-italic bg-light rounded text-center">
                 <strong>Disclaimer:</strong> {disclaimerText}
