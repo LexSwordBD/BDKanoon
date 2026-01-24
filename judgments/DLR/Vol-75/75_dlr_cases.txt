@@ -2996,3 +2996,116 @@ ORDER
 
   "Please note that while every effort has been made to provide accurate case references, there may be some unintentional errors. We encourage users to verify the information from official sources for complete accuracy."
 ===End===
+
+===75 DLR (HCD) 1===
+IN THE SUPREME COURT OF BANGLADESH 
+(HIGH COURT DIVISION)
+(Special Original Jurisdiction)
+
+Writ Petition No. 5380 of 2020
+
+Decided On: 19.08.2021
+
+Islam Prodhan and another
+... Vs. ...
+Government of Bangladesh and others
+
+Hon'ble Judges/Coram:
+Mr. Justice Md. Ashfaqul Islam and Mr. Justice Md. Iqbal Kabir
+
+Counsels:
+For Appellant/Petitioner/Plaintiff: Md. Oziullah with Md Tariqul Islam, Advocate
+For Respondents/Defendant: Kazi Mynul Hassan, Deputy Attorney-General—For the Respondent No. 5.
+
+Subject: Labour Law
+
+Acts/Rules/Orders:
+Bangladesh Labour Act, 2006 - Section 217, 218, 219, 219(gha), 303(e), 307, 351
+Limitation Act, 1908 - Section 5
+শ্রম বিধিমালা, ২০১৫ - Rule 205(4)
+শ্রম বিধিমালা, ২০১৫ - Form 66
+
+Prior History:
+From the judgment and order dated 3-9-2020 passed by the learned Chairman of the Labour Appellate Tribunal, Dhaka in BLA Appeal No. 66 of 2020
+
+ 
+Disposition:
+Rule made absolute
+
+JUDGMENT
+Md Ashfaqul Islam, J:
+
+1. This Rule under adjudication, at the instance of the petitioners, issued on 20-9-2020, was in the following terms:
+
+"Let a Rule Nisi be issued calling upon the respondents to show cause as to why the impugned judgment and order dated 3-9-2020 passed by the learned Chairman of the Labour Appellate Tribunal, Dhaka Respondent No. 2, in BLA Appeal No. 66 of 2020, summarily dismissing the appeal and thereby affirming the judgment and order dated 21-8-2016 passed by the learned Chairman of 3rd Labour Court, Dhaka Respondent No. 3, in BLA (Criminal) Case No. 348 of 2015 convicting the convict-petitioners along with another under section 303(e)/307 of the Bangladesh Labour Act, 2006 and sentencing all of them to suffer simple imprisonment for 6 (six) months and to pay a fine of Taka 30,000 (Thirty thousands) each of them in default, to suffer further simple imprisonment for 1 (one) month should not be declared as illegal, without lawful authority and is of no legal effect and/or such other or further order or orders passed as to this Court may seem fit and proper."
+2. Be it mentioned that on an application for bail filed by the petitioners this Division on 2-12-2020 enlarged the convict-petitioners on bail.
+
+3. The background leading to the Rule in short is that at the initiation of one Happy Akter, Labour Inspector (General), Department of Inspection for Factories and Establishment, Narayanganj (complainant) BLA (Criminal) Case No. 348 of 2015 was filed before the Chairman of 3rd Labour Court, Dhaka against the convict-petitioners under section 303(e)/307 of the Bangladesh Labour Act, 2006 (hereinafter referred to as Act, 2006). After receiving the said complaint the case was registered and charge was framed under section 303(e)/307 of the Act, 2006 against the petitioners and the trial proceeded accordingly. And upon completion of the trial the Chairman, Labour Court found the petitioners guilty under the said section and sentenced him to suffer simple imprisonment for 6 (six) months and to pay fine of Taka 30,000 (Thirty thousand), in default, to suffer further simple imprisonment for 1 (one) month by the Judgment and order dated 21-8-2016. The petitioners challenging the said judgment and order filed an appeal being BLA. Appeal No. 66 of 2020 with an application for condonation of delay of filing the appeal. The said appeal was heard on 3-9-2020 and the learned Chairman of the Labour Appellate Tribunal, Dhaka, respondent No. 2 summarily dismissed the appeal as being barred by law. The petitioners being aggrieved by and dissatisfied with the said order of dismissal moved this Division and obtained the present Rule as aforesaid.
+
+4. Mr Md Oziullah, the learned Advocate appearing with Mr Tariqul Islam, the learned Advocate for the petitioners after placing the petition, judgment of both the Courts below mainly advanced his argument on the question of limitation which is the focal point and the decisive factor in respect of the impugned judgment passed by the Labour Appellate Tribunal. He submits that the Appellate Tribunal misdirected itself in holding that section 5 of limitation Act, 1908 has no manner of application under section 217 which relates to filing an appeal in as much as the same being a special law. In elaborating his submissions the learned Counsel refers section 218 and 219 of Act, 2006 read with Rule 205(4) of শ্রম বিধিমালা, ২০১৫ (hereinafter referred to as Rules, 2015) and also form 66 therein. It is his submissions that if the said law and Rule be read together, it can be well perceived that in filing appeal under section 217, if there be any delay, an application under section 5 of the limitation Act, 1908 is well applicable. In other words, as he reiterates, section 5 of the limitation Act will apply with all its trappings in case of filing an application before the Labour Appellate Tribunal. Therefore, he concludes that the Appellate Court should have taken into consideration the application for condonation of delay on merit while deciding the same.
+
+5. The Rule is not opposed by filing any affidavit-in-opposition on behalf of the respondents.
+
+6. We have heard the learned Counsel appearing for the petitioners and considered his submissions and also gone through the impugned judgment passed by the Labour Appellate Tribunal and also the judgment passed by the 3rd Labour Court, Dhaka carefully.
+
+7. The only question that to be considered in this petition is whether upon analysis and interpretation of the provisions of Labour Act, 2006 and the Bangladesh Srama Bidhimala, 2015, the order impugned against would sustain.
+
+8. For better understanding and appreciation let us have a glean on a relevant laws governing the issue. Section 217 of Act, 2006 enjoins:
+
+“২১৭ । এই আইন সাপেক্ষে, শ্রম আদালত কর্তৃক প্রদত্ত কোন রায়, সিদ্ধান্ত, রোয়েদাদ বা দন্ডের বিরুদ্ধে কোন সংক্ষুব্ধ পক্ষ, উহা প্রদানের ষাট দিনের মধ্যে ট্রাইব্যুনালে আপীল দায়ের করিতে পারিবে এবং উক্তরূপ আপীলের ক্ষেত্রে ট্রাইব্যুনালের সিদ্ধান্ত চুড়ান্ত হইবে।”
+Next section 219 states:
+
+“২১৯ । কোন শ্রম আদালত কোন দরখাস্ত অথবা ট্রাইব্যুনালে কোন আপীল বিধি দ্বারা নির্ধারিত ফরমে পেশ করিতে হইবে এবং উহাতে বিধি দ্বারা নির্ধারিত বিষয় ছাড়াও নিম্নলিখিত বিষয়সমূহ লিপিবদ্ধ থাকিতে হইবে, যথাঃ-
+
+(ক)-----------------------------------
+
+(ঘ) দরখাস্ত বা আপীল বিলম্বে পেশের ক্ষেত্রে উক্ত বিলম্বের কারণ এবং যে আইনের ধারার অধীন বিলম্ব মওকুফ প্রার্থনা করা হইয়াছে উহার উল্লেখ;”
+Rule 205(4) of Rules, 2015 runs thus:
+
+“২০৫ । শ্রম আদালত বা আপীল ট্রাইব্যুনালে মামলা দায়ের।–
+
+(৪) ফরম-৬৬ অনুযায়ী ধারা ২১৯ মোতাবেক আপীল দায়ের করিতে হইবে।”
+9. And in form 66 column no. 2 it has been clearly mentioned ‘আপীল দায়েরে বিলম্ব ও মওকুফের কারণসমূহ’ It would be worthwhile to reproduced the form itself for construing and understanding:
+
+ফরম-৬৬
+[ধারা ২১৯ এবং বিধি ২০৫(৪) দ্রষ্টব্য]
+
+আপীলের দরখাস্ত
+আপীল------------নং/২০
+--------এ্যাপিল্যান্ট
+
+প্রসঙ্গ:
+------শ্রম আদালত কর্তৃক প্রদত্ত----- নং মোকদ্দমায়-------তারিখে প্রদত্ত রায়/অনুমতির বিরুদ্ধে বাংলাদেশ শ্রম আইন, ২০০৬ এর ধারা ২১৯ অনুযায়ী আপীল।
+১। আপীলকারীর বিনীত নিবেদন
+(ক) ----------------------------------------
+(খ) ----------------------------------------
+(গ) ----------------------------------------
+(ঘ) ----------------------------------------
+২। বিজ্ঞ শ্রম আদালত -----------তারিখের রায়ে নিম্নবর্ণিত কারণসমূহে ক্রমান্বয়ে সিদ্ধান্তে উপনীত হইয়াছেন—
+কারণসমূহ:
+(ক) ---------------------------------------
+(খ) --------------------------------------
+(গ) --------------------------------------
+(ঘ) --------------------------------------
+আপীল দায়েরে বিলম্ব মওকুফের কারণসমূহ
+--------------------------------------
+এমতাবস্থায় প্রার্থনা--------- শ্রম আদালতের ---------- তারিখের তর্কিত আদেশ বাতিলপূর্বক মোকদ্দমায় প্রার্থিত প্রতিকার মঞ্জুর করিতে মর্জি হয়।
+স্বাক্ষর:--------------------------
+তারিখ: -------------------------
+সংযুক্তি
+১।
+10. However, the law and the Rules if be read together it gives a clear picture that an appeal filed before the Labour Appellate Tribunal under section 217 has to be read with 219(gha) which clearly prescribed that appeal if be filed out of time the reasons for delay must be stated with a prayer for condonation of the delay of the said Ruling. Together with that when we visit Rule 205(4) of Rules, 2015 we find that in terms of the procedure of form 66 an appeal should be filed. In this connection section 219 of the Act, 2006 shall have to be mentioned. And in form 66 column 2 it has been clearly mentioned আপীল দায়ের ও বিলম্বের কারণসমূহ.
+
+11. The law and the rules clearly spelt out that limitation act would certainly operate as an aid to a party seeking condonation of delay in filing the appeal. This legal fiction or so to say the analogy has certainly escaped notice of the Appellate Tribunal. Further it has also failed to take into consideration the provisions of Rules, 2015 in the manner as we have discussed. Be it mentioned in this regard that right to appeal is a statutory right, a right which certainly should not be circumvent with any other provisions having prohibiting effect. Rules, 2015 came into force in chapter 15(9) of 2015 by SRO No. 291/Ain/2015. This Rule was framed and promulgated pursuant to section 351 of Act, 2006 which is the enabling section.
+
+12. Therefore, we are of the view that the submissions of the learned Counsel for the petitioners merit substance and hold that with the introduction of Rules, 2015 the question of section 5 of the limitation Act shall have clear application in filing of appeal before the Labour Appellate Tribunal. This aspect was not considered while passing the impugned judgment summarily rejecting the appeal on the ground of limitation. Therefore, this Rule succeeds.
+
+13. In the result the rule is made absolute. The judgment and order passed by the Labour Appellate Tribunal in BLA Appeal No. 66 of 2020 summarily dismissing the appeal on the ground of limitation is declared to have been passed without lawful authority having no legal effect and set-aside.
+
+Communicate at once.
+
+End.
+
+
+  "Please note that while every effort has been made to provide accurate case references, there may be some unintentional errors. We encourage users to verify the information from official sources for complete accuracy."
+===End===
