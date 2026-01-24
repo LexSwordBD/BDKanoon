@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
 
 // --- Error Boundary Component (For White Screen Fix) ---
@@ -93,15 +93,16 @@ const lawAliases = {
   // --- Administrative & Others ---
   'Administrative Tribunals Act (প্রশাসনিক ট্রাইব্যুনাল)': ['Administrative Tribunal', 'Admin Tribunal', 'KAT', 'A.T.', 'Service matter', 'Pension', 'Disciplinary', 'প্রশাসনিক ট্রাইব্যুনাল'],
   'Bangladesh Labor Act (শ্রম আইন)': ['Labor Act', 'Labour', 'Employment', 'Worker', 'Wages', 'Compensation', 'Dismissal', 'Termination', 'Trade Union', 'শ্রম'],
-  'Road Transport & Motor Vehicles (সড়ক পরিবহন)': ['Road Transport', 'Motor Vehicles', 'Accident', 'Driving License', 'Compensation', 'সড়ক পরিবহন', 'মোটরযান'],
+  'Road Transport & Motor Vehicles (সড়ক পরিবহন)': ['Road Transport', 'Motor Vehicles', 'Accident', 'Driving License', 'Compensation', 'সড়ক পরিবহন', 'মোটরযান'],
   'Environment Conservation Act (পরিবেশ সংরক্ষণ)': ['Environment', 'Pollution', 'Brick Kiln', 'DoE', 'পরিবেশ'],
   'Consumer Rights Protection Act (ভোক্তা অধিকার)': ['Consumer Rights', 'Consumer', 'DNCRP', 'ভোক্তা অধিকার'],
   'Food Safety Act (নিরাপদ খাদ্য)': ['Food Safety', 'Adulteration', 'Pure Food', 'নিরাপদ খাদ্য'],
   'Right to Information Act (তথ্য অধিকার)': ['Right to Information', 'RTI', 'তথ্য অধিকার']
 };
 
-const stopwords = ['a', 'an', 'the', 'of', 'in', 'and', 'or', 'is', 'are', 'was', 'were', 'be', 'to', 'for', 'with', 'on', 'at', 'by', 'from', 'shall', 'will', 'am'];
+const stopwords = ['a', 'an', 'the', 'of', 'in', 'and', 'or', 'is', 'are', 'was', 'were', 'be', 'to', 'for', 'with', 'on', 'at', 'by', 'from', 'shall', 'will', 'am', 'i', 'my', 'me', 'we', 'our', 'it', 'its', 'that', 'this', 'those', 'these'];
 
+// ✅ ২. হাইলাইটেড টেক্সট ফিক্স (স্টপ ওয়ার্ড বাদ দিয়ে)
 const HighlightedText = ({ text, highlight, isExactMatch }) => {
   if (!text) return null;
   if (!highlight) return <span>{text}</span>;
@@ -114,7 +115,11 @@ const HighlightedText = ({ text, highlight, isExactMatch }) => {
       const exactPhrase = escapeRegExp(highlight.trim());
       regex = new RegExp(`(${exactPhrase})`, 'gi');
     } else {
-      const words = highlight.split(/\s+/).filter(w => w.length > 0).map(escapeRegExp);
+      // ✅ Stopwords ফিল্টার করা হয়েছে
+      const words = highlight.split(/\s+/)
+        .filter(w => w.length > 0 && !stopwords.includes(w.toLowerCase()))
+        .map(escapeRegExp);
+      
       if (words.length === 0) return <span>{text}</span>;
       regex = new RegExp(`(${words.join('|')})`, 'gi');
     }
@@ -146,11 +151,13 @@ function AppContent() {
   const [isNavbarVisible, setIsNavbarVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
-  // Search States
+  // Search & Suggestions States
   const [results, setResults] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
+  const [suggestions, setSuggestions] = useState([]); // ✅ সাজেশনের জন্য স্টেট
+  const [showSuggestions, setShowSuggestions] = useState(false); // ✅ সাজেশন দেখাবে কিনা
   const [selectedLaw, setSelectedLaw] = useState('');
   const [isExactMatch, setIsExactMatch] = useState(false);
   const [showAdvSearch, setShowAdvSearch] = useState(false);
@@ -386,7 +393,7 @@ function AppContent() {
     const initSession = async () => {
       setLoading(true);
 
-      // ১. পাসওয়ার্ড রিসেট চেক
+      // ১. পাসওয়ার্ড রিসেট চেক
       const hash = window.location.hash;
       if (hash && (hash.includes('type=recovery') || hash.includes('error_description'))) {
          setModalMode('resetPassword');
@@ -400,13 +407,13 @@ function AppContent() {
       try {
         const { data, error } = await supabase.auth.getSession();
         
-        // যদি সেশন ফেচ করতে এরর হয় (সম্ভাব্য করাপ্ট স্টোরেজ), স্টোরেজ ক্লিয়ার করে দাও
+        // যদি সেশন ফেচ করতে এরর হয় (সম্ভাব্য করাপ্ট স্টোরেজ), স্টোরেজ ক্লিয়ার করে দাও
         if (error) {
             console.error("Session fetch error:", error);
             hardClearAuthStorage(); 
         }
 
-        // সেশন পাওয়া গেলে বা চেক শেষ হলে টাইমার বন্ধ করে দিব
+        // সেশন পাওয়া গেলে বা চেক শেষ হলে টাইমার বন্ধ করে দিব
         clearTimeout(timer);
 
         const current = data?.session || null;
@@ -427,7 +434,7 @@ function AppContent() {
         }
       } catch (error) {
         console.error("Session Init Critical Error:", error);
-        // ক্যাচ ব্লকে আসলে রিস্ক নিবো না, স্টোরেজ ক্লিয়ার করে দিব যাতে অ্যাপ ফ্রিজ না হয়
+        // ক্যাচ ব্লকে আসলে রিস্ক নিবো না, স্টোরেজ ক্লিয়ার করে দিব যাতে অ্যাপ ফ্রিজ না হয়
         hardClearAuthStorage();
         if (isMounted) setLoading(false);
       }
@@ -459,6 +466,38 @@ function AppContent() {
       if (sessionInterval) clearInterval(sessionInterval);
     };
   }, []);
+
+  // ✅ নতুন ১. অটো-সাজেশন লজিক (useEffect দিয়ে)
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      const trimmedTerm = searchTerm.trim();
+      if (trimmedTerm.length < 2) { // ২ অক্ষরের কম হলে সাজেশন দেখাবে না
+        setSuggestions([]);
+        setShowSuggestions(false);
+        return;
+      }
+
+      // সুপাবেজ থেকে ডাটা আনা (Title বা Headnote এ মিল থাকলে)
+      const { data, error } = await supabase
+        .from('cases')
+        .select('title') // আমরা শুধু টাইটেল দেখাবো সাজেশন হিসেবে
+        .or(`title.ilike.%${trimmedTerm}%,headnote.ilike.%${trimmedTerm}%`)
+        .limit(5); // সর্বোচ্চ ৫টি সাজেশন
+
+      if (!error && data) {
+        setSuggestions(data);
+        setShowSuggestions(true);
+      }
+    };
+
+    // Debounce: টাইপ করার ৩০০ms পর কল হবে, যাতে বারবার রিকোয়েস্ট না যায়
+    const debounceTimer = setTimeout(() => {
+      fetchSuggestions();
+    }, 300);
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchTerm]);
+
 
   const updateSessionInDB = async (currentSession) => {
     if (!currentSession?.user) return;
@@ -559,6 +598,8 @@ function AppContent() {
 
   const handleSearch = async (page = 1, type = 'simple') => {
     setLoading(true); setCurrentPage(page); setView('results');
+    // সার্চ শুরু হলে সাজেশন বন্ধ করে দিব
+    setShowSuggestions(false); 
     try {
       let queryBuilder = supabase.from('cases').select('*', { count: 'exact' });
       if (type === 'advanced') {
@@ -836,15 +877,54 @@ function AppContent() {
             </>
           )}
           <div className="search-container">
-            <div className="search-container-box">
+            <div className="search-container-box" style={{ position: 'relative' }}>
               <div className="law-select-wrapper">
                 <input className="law-input" list="lawList" placeholder="Select Law..." onChange={(e) => setSelectedLaw(e.target.value)} />
                 <datalist id="lawList">{Object.keys(lawAliases).map(law => <option key={law} value={law} />)}</datalist>
               </div>
-              <input type="text" className="main-input" placeholder="Search keywords..." value={searchTerm} maxLength={50} onChange={(e) => setSearchTerm(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch(1)} />
+              <input 
+                type="text" 
+                className="main-input" 
+                placeholder="Search keywords..." 
+                value={searchTerm} 
+                maxLength={50} 
+                onChange={(e) => setSearchTerm(e.target.value)} 
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch(1)} 
+              />
               <button className="btn btn-link text-secondary" onClick={() => setShowAdvSearch(!showAdvSearch)}><i className="fas fa-sliders-h"></i></button>
               <button className="btn-search-hero" onClick={() => handleSearch(1)}><i className="fas fa-arrow-right"></i></button>
+
+              {/* ✅ নতুন ৩. অটো-সাজেশন UI */}
+              {showSuggestions && suggestions.length > 0 && (
+                <div style={{
+                  position: 'absolute', top: '100%', left: '0', right: '0',
+                  background: 'white', borderRadius: '12px',
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.1)', zIndex: 1000,
+                  marginTop: '5px', overflow: 'hidden'
+                }}>
+                  {suggestions.map((item, index) => (
+                    <div 
+                      key={index}
+                      onClick={() => {
+                        setSearchTerm(item.title); // সাজেশনে ক্লিক করলে ইনপুট বক্সে সেট হবে
+                        setShowSuggestions(false);
+                        handleSearch(1); // অটোমেটিক সার্চ ট্রিগার হবে
+                      }}
+                      style={{
+                        padding: '12px 20px', cursor: 'pointer',
+                        borderBottom: index !== suggestions.length - 1 ? '1px solid #f1f5f9' : 'none',
+                        color: '#334155', fontSize: '15px', textAlign: 'left'
+                      }}
+                      onMouseOver={(e) => e.target.style.background = '#f8fafc'}
+                      onMouseOut={(e) => e.target.style.background = 'white'}
+                    >
+                      <i className="fas fa-search text-secondary me-3 small"></i> {item.title}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
+
             <div className="d-flex justify-content-center gap-3 mt-3">
               <label className="small text-secondary d-flex align-items-center gap-2" style={{ cursor: 'pointer' }}>
                 <input type="checkbox" onChange={(e) => setIsExactMatch(e.target.checked)} /> Exact Phrase Match
