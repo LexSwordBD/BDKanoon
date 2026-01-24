@@ -44,7 +44,7 @@ body {
     font-size: 14px; 
     margin: 0 6px; 
     transition: 0.3s; 
-    padding: 10px 16px;        /* প্যাডিং ফিক্স করা হয়েছে */
+    padding: 10px 16px;        /* প্যাডিং ফিক্স করা হয়েছে */
     border-radius: 50px;       /* বাটন শেপ */
     display: inline-flex;      /* এলাইনমেন্ট ফিক্স */
     align-items: center; 
@@ -129,6 +129,29 @@ body {
     font-family: 'Merriweather', serif; font-size: 17px; line-height: 1.8;
 }
 
+/* ✅ Judgment Table Fix (এখানে আপনার টেবিলের বর্ডার কোড যুক্ত করা হয়েছে) */
+#readerView table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 15px;
+}
+#readerView table, 
+#readerView th, 
+#readerView td {
+    border: 1px solid #000 !important; /* Force black visible border */
+}
+#readerView th, 
+#readerView td {
+    padding: 10px;
+    text-align: left;
+    vertical-align: top;
+}
+#readerView th {
+    background-color: #f1f5f9;
+    font-weight: 700;
+}
+
 /* --- Pricing Cards --- */
 .packages-section { padding: 80px 15px; background: white; }
 .pricing-card {
@@ -181,6 +204,13 @@ footer { background: #0f172a; color: #94a3b8; padding: 60px 0; font-size: 14px; 
     
     .navbar-brand { font-size: 20px; }
     .pricing-card.popular { transform: none; }
+    
+    /* Mobile Table Scroll Fix */
+    #readerView table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
 }
 
 /* --- Floating WhatsApp --- */
