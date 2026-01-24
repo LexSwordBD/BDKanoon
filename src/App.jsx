@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
 
 // --- Error Boundary Component (For White Screen Fix) ---
@@ -14,7 +14,6 @@ class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     console.error("App Crash Error:", error, errorInfo);
-    // যদি ক্রিটিকাল এরর হয়, লোকাল স্টোরেজ ক্লিয়ার করে দিবে যাতে ইউজার আটকে না থাকে
     localStorage.clear();
     sessionStorage.clear();
   }
@@ -102,7 +101,6 @@ const lawAliases = {
 
 const stopwords = ['a', 'an', 'the', 'of', 'in', 'and', 'or', 'is', 'are', 'was', 'were', 'be', 'to', 'for', 'with', 'on', 'at', 'by', 'from', 'shall', 'will', 'am', 'i', 'my', 'me', 'we', 'our', 'it', 'its', 'that', 'this', 'those', 'these'];
 
-// ✅ ২. হাইলাইটেড টেক্সট ফিক্স (স্টপ ওয়ার্ড বাদ দিয়ে)
 const HighlightedText = ({ text, highlight, isExactMatch }) => {
   if (!text) return null;
   if (!highlight) return <span>{text}</span>;
@@ -115,7 +113,6 @@ const HighlightedText = ({ text, highlight, isExactMatch }) => {
       const exactPhrase = escapeRegExp(highlight.trim());
       regex = new RegExp(`(${exactPhrase})`, 'gi');
     } else {
-      // ✅ Stopwords ফিল্টার করা হয়েছে, যাতে শুধু গুরুত্বপূর্ণ শব্দ হাইলাইট হয়
       const words = highlight.split(/\s+/)
         .filter(w => w.length > 0 && !stopwords.includes(w.toLowerCase()))
         .map(escapeRegExp);
@@ -144,10 +141,7 @@ function AppContent() {
   const [view, setView] = useState('home');
   const [loading, setLoading] = useState(true);
 
-  // অ্যাপ ইনস্টল অফার রাখার জন্য স্টেট
   const [deferredPrompt, setDeferredPrompt] = useState(null);
-
-  // মেনুবার স্ক্রল কন্ট্রোল স্টেট
   const [isNavbarVisible, setIsNavbarVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
@@ -157,7 +151,6 @@ function AppContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // ✅ ১. কিওয়ার্ড সাজেশনের জন্য স্টেট
   const [suggestions, setSuggestions] = useState([]); 
   const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -166,29 +159,23 @@ function AppContent() {
   const [showAdvSearch, setShowAdvSearch] = useState(false);
   const [advFields, setAdvFields] = useState({ journal: '', vol: '', div: '', page: '' });
 
-  // Reader State
   const [currentJudgment, setCurrentJudgment] = useState(null);
   const [judgmentText, setJudgmentText] = useState('');
   const [parallelCitations, setParallelCitations] = useState([]);
 
-  // Modals Control
   const [modalMode, setModalMode] = useState(null);
   const [profileData, setProfileData] = useState(null);
 
-  // Password visibility
   const [showLoginPass, setShowLoginPass] = useState(false);
   const [showSignupPass, setShowSignupPass] = useState(false);
   const [showResetPass, setShowResetPass] = useState(false);
 
-  // Notification Modal
   const [notice, setNotice] = useState(null);
   const openNotice = (payload) => setNotice(payload);
   const closeNotice = () => setNotice(null);
 
-  // Disclaimer Text
   const disclaimerText = "Please note that while every effort has been made to provide accurate case references, there may be some unintentional errors. We encourage users to verify the information from official sources for complete accuracy.";
 
-  // ব্রাউজার থেকে ইনস্টল অফার ধরার জন্য useEffect
   useEffect(() => {
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
@@ -196,9 +183,7 @@ function AppContent() {
     });
   }, []);
 
-  // ফুল স্ক্রিন এবং মেনুবার হাইড লজিক
   useEffect(() => {
-    // 1. Full Screen Meta Tags
     let viewport = document.querySelector('meta[name="viewport"]');
     if (viewport) {
       viewport.content = "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover";
@@ -209,7 +194,6 @@ function AppContent() {
       document.head.appendChild(viewport);
     }
 
-    // 2. Status Bar কালার সেট করা
     let metaTheme = document.querySelector('meta[name="theme-color"]');
     if (!metaTheme) {
       metaTheme = document.createElement('meta');
@@ -218,7 +202,6 @@ function AppContent() {
     }
     metaTheme.content = "#ffffff";
 
-    // 3. Scroll Listener
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       if (currentScrollY > lastScrollY && currentScrollY > 50) {
@@ -233,7 +216,6 @@ function AppContent() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
-  // --- Helper: hard local signout ---
   const hardClearAuthStorage = () => {
     try {
       const keys = Object.keys(localStorage || {});
@@ -392,17 +374,14 @@ function AppContent() {
     let sessionInterval;
     let isMounted = true;
 
-    // ✅ SUPER FAST LOAD & WHITE SCREEN FIX LOGIC
     const initSession = async () => {
       setLoading(true);
 
-      // ১. পাসওয়ার্ড রিসেট চেক
       const hash = window.location.hash;
       if (hash && (hash.includes('type=recovery') || hash.includes('error_description'))) {
          setModalMode('resetPassword');
       }
 
-      // ২. টাইমআউট সেফটি ভালভ: ১.৫ সেকেন্ডের বেশি লোডিং দেখাবে না
       const timer = setTimeout(() => {
         if (isMounted) setLoading(false);
       }, 1500);
@@ -410,19 +389,16 @@ function AppContent() {
       try {
         const { data, error } = await supabase.auth.getSession();
         
-        // যদি সেশন ফেচ করতে এরর হয় (সম্ভাব্য করাপ্ট স্টোরেজ), স্টোরেজ ক্লিয়ার করে দাও
         if (error) {
             console.error("Session fetch error:", error);
             hardClearAuthStorage(); 
         }
 
-        // সেশন পাওয়া গেলে বা চেক শেষ হলে টাইমার বন্ধ করে দিব
         clearTimeout(timer);
 
         const current = data?.session || null;
         if (isMounted) {
           setSession(current);
-          // ৩. সফলভাবে চেক হলে লোডিং বন্ধ
           setLoading(false); 
           if (current) {
             Promise.resolve().then(() => checkSubscription(current.user)).catch(() => { });
@@ -437,7 +413,6 @@ function AppContent() {
         }
       } catch (error) {
         console.error("Session Init Critical Error:", error);
-        // ক্যাচ ব্লকে আসলে রিস্ক নিবো না, স্টোরেজ ক্লিয়ার করে দিব যাতে অ্যাপ ফ্রিজ না হয়
         hardClearAuthStorage();
         if (isMounted) setLoading(false);
       }
@@ -470,7 +445,6 @@ function AppContent() {
     };
   }, []);
 
-  // ✅ নতুন ১. কিওয়ার্ড সাজেশন লজিক (Headnote থেকে)
   useEffect(() => {
     const fetchSuggestions = async () => {
       const trimmedTerm = searchTerm.trim();
@@ -480,7 +454,6 @@ function AppContent() {
         return;
       }
 
-      // সুপাবেজ থেকে হেডনোট আনা
       const { data, error } = await supabase
         .from('cases')
         .select('headnote')
@@ -490,15 +463,12 @@ function AppContent() {
       if (!error && data) {
         const phraseSet = new Set();
         
-        // হেডনোট থেকে কিওয়ার্ড বা ফ্রেজ এক্সট্রাক্ট করা (Google-এর মতো)
         data.forEach(item => {
           if (!item.headnote) return;
-          // রেজেক্স: সার্চ টার্ম দিয়ে শুরু হওয়া শব্দ + পরবর্তী ২-৩টি শব্দ
           const match = item.headnote.match(new RegExp(`\\b${trimmedTerm}[\\w]*(\\s+[\\w]+){0,3}`, 'i'));
           
           if (match) {
              let phrase = match[0].replace(/[.,;:"()]/g, '').trim();
-             // প্রথম অক্ষর বড় হাতের করা
              if(phrase.length > 2) {
                phrase = phrase.charAt(0).toUpperCase() + phrase.slice(1).toLowerCase();
                phraseSet.add(phrase);
@@ -506,7 +476,6 @@ function AppContent() {
           }
         });
 
-        // ১০টি ইউনিক সাজেশন সেট করা
         setSuggestions(Array.from(phraseSet).slice(0, 10));
         setShowSuggestions(true);
       }
@@ -616,9 +585,10 @@ function AppContent() {
     }
   };
 
-  const handleSearch = async (page = 1, type = 'simple') => {
+  // ✅ আপডেটেড handleSearch: এখন এটি ৩য় আর্গুমেন্ট হিসেবে termOverride গ্রহণ করে
+  const handleSearch = async (page = 1, type = 'simple', termOverride = null) => {
     setLoading(true); setCurrentPage(page); setView('results');
-    setShowSuggestions(false); // সার্চ করার পর সাজেশন হাইড হবে
+    setShowSuggestions(false); 
     try {
       let queryBuilder = supabase.from('cases').select('*', { count: 'exact' });
       if (type === 'advanced') {
@@ -636,7 +606,11 @@ function AppContent() {
           const titleChecks = aliases.map(a => `title.ilike.%${a}%`).join(',');
           aliasCondition = headnoteChecks + ',' + titleChecks;
         }
-        const safeSearchTerm = searchTerm.replace(/[^\w\s\u0980-\u09FF-]/g, "");
+        
+        // ✅ ফিক্স: যদি termOverride থাকে, সেটা ব্যবহার করো, নাহলে state এর searchTerm
+        const termToUse = termOverride !== null ? termOverride : searchTerm;
+        const safeSearchTerm = termToUse.replace(/[^\w\s\u0980-\u09FF-]/g, "");
+
         if (isExactMatch) {
           const queryStr = `headnote.ilike.%${safeSearchTerm}%,title.ilike.%${safeSearchTerm}%`;
           if (aliasCondition) queryBuilder = queryBuilder.or(aliasCondition + ',' + queryStr); else queryBuilder = queryBuilder.or(queryStr);
@@ -658,7 +632,6 @@ function AppContent() {
       const { data, error, count } = await queryBuilder.range(from, to).order('page_number', { ascending: true });
       
       if (data) { 
-        // ডুপ্লিকেট হেডনোট ফিল্টার
         const seenHeadnotes = new Set();
         const uniqueData = data.filter(item => {
           if (!item.headnote) return true;
@@ -896,7 +869,6 @@ function AppContent() {
             </>
           )}
           <div className="search-container">
-            {/* ✅ ৩. সার্চ বক্স এবং সাজেশন UI আপডেট করা হয়েছে */}
             <div className="search-container-box" style={{ position: 'relative' }}>
               <div className="law-select-wrapper">
                 <input className="law-input" list="lawList" placeholder="Select Law..." onChange={(e) => setSelectedLaw(e.target.value)} />
@@ -925,10 +897,11 @@ function AppContent() {
                   {suggestions.map((item, index) => (
                     <div 
                       key={index}
+                      // ✅ আপডেট: এখন ক্লিক করলে সরাসরি সার্চ হবে
                       onClick={() => {
-                        setSearchTerm(item); // ফ্রেজটি সার্চ বক্সে বসবে
+                        setSearchTerm(item); 
                         setShowSuggestions(false);
-                        handleSearch(1);
+                        handleSearch(1, 'simple', item); 
                       }}
                       style={{
                         padding: '12px 20px', cursor: 'pointer',
