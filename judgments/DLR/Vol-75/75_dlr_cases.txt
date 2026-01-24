@@ -3752,3 +3752,95 @@ Communicate the judgment at once.
 
 End.
 ===End===
+
+===75 DLR (HCD) 38===
+High Court Division 
+(Civil Revisional Jurisdiction)
+Present:
+Mr. Justice Md. Zakir Hossain
+
+Civil Revision No. 32 of 2020.
+
+Momin Ali (Md)
+---------- Petitioner
+VS
+Md Din Islam and others
+-------------- Opposite Parties
+
+Judgement Date : February 27, 2022
+
+Counsels:
+Khair Ezaz Maswood, Senior Advocate with Md Hashmat Ullah Sheikh, Advocate
+---- For the Petitioner
+
+Md Mamun Aleem, Advocate
+------- For the Opposite Party Nos. 1-7.
+
+Judgment
+1. At the instance of the petitioner, the Rule was issued to examine the legality and propriety of the impugned judgment and order dated 24-10-2019 passed by the learned District Judge, Dhaka in Civil Revision No. 145 of 2019 dismissing the same and thereby affirmed the order dated 12-3-2018 passed by the learned Senior Assistant Judge, 2nd Court and Arpita Shampatty Prattyrpan Tribunal, Dhaka in Arpita Shampatty Prattyrpan Case No. 3765 of 2013.
+
+2. Facts leading to the issuance of the Rule may be stated, in brief, as follows:
+
+The opposite party Nos.1-7 being plaintiff filed Arpita Shampatty Prattyrpan Case No. 3765 of 2013 for releasing the land as mentioned in the schedule to the plaint. Having received the summons, the defendant-Government entered appearance in the suit and submitted written statement denying the materials allegation set out in the plaint and after amendment of the plaint, the defendant filed additional written statement. During the pendency of the aforesaid suit, the instant petitioner claiming as lessee filed an application to be added as defendant under Order 1, rule 10(2) of the CPC. Upon hearing, the trial Court was pleased to reject the petition. Thereafter, the instant petitioner challenged the impugned order of the trial Court by way of revision and the learned District Judge upon hearing rejected the Revisional Application. Challenging the legality and propriety of the said order, the petitioner rushed to this Court and moved this application and obtained the Rule and stay thereto.
+
+3. Mr Khair Ezaz Maswood, the learned Senior Advocate along with Mr Md Hashmat Ullah Sheikh, the learned Advocate appearing on behalf of the petitioner, submits that admittedly the petitioner is a lessee under the Government. He also submits that since the property as mentioned in the schedule to the plaint was treated as enemy property and thereafter, vested to the Government and the Government leased it out to the petitioner and since in 1973, the petitioner has been the possessing the property as lessee and, therefore, he is a necessary party. He further submits that if the petitioner-lessee is not made party, he will suffer irreparable loss and injury; thereafter, for final and complete adjudication, the instant lessee needs to be made necessary party. He relies on the decisions of the several cases of Waliullah Munshi vs Lodu Mia Patwary and others, reported in 38 DLR (AD) 308, Babar Ali Pramanik and others vs Mosar Ali Pramanik and others, reported in 45 DLR (AD) 120, Mst. Aleya Begum vs Mohiuddin Manik and others, reported in 1987 BLD 105, Afzal Hossain vs Tahera Khatun and another, reported in 40 DLR 528 and Azharul Islam vs Idris Ali, reported in 39 DLR 352.
+
+4. Per contra, Mr Md Mamun Aleem, the learned Advocate on behalf of the opposite party Nos. 1-7, submits that lessee is not a necessary party to the suit and the lessee is also not in possession as per the report of the commissioner who held local inspection. His submission is on the decision of the cases of Sreemati Aroti Rani Paul vs Sree Sudarshan Kumar Paul and others, reported in 11 MLR (AD) (2006) 43 = 56 DLR (AD) 73 and Police Commissioner vs Dhaka Land (Pvt.) Ltd. and others, 9 BLT (AD) (2001) 64.
+
+5. I have perused the entire materials on record and submission advanced by the learned Advocates of the parties and the LCRs and the legal question intricately involved in this case with great care and attention and seriousness as it deserves.
+
+6. Now, the moot issue is—
+
+Whether the lessee in possession is necessary party or proper party.
+
+7. It cannot be denied that the Civil Court has got wide discretion to add or strike out the name of the parties in view of Order 1 rule 10(2) of the CPC. In the case of 38 DLR (AD) 308, the Appellate Division consisted of four Judges held that lessee in possession is a necessary party. In this respect for better appreciation, the relevant portion of the said judgment reported in 38 DLR (AD) 308, supra may be read thus:
+
+"...This act of leasing out after treating the suit property as vested and non-resident had led to the creation of interest in favour of the lessee, the defendant-appellant, which now gives him the standing. The creation of such interest, he may quite legitimately claim, has cast an obligation upon him to protest it. If the defendant, particularly when he has been impleaded in the suit, now proceeds to protect his interest in the suit land, no exception can possibly be taken.
+
+At the same time it may be necessary to point out that the lessee may have more reasons or urgency to protect his interest in the suit land than the lessor...."
+8. In the case of 45 DLR (AD) 120 consisting of three judges, the Appellate Division held that only lessees in possession are necessary parties in a suit against the lessor.
+
+9. In the case of 1987 BLD 105, the High Court Division held that in a suit for perpetual injunction, a lessee is a proper party. His presence also helps the plaintiffs in getting their claims effectively adjudicated and settled in presence of all the parties concerned. In this case, the High Court Division held that the lessee is a proper party in a suit for perpetual injunction.
+
+10. In the case of 40 DLR 528, the High Court Division after considering the judgment reported in 38 DLR (AD) 308 along with other judgments held that the petitioner is a proper party whose presence is necessary for complete and effectual determination of the issues in the suit.
+
+11. In the case of 39 DLR 352, the High Court Division held that a lessee in possession of the lease-hold property is a necessary party as contemplated in Order 1, rule 10(2), when a suit is brought against the lessor over the subject-matter of that property.
+
+12. In the case of 11 MLR (AD) (2006) 43 = 56 DLR (AD) 73 consisting of two judges, the Appellate Division held:
+
+"It further appears that neither the Government nor the Vested Property Authority challenged the decree of the trial Court and it is the defendant Nos. 6-8 being lessees of the Vested Property Authority for one year cannot have any locus-standi to challenge the decree or prefer an appeal against such decree. It is for the Vested Property Authority which can challenge the decree. We therefore hold that the defendant Nos. 6-8 being year to year lease holders had no locus-standi to prefer any appeal before the Appellate Court was well as in the High Court Division and, as such, the learned Single Judge of the High Court Division having failed to consider this aspect of the case, committed an error of law which resulted in an error in the decision causing failure of justice."
+13. In the case of 9 BLT (AD) (2001) 64 consisting of four judges, the Appellate Division held to the effect:
+
+"...In such cases allottee is not a necessary party before the Court of Settlement. The necessary party is Ministry of Housing and Public Works and they have been impleaded and in their presence release order was passed. There was no legal necessity to implead the present petitioner in the AP Case. The present petitioner cannot now question the validity of the judgment of the A.P. Case. The present petitioner rise and fall with their lessor and are bound by the judgment of the Court of Settlement...."
+14. Now it is clear from the aforesaid judgments in majority of the cases, the Appellate Division as well as the High Court Division held that the lessee is a necessary party to the suit.
+
+15. In the case of 11 MLR (AD) (2006) 43 = 56 DLR (AD) 73, the defendant Nos. 6-8 as lessees were parties to the suit and contested the same. After passing decree, the Government did not file any appeal; but the lessees attempted to challenge the decree by way of appeal, then the Appellate Division held that the lessees have got no locus standi to prefer appeal.
+
+16. Every case has to consider its own merit, peculiar facts and circumstances and therefore, the Court must be very careful and cautious in applying judicial precedent. In this respect, I am tempted to discuss the observations of Lord Denning in the matter of applying judicial precedent which have become locus classicus:
+
+"Each case depends on its own facts and a close similarity between one case and another is not enough because even a single significant detail may alter the entire aspect, in deciding such cases, one should avoid the temptation to decide cases (as said by Cardozo, J.) by matching the colour of one case against the colour of another. To decide therefore, on which side of the line a case falls, the broad resemblance to another case is not at all decisive.
+
+Precedent should be followed only so far as it marks the path of justice, but you must cut the dead wood and trim off the side branches else you will find yourself lost m thickets and branches. My plea is to keep the path to justice clear of obstructions which could impede it."
+17. In the case of One Bank Ltd. vs Chaya Developer (Pvt.) Ltd. and others, reported in 21 BLC (AD) 203, the Appellate Division distinguished between necessary party and proper party which may be read thus:
+
+"The established principle of law is that either a necessary party or a proper party may be added in the suit. A necessary party is one in whose absence no effective decree can be passed. Whereas a proper party is one whose presence is not necessary for passing an effective decree. The presence of proper party facilities more effectual and complete adjudication of all the disputes and avoid multiplicity of proceeding between the parties. A proper party is one who is legally interested in the suit. A legally interested party is one whose rights have been adversely affected by any order of a court."
+18. Order 1 rule 10(2) of the Code of Civil Procedure, 1908 (the CPC), has given ample power to the Court to add or strike out the name of the plaintiff or defendant, if they are necessary party to the suit or may strike out the name of plaintiff or defendant.
+
+19. In the case of Ramesh Hirachand vs Municipal Corporation of Greater Bombay, (1992) 2 SCC 524, it was observed that two considerations especially will have to be kept in mind before exercising powers under Order 1 rule 10(2) of the CPC namely
+
+the plaintiff is a dominus litis i.e. he is the master of the suit. He is the best judge of his interest. It is, therefore, him to choose his opponent from whom he claims relief and, normally, the Court should not compel him to fight against a person whom he does not want to fight and from whom he claims no relief; and
+if the Court is satisfied that the presence of a particular person is necessary to effectively and completely adjudicate all the disputes between the parties, irrespective of the wishes of the plaintiff, the Court may exercise the power and join a person as party to the suit.
+20. On perusal of the entire materials on record and the legal position intricately involved in this case and the backdrop of the case, it appears to me that the petitioner is a proper party to the suit, though he is not a necessary party to the suit; therefore, the impugned judgment and order of the learned District Judge passed in Civil Revisional Application affirming the order rejecting the petition for adding the petitioner as defendant suffers from illegality.
+
+21. In the additional written statement, the Government admitted to the effect that the applicant Md Momin Ali, the Managing Director of Nabisko Biscuit and Bread Factory took lease of the property in question in 1973 and since then he has been dealing in business therein by paying up to date lease money.
+
+22. The facts and circumstances of the cases of 11 MLR (AD) (2006) 43 = 56 DLR (AD) 73 and 9 BLT (AD) (2001) 64 are significantly distinguishable from the facts and circumstances of the case in hand. In the aforesaid two cases, the earlier judgments of the Appellate Division reported in 38 DLR (AD) 308 and 45 DLR (AD) 120 have not been considered.
+
+23. It would not be advisable to draw any hide bound rules as to who are necessary party or proper party to a suit or proceeding. It may vary from case to case. Respectfully agreeing with the ratio and obiter of the cases reported in 38 DLR (AD) 308, 45 DLR (AD) 120 and 21 BLC (AD) 203, it is my considered view that the petitioner as a lessee for more than 48 years by paying regular lease money is a proper party for final and complete adjudication of the dispute arisen in the suit. Accordingly, I find substance in the Rule and hence, the Rule deserves to be made absolute.
+
+24. In the result, the Rule is made absolute, however, without passing any order as to costs. The earlier order of stay thus stands vacated and recalled. Accordingly, the impugned judgment and order of the Courts below are set-aside. The petitioner's application for addition as defendant is allowed. The trial Court is also directed to dispose of the Arpita Shampatty Prattyrpan Case No. 3765 of 2013 within 6(six) months from the date of receiving the copy of the judgment and the added defendant has to file written statement within 1(one) months thereto. No unnecessary adjournment shall be entertained from either side.
+
+Let a copy of the judgment along with LCRs be transmitted to the Court below at once.
+
+End.
+===End===
