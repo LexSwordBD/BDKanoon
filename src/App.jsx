@@ -43,7 +43,6 @@ const lawAliases = {
 
 const stopwords = ['a', 'an', 'the', 'of', 'in', 'and', 'or', 'is', 'are', 'was', 'were', 'be', 'to', 'for', 'with', 'on', 'at', 'by', 'from', 'shall', 'will', 'am'];
 
-// ✅ ১. হাইলাইটেড টেক্সট কম্পোনেন্ট ফিক্স করা হয়েছে Exact Match এর জন্য
 const HighlightedText = ({ text, highlight, isExactMatch }) => {
   if (!text) return null;
   if (!highlight) return <span>{text}</span>;
@@ -53,12 +52,9 @@ const HighlightedText = ({ text, highlight, isExactMatch }) => {
     let regex;
 
     if (isExactMatch) {
-      // যদি Exact Match হয়, তাহলে পুরো ফ্রেজটা খুঁজবে (যেমন: "Criminal Trial")
-      // কোনো স্পেস দিয়ে আলাদা করবে না
       const exactPhrase = escapeRegExp(highlight.trim());
       regex = new RegExp(`(${exactPhrase})`, 'gi');
     } else {
-      // যদি Normal Search হয়, আগের মতো স্পেস দিয়ে শব্দ আলাদা করে খুঁজবে
       const words = highlight.split(/\s+/).filter(w => w.length > 0).map(escapeRegExp);
       if (words.length === 0) return <span>{text}</span>;
       regex = new RegExp(`(${words.join('|')})`, 'gi');
@@ -85,6 +81,10 @@ export default function App() {
 
   // অ্যাপ ইনস্টল অফার রাখার জন্য স্টেট
   const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+  // ✅ মেনুবার স্ক্রল কন্ট্রোল স্টেট
+  const [isNavbarVisible, setIsNavbarVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
   // Search States
   const [results, setResults] = useState([]);
@@ -122,6 +122,46 @@ export default function App() {
       setDeferredPrompt(e);
     });
   }, []);
+
+  // ✅ ১. ফুল স্ক্রিন এবং মেনুবার হাইড লজিক
+  useEffect(() => {
+    // 1. Full Screen Meta Tags Injection (Viewport Fit Cover)
+    let viewport = document.querySelector('meta[name="viewport"]');
+    if (viewport) {
+      // বিদ্যমান ভিউপোর্ট আপডেট করা যাতে নচ এরিয়া কভার করে
+      viewport.content = "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover";
+    } else {
+      viewport = document.createElement('meta');
+      viewport.name = "viewport";
+      viewport.content = "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover";
+      document.head.appendChild(viewport);
+    }
+
+    // 2. Status Bar কালার সেট করা (সাদা, যাতে অ্যাপের সাথে মিশে যায়)
+    let metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (!metaTheme) {
+      metaTheme = document.createElement('meta');
+      metaTheme.name = "theme-color";
+      document.head.appendChild(metaTheme);
+    }
+    metaTheme.content = "#ffffff";
+
+    // 3. Scroll Listener for Auto-Hiding Navbar
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // যদি ৫০ পিক্সেলের বেশি স্ক্রল করা হয় এবং নিচের দিকে যাওয়া হয়
+      if (currentScrollY > lastScrollY && currentScrollY > 50) {
+        setIsNavbarVisible(false); // হাইড করুন
+      } else {
+        setIsNavbarVisible(true); // উপরে উঠলে শো করুন
+      }
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   // --- Helper: hard local signout ---
   const hardClearAuthStorage = () => {
@@ -283,6 +323,14 @@ export default function App() {
     let isMounted = true;
     const initSession = async () => {
       setLoading(true);
+
+      // ✅ ২. পাসওয়ার্ড রিসেট ফিক্স (PWA Deep Link Fix)
+      // অ্যাপ ওপেন হওয়ার সাথে সাথে ইউআরএল হ্যাশ চেক করবে
+      const hash = window.location.hash;
+      if (hash && (hash.includes('type=recovery') || hash.includes('error_description'))) {
+         setModalMode('resetPassword');
+      }
+
       try {
         const { data } = await supabase.auth.getSession();
         const current = data?.session || null;
@@ -662,7 +710,16 @@ export default function App() {
 
   return (
     <div>
-      <nav className="navbar navbar-expand-lg fixed-top">
+      {/* ✅ মেনুবার আপডেটেড: অটো-হাইড এবং প্যাডিং যোগ করা হয়েছে */}
+      <nav 
+        className="navbar navbar-expand-lg fixed-top" 
+        style={{ 
+            transition: 'transform 0.3s ease-in-out',
+            transform: isNavbarVisible ? 'translateY(0)' : 'translateY(-100%)',
+            paddingTop: 'env(safe-area-inset-top)', // নচ এরিয়া হ্যান্ডেল করার জন্য
+            height: 'auto'
+        }}
+      >
         <div className="container">
           <a className="navbar-brand" href="#" onClick={() => window.location.reload()}>BD<span>Kanoon</span></a>
           <button className="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><i className="fas fa-bars"></i></button>
@@ -741,7 +798,6 @@ export default function App() {
                 <div className="mb-2">
                   {(session && subStatus) ? <><span className="badge bg-light text-dark border">{item.citation}</span> <span className="text-muted small ms-2">{item.division}</span></> : <span className="badge bg-secondary text-white"><i className="fas fa-lock"></i> Premium</span>}
                 </div>
-                {/* ✅ ২. HighlightedText এ isExactMatch পাঠানো হচ্ছে */}
                 <div className="headnote-text" style={{ whiteSpace: 'pre-wrap', textAlign: 'justify' }}>
                     <HighlightedText text={item.headnote || ""} highlight={searchTerm || selectedLaw} isExactMatch={isExactMatch} />
                 </div>
