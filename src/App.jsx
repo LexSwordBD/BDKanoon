@@ -1,6 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 
+// --- Error Boundary Component (For White Screen Fix) ---
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("App Crash Error:", error, errorInfo);
+    // যদি ক্রিটিকাল এরর হয়, লোকাল স্টোরেজ ক্লিয়ার করে দিবে যাতে ইউজার আটকে না থাকে
+    localStorage.clear();
+    sessionStorage.clear();
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="d-flex flex-column justify-content-center align-items-center vh-100 text-center p-4">
+          <h3 className="text-danger mb-3">Something went wrong.</h3>
+          <p className="text-muted">We have detected an issue. Please reload to fix it.</p>
+          <button className="btn btn-dark rounded-pill px-4" onClick={() => window.location.reload()}>Reload App</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // --- Constants & Data ---
 const githubUser = 'LexSwordBD';
 const repoName = 'BDKanoon';
@@ -73,7 +105,8 @@ const HighlightedText = ({ text, highlight, isExactMatch }) => {
   }
 };
 
-export default function App() {
+// --- Main App Logic ---
+function AppContent() {
   const [session, setSession] = useState(null);
   const [subStatus, setSubStatus] = useState(false);
   const [view, setView] = useState('home');
@@ -114,6 +147,9 @@ export default function App() {
   const [notice, setNotice] = useState(null);
   const openNotice = (payload) => setNotice(payload);
   const closeNotice = () => setNotice(null);
+
+  // Disclaimer Text
+  const disclaimerText = "Please note that while every effort has been made to provide accurate case references, there may be some unintentional errors. We encourage users to verify the information from official sources for complete accuracy.";
 
   // ব্রাউজার থেকে ইনস্টল অফার ধরার জন্য useEffect
   useEffect(() => {
@@ -319,7 +355,7 @@ export default function App() {
     let sessionInterval;
     let isMounted = true;
 
-    // ✅ SUPER FAST LOAD LOGIC
+    // ✅ SUPER FAST LOAD & WHITE SCREEN FIX LOGIC
     const initSession = async () => {
       setLoading(true);
 
@@ -335,15 +371,22 @@ export default function App() {
       }, 1500);
 
       try {
-        const { data } = await supabase.auth.getSession();
+        const { data, error } = await supabase.auth.getSession();
         
+        // যদি সেশন ফেচ করতে এরর হয় (সম্ভাব্য করাপ্ট স্টোরেজ), স্টোরেজ ক্লিয়ার করে দাও
+        if (error) {
+            console.error("Session fetch error:", error);
+            hardClearAuthStorage(); 
+        }
+
         // সেশন পাওয়া গেলে বা চেক শেষ হলে টাইমার বন্ধ করে দিব
         clearTimeout(timer);
 
         const current = data?.session || null;
         if (isMounted) {
           setSession(current);
-          setLoading(false); // সাথে সাথে লোডিং বন্ধ
+          // ৩. সফলভাবে চেক হলে লোডিং বন্ধ
+          setLoading(false); 
           if (current) {
             Promise.resolve().then(() => checkSubscription(current.user)).catch(() => { });
             Promise.resolve().then(() => updateSessionInDB(current)).catch(() => { });
@@ -356,8 +399,9 @@ export default function App() {
           }
         }
       } catch (error) {
-        console.error("Session Init Error:", error);
-        // এরর হলেও লোডিং বন্ধ করে দিব যাতে ইউজার সার্চ করতে পারে
+        console.error("Session Init Critical Error:", error);
+        // ক্যাচ ব্লকে আসলে রিস্ক নিবো না, স্টোরেজ ক্লিয়ার করে দিব যাতে অ্যাপ ফ্রিজ না হয়
+        hardClearAuthStorage();
         if (isMounted) setLoading(false);
       }
     };
@@ -841,6 +885,15 @@ export default function App() {
               </div>
             )}
             <div className="mt-4 text-justify" style={{ whiteSpace: 'pre-wrap', fontFamily: 'Merriweather', textAlign: 'justify' }}>{judgmentText}</div>
+            
+            {/* ✅ DISCLAIMER SECTION ADDED HERE */}
+            {/* যদি জাজমেন্ট টেক্সটের মধ্যে অলরেডি ডিসক্লেইমার না থাকে, তবেই এটি দেখাবে */}
+            {!judgmentText.includes("Please note that while every effort") && (
+              <div className="mt-5 p-3 border-top border-secondary text-muted small fst-italic bg-light rounded text-center">
+                <strong>Disclaimer:</strong> {disclaimerText}
+              </div>
+            )}
+
           </div>
         )}
         {view === 'home' && (
@@ -855,6 +908,7 @@ export default function App() {
         )}
       </div>
 
+      {/* --- Pricing, Modals, Footer Sections (Unchanged) --- */}
       <div className="packages-section" id="packages">
         <div className="container">
           <div className="text-center mb-5"><h2 className="hero-title" style={{ fontSize: '32px' }}>Simple, Transparent Pricing</h2><p className="text-muted">Choose the plan that fits your practice.</p></div>
@@ -1105,5 +1159,14 @@ export default function App() {
         </div>
       )}
     </div>
+  );
+}
+
+// ✅ WRAPPER COMPONENT: This ensures Error Boundary catches errors in the main App logic
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <AppContent />
+    </ErrorBoundary>
   );
 }
