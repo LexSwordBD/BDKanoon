@@ -82,7 +82,7 @@ export default function App() {
   // অ্যাপ ইনস্টল অফার রাখার জন্য স্টেট
   const [deferredPrompt, setDeferredPrompt] = useState(null);
 
-  // ✅ মেনুবার স্ক্রল কন্ট্রোল স্টেট
+  // মেনুবার স্ক্রল কন্ট্রোল স্টেট
   const [isNavbarVisible, setIsNavbarVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
@@ -123,12 +123,11 @@ export default function App() {
     });
   }, []);
 
-  // ✅ ১. ফুল স্ক্রিন এবং মেনুবার হাইড লজিক
+  // ফুল স্ক্রিন এবং মেনুবার হাইড লজিক
   useEffect(() => {
-    // 1. Full Screen Meta Tags Injection (Viewport Fit Cover)
+    // 1. Full Screen Meta Tags
     let viewport = document.querySelector('meta[name="viewport"]');
     if (viewport) {
-      // বিদ্যমান ভিউপোর্ট আপডেট করা যাতে নচ এরিয়া কভার করে
       viewport.content = "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover";
     } else {
       viewport = document.createElement('meta');
@@ -137,7 +136,7 @@ export default function App() {
       document.head.appendChild(viewport);
     }
 
-    // 2. Status Bar কালার সেট করা (সাদা, যাতে অ্যাপের সাথে মিশে যায়)
+    // 2. Status Bar কালার সেট করা
     let metaTheme = document.querySelector('meta[name="theme-color"]');
     if (!metaTheme) {
       metaTheme = document.createElement('meta');
@@ -146,15 +145,13 @@ export default function App() {
     }
     metaTheme.content = "#ffffff";
 
-    // 3. Scroll Listener for Auto-Hiding Navbar
+    // 3. Scroll Listener
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      
-      // যদি ৫০ পিক্সেলের বেশি স্ক্রল করা হয় এবং নিচের দিকে যাওয়া হয়
       if (currentScrollY > lastScrollY && currentScrollY > 50) {
-        setIsNavbarVisible(false); // হাইড করুন
+        setIsNavbarVisible(false);
       } else {
-        setIsNavbarVisible(true); // উপরে উঠলে শো করুন
+        setIsNavbarVisible(true);
       }
       setLastScrollY(currentScrollY);
     };
@@ -321,22 +318,32 @@ export default function App() {
   useEffect(() => {
     let sessionInterval;
     let isMounted = true;
+
+    // ✅ SUPER FAST LOAD LOGIC
     const initSession = async () => {
       setLoading(true);
 
-      // ✅ ২. পাসওয়ার্ড রিসেট ফিক্স (PWA Deep Link Fix)
-      // অ্যাপ ওপেন হওয়ার সাথে সাথে ইউআরএল হ্যাশ চেক করবে
+      // ১. পাসওয়ার্ড রিসেট চেক
       const hash = window.location.hash;
       if (hash && (hash.includes('type=recovery') || hash.includes('error_description'))) {
          setModalMode('resetPassword');
       }
 
+      // ২. টাইমআউট সেফটি ভালভ: ১.৫ সেকেন্ডের বেশি লোডিং দেখাবে না
+      const timer = setTimeout(() => {
+        if (isMounted) setLoading(false);
+      }, 1500);
+
       try {
         const { data } = await supabase.auth.getSession();
+        
+        // সেশন পাওয়া গেলে বা চেক শেষ হলে টাইমার বন্ধ করে দিব
+        clearTimeout(timer);
+
         const current = data?.session || null;
         if (isMounted) {
           setSession(current);
-          setLoading(false);
+          setLoading(false); // সাথে সাথে লোডিং বন্ধ
           if (current) {
             Promise.resolve().then(() => checkSubscription(current.user)).catch(() => { });
             Promise.resolve().then(() => updateSessionInDB(current)).catch(() => { });
@@ -350,10 +357,13 @@ export default function App() {
         }
       } catch (error) {
         console.error("Session Init Error:", error);
+        // এরর হলেও লোডিং বন্ধ করে দিব যাতে ইউজার সার্চ করতে পারে
         if (isMounted) setLoading(false);
       }
     };
+
     initSession();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted) return;
       setSession(session);
@@ -710,13 +720,12 @@ export default function App() {
 
   return (
     <div>
-      {/* ✅ মেনুবার আপডেটেড: অটো-হাইড এবং প্যাডিং যোগ করা হয়েছে */}
       <nav 
         className="navbar navbar-expand-lg fixed-top" 
         style={{ 
             transition: 'transform 0.3s ease-in-out',
             transform: isNavbarVisible ? 'translateY(0)' : 'translateY(-100%)',
-            paddingTop: 'env(safe-area-inset-top)', // নচ এরিয়া হ্যান্ডেল করার জন্য
+            paddingTop: 'env(safe-area-inset-top)',
             height: 'auto'
         }}
       >
