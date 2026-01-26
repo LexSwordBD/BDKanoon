@@ -36,6 +36,7 @@ class ErrorBoundary extends React.Component {
 const githubUser = 'LexSwordBD';
 const repoName = 'BDKanoon';
 const siteLink = window.location.origin;
+const ADMIN_EMAIL = 'bdkanoon@gmail.com'; // Admin Email
 
 const lawAliases = {
   // --- Constitutional & Procedural ---
@@ -82,7 +83,7 @@ const lawAliases = {
   'Non-Agricultural Tenancy Act (অ-কৃষি প্রজাস্বত্ব)': ['Non-Agricultural', 'Non-agri', 'Chandina', 'অ-কৃষি'],
   'Land Survey Tribunal (ভূমি জরিপ)': ['Land Survey', 'L.S.T', 'Tribunal', 'Survey', 'জরিপ'],
   'Trust Act (ট্রাস্ট আইন)': ['Trust Act', 'Trustee', 'Beneficiary'],
-  
+   
   // --- Family & Personal ---
   'Muslim Family Laws (মুসলিম পারিবারিক আইন)': ['Muslim Family', 'MFLO', 'Denmohar', 'Dower', 'Talaq', 'Divorce', 'Maintenance', 'Polygamy'],
   'Family Courts Ordinance (পারিবারিক আদালত)': ['Family Courts', 'Family Court', 'Restitution of conjugal rights', 'পারিবারিক'],
@@ -170,17 +171,71 @@ function AppContent() {
   const [showSignupPass, setShowSignupPass] = useState(false);
   const [showResetPass, setShowResetPass] = useState(false);
 
+  // Local Notice (Toast)
   const [notice, setNotice] = useState(null);
   const openNotice = (payload) => setNotice(payload);
   const closeNotice = () => setNotice(null);
 
+  // --- Admin Notification States ---
+  const [globalNotifications, setGlobalNotifications] = useState([]);
+  const [adminMsgInput, setAdminMsgInput] = useState('');
+  const [adminTitleInput, setAdminTitleInput] = useState('');
+  const [adminMsgType, setAdminMsgType] = useState('info'); // info, success, warning
+  const [isAdmin, setIsAdmin] = useState(false);
+
   const disclaimerText = "Please note that while every effort has been made to provide accurate case references, there may be some unintentional errors. We encourage users to verify the information from official sources for complete accuracy.";
+
+  // --- Notification Fetching Logic ---
+  const fetchGlobalNotifications = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (data) setGlobalNotifications(data);
+    } catch (e) {
+      console.log('No notification table or error fetching');
+    }
+  };
+
+  const deleteNotification = async (id) => {
+    if (!isAdmin) return;
+    const { error } = await supabase.from('notifications').delete().eq('id', id);
+    if (!error) {
+       openNotice({ type: 'success', title: 'Deleted', message: 'Notification removed.' });
+       fetchGlobalNotifications();
+    } else {
+       openNotice({ type: 'error', title: 'Error', message: 'Could not delete.' });
+    }
+  };
+
+  const sendAdminNotification = async (e) => {
+    e.preventDefault();
+    if (!adminTitleInput || !adminMsgInput) return;
+    
+    const { error } = await supabase.from('notifications').insert([{
+        title: adminTitleInput,
+        message: adminMsgInput,
+        type: adminMsgType,
+        created_at: new Date()
+    }]);
+
+    if (error) {
+        openNotice({ type: 'error', title: 'Failed', message: error.message });
+    } else {
+        openNotice({ type: 'success', title: 'Sent', message: 'Notification pushed to all users.' });
+        setAdminMsgInput('');
+        setAdminTitleInput('');
+        fetchGlobalNotifications();
+    }
+  };
 
   useEffect(() => {
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
     });
+    fetchGlobalNotifications(); // Fetch notifications on load
   }, []);
 
   useEffect(() => {
@@ -241,6 +296,7 @@ function AppContent() {
     setSession(null);
     setSubStatus(false);
     setProfileData(null);
+    setIsAdmin(false);
     setModalMode('login');
     openNotice({
       type: 'warning',
@@ -399,6 +455,11 @@ function AppContent() {
         const current = data?.session || null;
         if (isMounted) {
           setSession(current);
+          if (current?.user?.email === ADMIN_EMAIL) {
+            setIsAdmin(true);
+          } else {
+            setIsAdmin(false);
+          }
           setLoading(false); 
           if (current) {
             Promise.resolve().then(() => checkSubscription(current.user)).catch(() => { });
@@ -423,6 +484,11 @@ function AppContent() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted) return;
       setSession(session);
+      if (session?.user?.email === ADMIN_EMAIL) {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+      }
       setLoading(false);
       if (event === 'PASSWORD_RECOVERY') setModalMode('resetPassword');
       if (session) {
@@ -585,7 +651,6 @@ function AppContent() {
     }
   };
 
-  // ✅ আপডেটেড handleSearch: এখন এটি ৩য় আর্গুমেন্ট হিসেবে termOverride গ্রহণ করে
   const handleSearch = async (page = 1, type = 'simple', termOverride = null) => {
     setLoading(true); setCurrentPage(page); setView('results');
     setShowSuggestions(false); 
@@ -607,7 +672,6 @@ function AppContent() {
           aliasCondition = headnoteChecks + ',' + titleChecks;
         }
         
-        // ✅ ফিক্স: যদি termOverride থাকে, সেটা ব্যবহার করো, নাহলে state এর searchTerm
         const termToUse = termOverride !== null ? termOverride : searchTerm;
         const safeSearchTerm = termToUse.replace(/[^\w\s\u0980-\u09FF-]/g, "");
 
@@ -752,7 +816,7 @@ function AppContent() {
 
   const handleLogout = async () => {
     setLoading(true);
-    try { try { await supabase.auth.signOut(); } catch (e) { } hardClearAuthStorage(); setSession(null); setSubStatus(false); setProfileData(null); setModalMode(null); }
+    try { try { await supabase.auth.signOut(); } catch (e) { } hardClearAuthStorage(); setSession(null); setSubStatus(false); setProfileData(null); setIsAdmin(false); setModalMode(null); }
     catch (error) { } finally { setLoading(false); window.location.reload(); }
   };
 
@@ -824,6 +888,23 @@ function AppContent() {
 
   return (
     <div>
+      {/* Global Push Notification Display */}
+      {globalNotifications.length > 0 && !isAdmin && (
+         <div style={{ position: 'fixed', top: '80px', right: '20px', zIndex: 9999, maxWidth: '350px' }}>
+            {globalNotifications.map((note) => (
+               <div key={note.id} className="toast show mb-3 shadow border-0" style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(5px)' }}>
+                  <div className={`toast-header text-white ${note.type === 'error' ? 'bg-danger' : note.type === 'warning' ? 'bg-warning text-dark' : 'bg-dark'}`}>
+                     <strong className="me-auto">{note.title}</strong>
+                     <button type="button" className="btn-close btn-close-white" onClick={() => setGlobalNotifications(prev => prev.filter(n => n.id !== note.id))}></button>
+                  </div>
+                  <div className="toast-body text-dark">
+                     {note.message}
+                  </div>
+               </div>
+            ))}
+         </div>
+      )}
+
       <nav 
         className="navbar navbar-expand-lg fixed-top" 
         style={{ 
@@ -841,6 +922,15 @@ function AppContent() {
               <li className="nav-item"><a className="nav-link nav-link-close" href="#" onClick={() => { setView('home'); setResults([]); }}>Home</a></li>
               <li className="nav-item"><a className="nav-link nav-link-close" href="#" onClick={fetchBookmarks}>Bookmarks</a></li>
               <li className="nav-item"><a className="nav-link nav-link-close" href="#packages">Pricing</a></li>
+              
+              {/* Admin Panel Button in Navbar */}
+              {isAdmin && (
+                  <li className="nav-item">
+                     <button className="btn btn-danger btn-sm rounded-pill px-3 ms-lg-3 fw-bold" onClick={() => setModalMode('adminPanel')}>
+                        <i className="fas fa-user-shield me-2"></i>Admin Panel
+                     </button>
+                  </li>
+              )}
                 
               <li className="nav-item">
                 <button className="btn-app ms-lg-3 mt-3 mt-lg-0 border-0" onClick={handleInstallClick}>
@@ -897,7 +987,6 @@ function AppContent() {
                   {suggestions.map((item, index) => (
                     <div 
                       key={index}
-                      // ✅ আপডেট: এখন ক্লিক করলে সরাসরি সার্চ হবে
                       onClick={() => {
                         setSearchTerm(item); 
                         setShowSuggestions(false);
@@ -985,7 +1074,6 @@ function AppContent() {
               </div>
             )}
             
-            {/* ✅ পরিবর্তন করা হয়েছে: এখানে dangerouslySetInnerHTML যোগ করা হয়েছে */}
             <div className="mt-4 text-justify" style={{ whiteSpace: 'pre-wrap', fontFamily: 'Merriweather', textAlign: 'justify' }} dangerouslySetInnerHTML={{ __html: judgmentText }} />
             
             {!judgmentText.includes("Please note that while every effort") && (
@@ -996,19 +1084,56 @@ function AppContent() {
 
           </div>
         )}
+        
+        {/* === MODIFIED SECTION: PROFESSIONAL FEATURES SECTION === */}
         {view === 'home' && (
-          <div id="featuresSection" className="py-5">
-            <div className="row g-4 justify-content-center text-center">
-              <div className="col-6 col-md-3"><i className="fas fa-bolt fa-2x text-warning mb-3"></i><h6 className="fw-bold">Fast Search</h6></div>
-              <div className="col-6 col-md-3"><i className="fas fa-book fa-2x text-primary mb-3"></i><h6 className="fw-bold">All Laws</h6></div>
-              <div className="col-6 col-md-3"><i className="fas fa-mobile-alt fa-2x text-success mb-3"></i><h6 className="fw-bold">Mobile First</h6></div>
-              <div className="col-6 col-md-3"><i className="fas fa-headset fa-2x text-secondary mb-3"></i><h6 className="fw-bold">24/7 Support</h6></div>
+          <div id="featuresSection" className="py-5" style={{ background: '#fff' }}>
+            <div className="text-center mb-5">
+               <h2 className="fw-bold text-dark" style={{ fontFamily: 'Playfair Display' }}>Why Choose BDKanoon?</h2>
+               <p className="text-muted">The ultimate legal companion for professionals.</p>
+            </div>
+            <div className="row g-4">
+              
+              <div className="col-md-3 col-sm-6">
+                 <div className="p-4 h-100 rounded-3 border-0 shadow-sm" style={{ background: '#f8f9fa', transition: '0.3s' }}>
+                    <div className="mb-3 text-primary"><i className="fas fa-bolt fa-2x"></i></div>
+                    <h5 className="fw-bold mb-2">Lightning Fast Search</h5>
+                    <p className="text-muted small mb-0">Experience zero-latency search results powered by our optimized indexing engine.</p>
+                 </div>
+              </div>
+
+              <div className="col-md-3 col-sm-6">
+                 <div className="p-4 h-100 rounded-3 border-0 shadow-sm" style={{ background: '#f8f9fa', transition: '0.3s' }}>
+                    <div className="mb-3 text-primary"><i className="fas fa-book fa-2x"></i></div>
+                    <h5 className="fw-bold mb-2">Comprehensive Database</h5>
+                    <p className="text-muted small mb-0">Access all major laws and over 20,000+ High Court and Appellate Division judgments.</p>
+                 </div>
+              </div>
+
+              <div className="col-md-3 col-sm-6">
+                 <div className="p-4 h-100 rounded-3 border-0 shadow-sm" style={{ background: '#f8f9fa', transition: '0.3s' }}>
+                    <div className="mb-3 text-primary"><i className="fas fa-mobile-alt fa-2x"></i></div>
+                    <h5 className="fw-bold mb-2">Mobile First Design</h5>
+                    <p className="text-muted small mb-0">Fully optimized for PWA. Install it on your phone and practice law on the go.</p>
+                 </div>
+              </div>
+
+              <div className="col-md-3 col-sm-6">
+                 <div className="p-4 h-100 rounded-3 border-0 shadow-sm" style={{ background: '#f8f9fa', transition: '0.3s' }}>
+                    <div className="mb-3 text-primary"><i className="fas fa-headset fa-2x"></i></div>
+                    <h5 className="fw-bold mb-2">Premium Support</h5>
+                    <p className="text-muted small mb-0">Dedicated 24/7 technical support team ready to assist you anytime, anywhere.</p>
+                 </div>
+              </div>
+
             </div>
           </div>
         )}
+        {/* === END MODIFIED SECTION === */}
+
       </div>
 
-      {/* --- Pricing, Modals, Footer Sections (Unchanged) --- */}
+      {/* --- Pricing, Modals, Footer Sections --- */}
       <div className="packages-section" id="packages">
         <div className="container">
           <div className="text-center mb-5"><h2 className="hero-title" style={{ fontSize: '32px' }}>Simple, Transparent Pricing</h2><p className="text-muted">Choose the plan that fits your practice.</p></div>
@@ -1020,6 +1145,74 @@ function AppContent() {
           <div className="text-center mt-5"><button className="btn btn-link text-secondary text-decoration-none" onClick={() => setModalMode('payment')}>Already paid via bKash? <span className="text-primary fw-bold">Confirm Payment</span></button></div>
         </div>
       </div>
+
+      {/* --- NEW ADMIN PANEL MODAL --- */}
+      {modalMode === 'adminPanel' && isAdmin && (
+        <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.8)', zIndex: 1100 }}>
+          <div className="modal-dialog modal-lg modal-dialog-scrollable">
+            <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '15px' }}>
+              <div className="modal-header bg-dark text-white border-0">
+                <h5 className="modal-title fw-bold"><i className="fas fa-tachometer-alt me-2"></i>Admin Notification Center</h5>
+                <button className="btn-close btn-close-white" onClick={() => setModalMode(null)}></button>
+              </div>
+              <div className="modal-body p-4 bg-light">
+                
+                {/* Send New Notification */}
+                <div className="card border-0 shadow-sm mb-4">
+                   <div className="card-header bg-white fw-bold py-3 border-bottom-0">Create New Push Notification</div>
+                   <div className="card-body">
+                      <form onSubmit={sendAdminNotification}>
+                         <div className="row">
+                            <div className="col-md-8 mb-3">
+                               <label className="form-label small text-muted text-uppercase fw-bold">Title</label>
+                               <input type="text" className="form-control" placeholder="Short title (e.g. Server Maintenance)" value={adminTitleInput} onChange={e => setAdminTitleInput(e.target.value)} required />
+                            </div>
+                            <div className="col-md-4 mb-3">
+                               <label className="form-label small text-muted text-uppercase fw-bold">Type</label>
+                               <select className="form-select" value={adminMsgType} onChange={e => setAdminMsgType(e.target.value)}>
+                                  <option value="info">Info (Blue)</option>
+                                  <option value="success">Success (Green)</option>
+                                  <option value="warning">Warning (Yellow/Red)</option>
+                               </select>
+                            </div>
+                            <div className="col-12 mb-3">
+                               <label className="form-label small text-muted text-uppercase fw-bold">Message Content</label>
+                               <textarea className="form-control" rows="3" placeholder="Write your message here..." value={adminMsgInput} onChange={e => setAdminMsgInput(e.target.value)} required style={{ resize: 'none' }}></textarea>
+                            </div>
+                         </div>
+                         <div className="d-flex justify-content-end">
+                            <button type="submit" className="btn btn-dark px-4"><i className="fas fa-paper-plane me-2"></i>Send Broadcast</button>
+                         </div>
+                      </form>
+                   </div>
+                </div>
+
+                {/* Active Notifications List */}
+                <h6 className="fw-bold text-secondary text-uppercase mb-3 small">Active Notifications</h6>
+                {globalNotifications.length === 0 ? (
+                   <div className="text-center text-muted py-3">No active notifications found.</div>
+                ) : (
+                   <div className="list-group">
+                      {globalNotifications.map((notif) => (
+                         <div key={notif.id} className="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3 border-0 mb-2 shadow-sm rounded">
+                            <div>
+                               <div className="d-flex align-items-center mb-1">
+                                  <span className={`badge me-2 ${notif.type === 'error' ? 'bg-danger' : notif.type === 'warning' ? 'bg-warning text-dark' : 'bg-primary'}`}>{notif.type}</span>
+                                  <h6 className="mb-0 fw-bold">{notif.title}</h6>
+                               </div>
+                               <p className="mb-0 text-muted small">{notif.message}</p>
+                               <small className="text-muted" style={{ fontSize: '10px' }}>{new Date(notif.created_at).toLocaleString()}</small>
+                            </div>
+                            <button className="btn btn-outline-danger btn-sm rounded-circle" onClick={() => deleteNotification(notif.id)} title="Delete"><i className="fas fa-trash"></i></button>
+                         </div>
+                      ))}
+                   </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {modalMode === 'login' && (
         <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
@@ -1141,6 +1334,10 @@ function AppContent() {
                       </>
                     )}
                   </div>
+                )}
+                {/* Admin Button inside Profile Modal as well for easy access */}
+                {isAdmin && (
+                   <button className="btn btn-warning w-100 mt-3 fw-bold" onClick={() => { setModalMode('adminPanel'); }}><i className="fas fa-tools me-2"></i>Open Admin Panel</button>
                 )}
                 <button className="btn btn-outline-danger w-100 mt-4" onClick={handleLogout}>Sign Out</button>
               </div>
