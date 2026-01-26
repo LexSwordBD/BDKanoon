@@ -181,6 +181,9 @@ function AppContent() {
   const [adminMsgInput, setAdminMsgInput] = useState('');
   const [adminTitleInput, setAdminTitleInput] = useState('');
   const [adminMsgType, setAdminMsgType] = useState('info'); // info, success, warning
+  const [adminExpiryInput, setAdminExpiryInput] = useState(''); // Expiry Date State
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
   const disclaimerText = "Please note that while every effort has been made to provide accurate case references, there may be some unintentional errors. We encourage users to verify the information from official sources for complete accuracy.";
@@ -192,14 +195,49 @@ function AppContent() {
         .from('notifications')
         .select('*')
         .order('created_at', { ascending: false });
-      if (data) setGlobalNotifications(data);
+
+      if (data) {
+         // Filter: Remove dismissed ones AND expired ones
+         const dismissed = JSON.parse(localStorage.getItem('dismissed_notifs') || '[]');
+         const now = new Date();
+         
+         const validNotifications = data.filter(n => {
+            // Check dismissal
+            if (dismissed.includes(n.id)) return false;
+            // Check expiry if set
+            if (n.expires_at) {
+               const expDate = new Date(n.expires_at);
+               if (now > expDate) return false;
+            }
+            return true;
+         });
+         
+         // If admin, show all (including expired) for management, else show valid
+         if (isAdmin) setGlobalNotifications(data);
+         else setGlobalNotifications(validNotifications);
+      }
     } catch (e) {
       console.log('No notification table or error fetching');
     }
   };
 
+  // --- User Dismiss Logic ---
+  const dismissNotification = (id) => {
+      // 1. Remove from UI
+      setGlobalNotifications(prev => prev.filter(n => n.id !== id));
+      
+      // 2. Add to Local Storage
+      const dismissed = JSON.parse(localStorage.getItem('dismissed_notifs') || '[]');
+      if (!dismissed.includes(id)) {
+          dismissed.push(id);
+          localStorage.setItem('dismissed_notifs', JSON.stringify(dismissed));
+      }
+  };
+
   const deleteNotification = async (id) => {
     if (!isAdmin) return;
+    if (!window.confirm("Are you sure you want to delete this notification permanently?")) return;
+    
     const { error } = await supabase.from('notifications').delete().eq('id', id);
     if (!error) {
        openNotice({ type: 'success', title: 'Deleted', message: 'Notification removed.' });
@@ -209,23 +247,57 @@ function AppContent() {
     }
   };
 
+  const handleEditClick = (notif) => {
+      setIsEditing(true);
+      setEditingId(notif.id);
+      setAdminTitleInput(notif.title);
+      setAdminMsgInput(notif.message);
+      setAdminMsgType(notif.type);
+      // Format timestamp for datetime-local input (YYYY-MM-DDTHH:MM)
+      if (notif.expires_at) {
+        const d = new Date(notif.expires_at);
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+        setAdminExpiryInput(d.toISOString().slice(0, 16));
+      } else {
+        setAdminExpiryInput('');
+      }
+  };
+
+  const cancelEdit = () => {
+      setIsEditing(false);
+      setEditingId(null);
+      setAdminTitleInput('');
+      setAdminMsgInput('');
+      setAdminMsgType('info');
+      setAdminExpiryInput('');
+  };
+
   const sendAdminNotification = async (e) => {
     e.preventDefault();
     if (!adminTitleInput || !adminMsgInput) return;
     
-    const { error } = await supabase.from('notifications').insert([{
+    const payload = {
         title: adminTitleInput,
         message: adminMsgInput,
         type: adminMsgType,
-        created_at: new Date()
-    }]);
+        expires_at: adminExpiryInput ? new Date(adminExpiryInput).toISOString() : null
+    };
+
+    let error;
+
+    if (isEditing && editingId) {
+        const res = await supabase.from('notifications').update(payload).eq('id', editingId);
+        error = res.error;
+    } else {
+        const res = await supabase.from('notifications').insert([{ ...payload, created_at: new Date() }]);
+        error = res.error;
+    }
 
     if (error) {
         openNotice({ type: 'error', title: 'Failed', message: error.message });
     } else {
-        openNotice({ type: 'success', title: 'Sent', message: 'Notification pushed to all users.' });
-        setAdminMsgInput('');
-        setAdminTitleInput('');
+        openNotice({ type: 'success', title: isEditing ? 'Updated' : 'Sent', message: 'Notification processed.' });
+        cancelEdit(); // Reset form
         fetchGlobalNotifications();
     }
   };
@@ -236,7 +308,7 @@ function AppContent() {
       setDeferredPrompt(e);
     });
     fetchGlobalNotifications(); // Fetch notifications on load
-  }, []);
+  }, [isAdmin]); // Re-fetch when admin status changes
 
   useEffect(() => {
     let viewport = document.querySelector('meta[name="viewport"]');
@@ -888,20 +960,61 @@ function AppContent() {
 
   return (
     <div>
-      {/* Global Push Notification Display */}
+      {/* --- NEW PROFESSIONAL NOTIFICATION MODAL --- */}
       {globalNotifications.length > 0 && !isAdmin && (
-         <div style={{ position: 'fixed', top: '80px', right: '20px', zIndex: 9999, maxWidth: '350px' }}>
-            {globalNotifications.map((note) => (
-               <div key={note.id} className="toast show mb-3 shadow border-0" style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(5px)' }}>
-                  <div className={`toast-header text-white ${note.type === 'error' ? 'bg-danger' : note.type === 'warning' ? 'bg-warning text-dark' : 'bg-dark'}`}>
-                     <strong className="me-auto">{note.title}</strong>
-                     <button type="button" className="btn-close btn-close-white" onClick={() => setGlobalNotifications(prev => prev.filter(n => n.id !== note.id))}></button>
-                  </div>
-                  <div className="toast-body text-dark">
-                     {note.message}
-                  </div>
-               </div>
+         <div style={{
+            position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 9999, background: 'rgba(0, 0, 0, 0.65)', backdropFilter: 'blur(5px)'
+         }}>
+            {globalNotifications.slice(0, 1).map((note) => (
+                <div key={note.id} className="notification-modal-card" style={{
+                    width: '90%', maxWidth: '420px', background: '#fff', borderRadius: '16px',
+                    boxShadow: '0 20px 60px rgba(0,0,0,0.3)', overflow: 'hidden', animation: 'fadeInScale 0.3s ease-out'
+                }}>
+                    <div style={{
+                        padding: '25px', textAlign: 'center', position: 'relative',
+                        borderBottom: '1px solid #f0f0f0'
+                    }}>
+                        {/* High Contrast Close Button */}
+                        <button 
+                            onClick={() => dismissNotification(note.id)}
+                            style={{
+                                position: 'absolute', top: '15px', right: '15px',
+                                background: 'rgba(0,0,0,0.05)', border: 'none', borderRadius: '50%',
+                                width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                cursor: 'pointer', color: '#333', fontSize: '18px'
+                            }}
+                        >
+                            <i className="fas fa-times"></i>
+                        </button>
+
+                        <div style={{ marginBottom: '15px' }}>
+                             {note.type === 'error' ? <i className="fas fa-exclamation-circle fa-3x text-danger"></i> :
+                              note.type === 'warning' ? <i className="fas fa-bell fa-3x text-warning"></i> :
+                              <i className="fas fa-info-circle fa-3x text-primary"></i>}
+                        </div>
+                        <h5 className="fw-bold text-dark mb-0" style={{ fontSize: '18px' }}>{note.title}</h5>
+                    </div>
+                    <div style={{ padding: '25px', color: '#555', fontSize: '15px', lineHeight: '1.6', textAlign: 'center' }}>
+                        {note.message}
+                    </div>
+                    <div style={{ padding: '0 25px 25px 25px' }}>
+                        <button 
+                            className="btn btn-dark w-100 py-2 rounded-pill fw-bold"
+                            onClick={() => dismissNotification(note.id)}
+                        >
+                            Got it
+                        </button>
+                    </div>
+                </div>
             ))}
+            <style>{`
+                @keyframes fadeInScale {
+                    from { opacity: 0; transform: scale(0.9); }
+                    to { opacity: 1; transform: scale(1); }
+                }
+            `}</style>
          </div>
       )}
 
@@ -1085,7 +1198,6 @@ function AppContent() {
           </div>
         )}
         
-        {/* === MODIFIED SECTION: PROFESSIONAL FEATURES SECTION === */}
         {view === 'home' && (
           <div id="featuresSection" className="py-5" style={{ background: '#fff' }}>
             <div className="text-center mb-5">
@@ -1129,7 +1241,6 @@ function AppContent() {
             </div>
           </div>
         )}
-        {/* === END MODIFIED SECTION === */}
 
       </div>
 
@@ -1146,7 +1257,7 @@ function AppContent() {
         </div>
       </div>
 
-      {/* --- NEW ADMIN PANEL MODAL --- */}
+      {/* --- MODIFIED ADMIN PANEL MODAL --- */}
       {modalMode === 'adminPanel' && isAdmin && (
         <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.8)', zIndex: 1100 }}>
           <div className="modal-dialog modal-lg modal-dialog-scrollable">
@@ -1157,15 +1268,18 @@ function AppContent() {
               </div>
               <div className="modal-body p-4 bg-light">
                 
-                {/* Send New Notification */}
+                {/* Send/Edit Notification Form */}
                 <div className="card border-0 shadow-sm mb-4">
-                   <div className="card-header bg-white fw-bold py-3 border-bottom-0">Create New Push Notification</div>
+                   <div className="card-header bg-white fw-bold py-3 border-bottom-0 d-flex justify-content-between align-items-center">
+                       <span>{isEditing ? 'Edit Notification' : 'Create New Notification'}</span>
+                       {isEditing && <button className="btn btn-sm btn-outline-secondary" onClick={cancelEdit}>Cancel Edit</button>}
+                   </div>
                    <div className="card-body">
                       <form onSubmit={sendAdminNotification}>
                          <div className="row">
                             <div className="col-md-8 mb-3">
                                <label className="form-label small text-muted text-uppercase fw-bold">Title</label>
-                               <input type="text" className="form-control" placeholder="Short title (e.g. Server Maintenance)" value={adminTitleInput} onChange={e => setAdminTitleInput(e.target.value)} required />
+                               <input type="text" className="form-control" placeholder="Short title" value={adminTitleInput} onChange={e => setAdminTitleInput(e.target.value)} required />
                             </div>
                             <div className="col-md-4 mb-3">
                                <label className="form-label small text-muted text-uppercase fw-bold">Type</label>
@@ -1175,35 +1289,59 @@ function AppContent() {
                                   <option value="warning">Warning (Yellow/Red)</option>
                                </select>
                             </div>
+                            {/* Expiry Date Picker */}
+                            <div className="col-12 mb-3">
+                               <label className="form-label small text-muted text-uppercase fw-bold">Expires At (Optional)</label>
+                               <input 
+                                   type="datetime-local" 
+                                   className="form-control" 
+                                   value={adminExpiryInput} 
+                                   onChange={e => setAdminExpiryInput(e.target.value)} 
+                               />
+                               <small className="text-muted">Leave blank for no expiration. Users won't see this after this date.</small>
+                            </div>
                             <div className="col-12 mb-3">
                                <label className="form-label small text-muted text-uppercase fw-bold">Message Content</label>
                                <textarea className="form-control" rows="3" placeholder="Write your message here..." value={adminMsgInput} onChange={e => setAdminMsgInput(e.target.value)} required style={{ resize: 'none' }}></textarea>
                             </div>
                          </div>
                          <div className="d-flex justify-content-end">
-                            <button type="submit" className="btn btn-dark px-4"><i className="fas fa-paper-plane me-2"></i>Send Broadcast</button>
+                            <button type="submit" className={`btn px-4 ${isEditing ? 'btn-warning' : 'btn-dark'}`}>
+                                <i className={`fas ${isEditing ? 'fa-save' : 'fa-paper-plane'} me-2`}></i>
+                                {isEditing ? 'Update Notification' : 'Send Broadcast'}
+                            </button>
                          </div>
                       </form>
                    </div>
                 </div>
 
                 {/* Active Notifications List */}
-                <h6 className="fw-bold text-secondary text-uppercase mb-3 small">Active Notifications</h6>
+                <h6 className="fw-bold text-secondary text-uppercase mb-3 small">All Notifications (Including Expired)</h6>
                 {globalNotifications.length === 0 ? (
                    <div className="text-center text-muted py-3">No active notifications found.</div>
                 ) : (
                    <div className="list-group">
                       {globalNotifications.map((notif) => (
                          <div key={notif.id} className="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3 border-0 mb-2 shadow-sm rounded">
-                            <div>
+                            <div className="w-100 pe-3">
                                <div className="d-flex align-items-center mb-1">
                                   <span className={`badge me-2 ${notif.type === 'error' ? 'bg-danger' : notif.type === 'warning' ? 'bg-warning text-dark' : 'bg-primary'}`}>{notif.type}</span>
                                   <h6 className="mb-0 fw-bold">{notif.title}</h6>
                                </div>
-                               <p className="mb-0 text-muted small">{notif.message}</p>
-                               <small className="text-muted" style={{ fontSize: '10px' }}>{new Date(notif.created_at).toLocaleString()}</small>
+                               <p className="mb-1 text-muted small text-truncate">{notif.message}</p>
+                               <div className="d-flex gap-3">
+                                   <small className="text-muted" style={{ fontSize: '10px' }}>Created: {new Date(notif.created_at).toLocaleString()}</small>
+                                   {notif.expires_at && (
+                                       <small className={new Date(notif.expires_at) < new Date() ? "text-danger fw-bold" : "text-success fw-bold"} style={{ fontSize: '10px' }}>
+                                           Expires: {new Date(notif.expires_at).toLocaleString()}
+                                       </small>
+                                   )}
+                               </div>
                             </div>
-                            <button className="btn btn-outline-danger btn-sm rounded-circle" onClick={() => deleteNotification(notif.id)} title="Delete"><i className="fas fa-trash"></i></button>
+                            <div className="d-flex flex-column gap-2">
+                                <button className="btn btn-outline-dark btn-sm rounded-circle" onClick={() => handleEditClick(notif)} title="Edit"><i className="fas fa-edit"></i></button>
+                                <button className="btn btn-outline-danger btn-sm rounded-circle" onClick={() => deleteNotification(notif.id)} title="Delete"><i className="fas fa-trash"></i></button>
+                            </div>
                          </div>
                       ))}
                    </div>
