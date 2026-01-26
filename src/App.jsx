@@ -211,7 +211,7 @@ function AppContent() {
         pageLanguage: 'en',
         includedLanguages: 'en,bn', // Only En & Bn
         autoDisplay: false, 
-        multilanguagePage: true,
+        multilanguagePage: true, // Improve translation quality
       }, 'google_translate_element');
     };
 
@@ -250,17 +250,17 @@ function AppContent() {
       /* Hide the element itself */
       #google_translate_element, .goog-te-gadget { display: none !important; }
       
-      /* HIDE MOBILE TRANSLATE BAR (The specific class from screenshot) */
+      /* HIDE MOBILE TRANSLATE BAR (Specific IDs) */
       .VIpgJd-ZVi9od-ORHb-OEVmcd { display: none !important; }
       #goog-gt-tt { display: none !important; visibility: hidden !important; }
 
-      /* --- Custom Professional Font for Bangla --- */
+      /* --- Custom Professional Font for Bangla (Kalpurush/SolaimanLipi) --- */
       @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600&display=swap');
       
-      /* When translated, apply Kalpurush/Professional Font */
+      /* When translated, apply Kalpurush first, then SolaimanLipi, then fallback */
       .translated-mode .judgment-content, 
       .translated-mode .judgment-content * {
-          font-family: 'Hind Siliguri', 'Kalpurush', 'SolaimanLipi', sans-serif !important;
+          font-family: 'Kalpurush', 'SolaimanLipi', 'Hind Siliguri', sans-serif !important;
           line-height: 2 !important;
           font-size: 1.15rem !important;
           text-align: justify !important;
@@ -273,46 +273,7 @@ function AppContent() {
     document.head.appendChild(style);
   }, []);
 
-  // --- Toggle Language Helper & Legal Term Correction ---
-  const correctLegalTerms = () => {
-      // This runs ONCE after translation
-      const contentDiv = document.querySelector('.judgment-content');
-      if (!contentDiv) return;
-
-      let html = contentDiv.innerHTML;
-
-      // DICTIONARY OF CORRECTIONS (Bad Google Trans -> Professional Legal Bengali)
-      const corrections = [
-          { bad: "আপীলের ছুটি", good: "লিভ টু আপিল (Leave to Appeal)" },
-          { bad: "আপিলের ছুটি", good: "লিভ টু আপিল (Leave to Appeal)" },
-          { bad: "ছুটি দেওয়া", good: "অনুমতি দেওয়া হলো" }, 
-          { bad: "নিয়ম পরম", good: "রুল চূড়ান্ত (Rule Absolute)" },
-          { bad: "নিয়ম", good: "রুল" }, // Context dependent, but usually Rule in court
-          { bad: "পরম তৈরি", good: "চূড়ান্ত করা হলো" },
-          { bad: "আইনজীবী দাখিল করেন", good: "আইনজীবী যুক্তি উপস্থাপন করেন" },
-          { bad: "আইনজীবী জমা", good: "আইনজীবীর সাবমিশন" },
-          { bad: "শিখেছি", good: "বিজ্ঞ" }, // learned advocate -> বিজ্ঞ আইনজীবী
-          { bad: "শেখা", good: "বিজ্ঞ" },
-          { bad: "অকার্যকর", good: "আইনগত কর্তৃত্ববহির্ভূত (Void)" },
-          { bad: "লিখিত পিটিশন", good: "রিট পিটিশন" },
-          { bad: "লেখা পিটিশন", good: "রিট পিটিশন" },
-          { bad: "প্রার্থনা", good: "প্রার্থনা (Prayer)" },
-          { bad: "বিবাদী", good: "রেসপনডেন্ট/বিবাদী" },
-          { bad: "আবেদনকারী", good: "পিটিশনার/আবেদনকারী" },
-          { bad: "শুনানি", good: "শুনানি (Hearing)" },
-          { bad: "রায়", good: "রায় (Judgment)" },
-          { bad: "আদেশ", good: "আদেশ (Order)" }
-      ];
-
-      corrections.forEach(item => {
-          // Use regex with global flag to replace all instances
-          const regex = new RegExp(item.bad, 'g');
-          html = html.replace(regex, item.good);
-      });
-
-      contentDiv.innerHTML = html;
-  };
-
+  // --- Toggle Language Helper ---
   const toggleLanguage = () => {
     const select = document.querySelector('.goog-te-combo');
     if (select) {
@@ -324,10 +285,6 @@ function AppContent() {
         select.value = 'bn';
         select.dispatchEvent(new Event('change'));
         setIsTranslated(true);
-        // FIX: NO Infinite Loop. Run correction ONCE after 2.5s delay
-        setTimeout(() => {
-            correctLegalTerms();
-        }, 2500); 
       }
     } else {
         openNotice({ type: 'warning', title: 'System Initializing', message: 'Translation engine is getting ready. Please try again in 5 seconds.' });
@@ -937,12 +894,12 @@ function AppContent() {
     if (item.is_premium && !session) { setModalMode('warning'); return; }
     if (item.is_premium && !subStatus) { setModalMode('warning'); return; }
     setLoading(true); setView('reader'); setCurrentJudgment(item); setParallelCitations([]);
-    
-    // **FORCE RESET ON LOAD**
+    // Ensure clean state
     if (isTranslated) {
-        setIsTranslated(false);
+        // Toggle off manually first to reset UI
         const select = document.querySelector('.goog-te-combo');
         if(select) { select.value = 'en'; select.dispatchEvent(new Event('change')); }
+        setIsTranslated(false);
     }
 
     try {
@@ -1517,7 +1474,7 @@ function AppContent() {
                                <div className="d-flex align-items-center mb-1">
                                   <span className={`badge me-2 ${notif.type === 'error' ? 'bg-danger' : notif.type === 'warning' ? 'bg-warning text-dark' : 'bg-primary'}`}>{notif.type}</span>
                                   <h6 className="mb-0 fw-bold">{notif.title}</h6>
-                               </div>
+                                </div>
                                <p className="mb-1 text-muted small text-truncate">{notif.message}</p>
                                <div className="d-flex gap-3">
                                    <small className="text-muted" style={{ fontSize: '10px' }}>Created: {new Date(notif.created_at).toLocaleString()}</small>
