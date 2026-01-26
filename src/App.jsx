@@ -14,6 +14,10 @@ class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     console.error("App Crash Error:", error, errorInfo);
+    // Crash হলে লোকাল স্টোরেজ ক্লিয়ার করা হয়, কিন্তু গুগল ট্রান্সলেট কুকি থাকলে সমস্যা হতে পারে
+    // তাই কুকি ক্লিয়ার করার চেষ্টা করা হলো
+    document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname;
     localStorage.clear();
     sessionStorage.clear();
   }
@@ -186,7 +190,65 @@ function AppContent() {
   const [editingId, setEditingId] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // --- Translation State ---
+  const [isTranslated, setIsTranslated] = useState(false);
+
   const disclaimerText = "Please note that while every effort has been made to provide accurate case references, there may be some unintentional errors. We encourage users to verify the information from official sources for complete accuracy.";
+
+  // --- Google Translate Initialization ---
+  useEffect(() => {
+    // 1. Add Google Translate Script dynamically
+    if (!document.getElementById('google-translate-script')) {
+      const script = document.createElement('script');
+      script.id = 'google-translate-script';
+      script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+
+    // 2. Define the callback function
+    window.googleTranslateElementInit = () => {
+      new window.google.translate.TranslateElement({
+        pageLanguage: 'en',
+        includedLanguages: 'en,bn', // Only English and Bengali
+        autoDisplay: false
+      }, 'google_translate_element');
+    };
+
+    // 3. Inject CSS to Hide Google Toolbar (Professional Look)
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .goog-te-banner-frame.skiptranslate { display: none !important; } 
+      body { top: 0px !important; } 
+      #google_translate_element { display: none; }
+      .goog-tooltip { display: none !important; }
+      .goog-tooltip:hover { display: none !important; }
+      .goog-text-highlight { background-color: transparent !important; box-shadow: none !important; }
+      font { background-color: transparent !important; box-shadow: none !important; }
+    `;
+    document.head.appendChild(style);
+  }, []);
+
+  // --- Helper to Toggle Language ---
+  const toggleLanguage = () => {
+    const select = document.querySelector('.goog-te-combo');
+    if (select) {
+      if (isTranslated) {
+        // Switch back to English
+        select.value = 'en'; 
+        select.dispatchEvent(new Event('change'));
+        setIsTranslated(false);
+      } else {
+        // Switch to Bengali
+        select.value = 'bn';
+        select.dispatchEvent(new Event('change'));
+        setIsTranslated(true);
+      }
+    } else {
+        // Fallback if script hasn't loaded yet
+        openNotice({ type: 'warning', title: 'Loading...', message: 'Translation engine is initializing. Please try again in a moment.' });
+    }
+  };
 
   // --- Notification Fetching Logic ---
   const fetchGlobalNotifications = async () => {
@@ -723,9 +785,20 @@ function AppContent() {
     }
   };
 
+  // --- Reset Language When Leaving Reader View ---
+  const handleBackToResults = () => {
+     if (isTranslated) {
+        toggleLanguage(); // Reset to English
+     }
+     setView('results');
+  }
+
   const handleSearch = async (page = 1, type = 'simple', termOverride = null) => {
     setLoading(true); setCurrentPage(page); setView('results');
     setShowSuggestions(false); 
+    // Ensure language is reset when searching
+    if(isTranslated) toggleLanguage();
+
     try {
       let queryBuilder = supabase.from('cases').select('*', { count: 'exact' });
       if (type === 'advanced') {
@@ -790,6 +863,14 @@ function AppContent() {
     if (item.is_premium && !session) { setModalMode('warning'); return; }
     if (item.is_premium && !subStatus) { setModalMode('warning'); return; }
     setLoading(true); setView('reader'); setCurrentJudgment(item); setParallelCitations([]);
+    // Ensure clean state
+    if (isTranslated) {
+        setIsTranslated(false);
+        // Force reset cookie if needed, but simple state toggle is safer first
+        const select = document.querySelector('.goog-te-combo');
+        if(select) { select.value = 'en'; select.dispatchEvent(new Event('change')); }
+    }
+
     try {
       const url = `https://raw.githubusercontent.com/${githubUser}/${repoName}/main/judgments/${item.github_filename}`;
       const res = await fetch(url);
@@ -960,6 +1041,9 @@ function AppContent() {
 
   return (
     <div>
+      {/* Hidden Div for Google Translate Element */}
+      <div id="google_translate_element"></div>
+
       {/* --- NEW PROFESSIONAL NOTIFICATION MODAL --- */}
       {globalNotifications.length > 0 && !isAdmin && (
          <div style={{
@@ -1169,15 +1253,30 @@ function AppContent() {
             )}
           </div>
         )}
+        
+        {/* === READER VIEW WITH TRANSLATE BUTTON === */}
         {view === 'reader' && !loading && currentJudgment && (
           <div id="readerView" className="bg-white p-4 p-md-5 rounded-3 shadow-sm border mb-5">
-            <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-              <button className="btn btn-outline-secondary btn-sm" onClick={() => setView('results')}><i className="fas fa-arrow-left"></i> Back</button>
-              <div className="d-flex gap-2">
-                <button className="btn btn-sm btn-outline-warning text-dark" onClick={() => toggleBookmark(currentJudgment)}><i className="far fa-bookmark"></i> Save / Unsave</button>
-                <button className="btn btn-sm btn-outline-dark" onClick={() => window.print()}><i className="fas fa-print"></i> Print</button>
+            <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 border-bottom pb-3 gap-3">
+              <button className="btn btn-outline-secondary btn-sm align-self-start align-self-md-center" onClick={handleBackToResults}><i className="fas fa-arrow-left"></i> Back</button>
+              
+              <div className="d-flex gap-2 flex-wrap justify-content-center">
+                
+                {/* --- NEW TRANSLATE BUTTON --- */}
+                <button 
+                  className={`btn btn-sm ${isTranslated ? 'btn-outline-primary' : 'btn-primary'} rounded-pill px-3 shadow-sm fw-bold`} 
+                  onClick={toggleLanguage}
+                  style={{ transition: 'all 0.2s' }}
+                >
+                  <i className={`fas ${isTranslated ? 'fa-undo' : 'fa-language'} me-2`}></i>
+                  {isTranslated ? 'Show Original' : 'বাংলায় পড়ুন'}
+                </button>
+                
+                <button className="btn btn-sm btn-outline-warning text-dark rounded-pill px-3" onClick={() => toggleBookmark(currentJudgment)}><i className="far fa-bookmark"></i> Save</button>
+                <button className="btn btn-sm btn-outline-dark rounded-pill px-3" onClick={() => window.print()}><i className="fas fa-print"></i> Print</button>
               </div>
             </div>
+
             <h3 className="fw-bold text-center text-primary mb-2" style={{ fontFamily: 'Playfair Display' }}>{currentJudgment.title}</h3>
             <p className="text-center text-dark fw-bold mb-2 fs-5">{currentJudgment.citation}</p>
             {parallelCitations.length > 0 && (
@@ -1187,7 +1286,15 @@ function AppContent() {
               </div>
             )}
             
-            <div className="mt-4 text-justify" style={{ whiteSpace: 'pre-wrap', fontFamily: 'Merriweather', textAlign: 'justify' }} dangerouslySetInnerHTML={{ __html: judgmentText }} />
+            {/* Disclaimer for Translation */}
+            {isTranslated && (
+                <div className="alert alert-info py-2 small text-center mb-4 border-0 bg-light-info text-primary">
+                    <i className="fas fa-robot me-2"></i>
+                    AI Generated Translation. For reference only.
+                </div>
+            )}
+
+            <div className="mt-4 text-justify" style={{ whiteSpace: 'pre-wrap', fontFamily: 'Merriweather', textAlign: 'justify', lineHeight: '1.8' }} dangerouslySetInnerHTML={{ __html: judgmentText }} />
             
             {!judgmentText.includes("Please note that while every effort") && (
               <div className="mt-5 p-3 border-top border-secondary text-muted small fst-italic bg-light rounded text-center">
