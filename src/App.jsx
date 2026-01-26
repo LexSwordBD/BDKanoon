@@ -191,7 +191,6 @@ function AppContent() {
 
   // --- Translation State ---
   const [isTranslated, setIsTranslated] = useState(false);
-  const judgmentRef = useRef(null); // Ref for judgment content
 
   const disclaimerText = "Please note that while every effort has been made to provide accurate case references, there may be some unintentional errors. We encourage users to verify the information from official sources for complete accuracy.";
 
@@ -276,7 +275,7 @@ function AppContent() {
 
   // --- Toggle Language Helper & Legal Term Correction ---
   const correctLegalTerms = () => {
-      // This runs AFTER Google Translate has modified the DOM
+      // This runs ONCE after translation
       const contentDiv = document.querySelector('.judgment-content');
       if (!contentDiv) return;
 
@@ -314,29 +313,6 @@ function AppContent() {
       contentDiv.innerHTML = html;
   };
 
-  // Helper to trigger corrections efficiently
-  useEffect(() => {
-      if (!isTranslated) return;
-
-      // Use MutationObserver to detect when Google finishes translating
-      const observer = new MutationObserver((mutations) => {
-          // Simple debounce/throttle could be added here if needed
-          // But for now, we just run correction once text nodes change
-          correctLegalTerms();
-      });
-
-      const target = document.querySelector('.judgment-content');
-      if (target) {
-          observer.observe(target, { childList: true, subtree: true, characterData: true });
-          
-          // Initial correction run in case it was already there
-          setTimeout(correctLegalTerms, 1500); 
-      }
-
-      return () => observer.disconnect();
-  }, [isTranslated]);
-
-
   const toggleLanguage = () => {
     const select = document.querySelector('.goog-te-combo');
     if (select) {
@@ -348,8 +324,10 @@ function AppContent() {
         select.value = 'bn';
         select.dispatchEvent(new Event('change'));
         setIsTranslated(true);
-        // Force correction after a delay allowing Google to render
-        setTimeout(correctLegalTerms, 2000); 
+        // FIX: NO Infinite Loop. Run correction ONCE after 2.5s delay
+        setTimeout(() => {
+            correctLegalTerms();
+        }, 2500); 
       }
     } else {
         openNotice({ type: 'warning', title: 'System Initializing', message: 'Translation engine is getting ready. Please try again in 5 seconds.' });
@@ -959,12 +937,12 @@ function AppContent() {
     if (item.is_premium && !session) { setModalMode('warning'); return; }
     if (item.is_premium && !subStatus) { setModalMode('warning'); return; }
     setLoading(true); setView('reader'); setCurrentJudgment(item); setParallelCitations([]);
-    // Ensure clean state
+    
+    // **FORCE RESET ON LOAD**
     if (isTranslated) {
-        // Toggle off manually first to reset UI
+        setIsTranslated(false);
         const select = document.querySelector('.goog-te-combo');
         if(select) { select.value = 'en'; select.dispatchEvent(new Event('change')); }
-        setIsTranslated(false);
     }
 
     try {
