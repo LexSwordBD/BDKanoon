@@ -86,7 +86,7 @@ const lawAliases = {
   'Non-Agricultural Tenancy Act (অ-কৃষি প্রজাস্বত্ব)': ['Non-Agricultural', 'Non-agri', 'Chandina', 'অ-কৃষি'],
   'Land Survey Tribunal (ভূমি জরিপ)': ['Land Survey', 'L.S.T', 'Tribunal', 'Survey', 'জরিপ'],
   'Trust Act (ট্রাস্ট আইন)': ['Trust Act', 'Trustee', 'Beneficiary'],
-   
+    
   // --- Family & Personal ---
   'Muslim Family Laws (মুসলিম পারিবারিক আইন)': ['Muslim Family', 'MFLO', 'Denmohar', 'Dower', 'Talaq', 'Divorce', 'Maintenance', 'Polygamy'],
   'Family Courts Ordinance (পারিবারিক আদালত)': ['Family Courts', 'Family Court', 'Restitution of conjugal rights', 'পারিবারিক'],
@@ -245,7 +245,7 @@ function AppContent() {
       /* Hide Tooltips, Popups, Hover Effects */
       .goog-tooltip { display: none !important; }
       .goog-tooltip:hover { display: none !important; }
-      .goog-text-highlight { background-color: transparent !important; box-shadow: none !important; }
+      .goog-text-highlight { background-color: transparent !important; box-shadow: none !important; color: inherit !important; }
       
       /* Hide the element itself */
       #google_translate_element, .goog-te-gadget { display: none !important; }
@@ -603,9 +603,10 @@ function AppContent() {
          setModalMode('resetPassword');
       }
 
+      // --- PERFORMANCE FIX: Reduced artificial delay from 1500ms to 100ms for fast PWA load ---
       const timer = setTimeout(() => {
         if (isMounted) setLoading(false);
-      }, 1500);
+      }, 100);
 
       try {
         const { data, error } = await supabase.auth.getSession();
@@ -890,6 +891,37 @@ function AppContent() {
     } catch (e) { openNotice({ type: 'error', title: 'Error', message: 'Unexpected error.', primaryText: 'OK', onPrimary: closeNotice }); } finally { setLoading(false); }
   };
 
+  // --- PROTECT LEGAL TERMS FUNCTION ---
+  // Wraps specific legal phrases in <span class="notranslate"> to prevent bad translation
+  const protectLegalTerms = (text) => {
+    if (!text) return "";
+    let processed = text;
+    
+    // List of legal terms to keep in English
+    const termsToProtect = [
+      "rule absolute", "Rule Absolute", 
+      "rule discharged", "Rule Discharged", 
+      "leave to appeal", "Leave to Appeal", 
+      "lawyers submission", "lawyer's submission", "Lawyer's Submission",
+      "suo moto", "Suo Moto",
+      "status quo", "Status Quo",
+      "ad interim", "Ad Interim",
+      "decree", "Decree",
+      "amicus curiae", "Amicus Curiae",
+      "habeas corpus", "Habeas Corpus",
+      "certiorari", "mandamus", "quo warranto", "prohibition"
+    ];
+
+    termsToProtect.forEach(term => {
+       // Create regex to match term globally, ignoring case is handled by having both cases in list for precision or using 'gi'
+       // We use a simple replacement to wrap match in span
+       const regex = new RegExp(`(${term})`, 'gi');
+       processed = processed.replace(regex, '<span class="notranslate">$1</span>');
+    });
+
+    return processed;
+  };
+
   const loadJudgment = async (item) => {
     if (item.is_premium && !session) { setModalMode('warning'); return; }
     if (item.is_premium && !subStatus) { setModalMode('warning'); return; }
@@ -925,7 +957,12 @@ function AppContent() {
           caseContent = caseContent.replace(match[1], '').trimStart();
         } else { break; }
       }
-      setParallelCitations(matches); setJudgmentText(caseContent);
+      setParallelCitations(matches); 
+      
+      // Apply Protection before setting state
+      const safeContent = protectLegalTerms(caseContent);
+      setJudgmentText(safeContent);
+
     } catch (e) {
       setJudgmentText("Error: " + e.message); setParallelCitations([]);
       openNotice({ type: 'error', title: 'Load Failed', message: 'Could not load text.', primaryText: 'OK', onPrimary: closeNotice });
@@ -1327,7 +1364,7 @@ function AppContent() {
             {isTranslated && (
                 <div className="alert alert-info py-2 small text-center mb-4 border-0 bg-light-info text-primary notranslate">
                     <i className="fas fa-robot me-2"></i>
-                    AI Generated Translation. For reference only.
+                    AI Generated Translation. Legal terms are kept in English for accuracy.
                 </div>
             )}
 
@@ -1423,41 +1460,41 @@ function AppContent() {
                    </div>
                    <div className="card-body">
                       <form onSubmit={sendAdminNotification}>
-                         <div className="row">
-                            <div className="col-md-8 mb-3">
-                               <label className="form-label small text-muted text-uppercase fw-bold">Title</label>
-                               <input type="text" className="form-control" placeholder="Short title" value={adminTitleInput} onChange={e => setAdminTitleInput(e.target.value)} required />
-                            </div>
-                            <div className="col-md-4 mb-3">
-                               <label className="form-label small text-muted text-uppercase fw-bold">Type</label>
-                               <select className="form-select" value={adminMsgType} onChange={e => setAdminMsgType(e.target.value)}>
-                                  <option value="info">Info (Blue)</option>
-                                  <option value="success">Success (Green)</option>
-                                  <option value="warning">Warning (Yellow/Red)</option>
-                               </select>
-                            </div>
-                            {/* Expiry Date Picker */}
-                            <div className="col-12 mb-3">
-                               <label className="form-label small text-muted text-uppercase fw-bold">Expires At (Optional)</label>
-                               <input 
+                          <div className="row">
+                             <div className="col-md-8 mb-3">
+                                <label className="form-label small text-muted text-uppercase fw-bold">Title</label>
+                                <input type="text" className="form-control" placeholder="Short title" value={adminTitleInput} onChange={e => setAdminTitleInput(e.target.value)} required />
+                             </div>
+                             <div className="col-md-4 mb-3">
+                                <label className="form-label small text-muted text-uppercase fw-bold">Type</label>
+                                <select className="form-select" value={adminMsgType} onChange={e => setAdminMsgType(e.target.value)}>
+                                   <option value="info">Info (Blue)</option>
+                                   <option value="success">Success (Green)</option>
+                                   <option value="warning">Warning (Yellow/Red)</option>
+                                </select>
+                             </div>
+                             {/* Expiry Date Picker */}
+                             <div className="col-12 mb-3">
+                                <label className="form-label small text-muted text-uppercase fw-bold">Expires At (Optional)</label>
+                                <input 
                                    type="datetime-local" 
                                    className="form-control" 
                                    value={adminExpiryInput} 
                                    onChange={e => setAdminExpiryInput(e.target.value)} 
-                               />
-                               <small className="text-muted">Leave blank for no expiration. Users won't see this after this date.</small>
-                            </div>
-                            <div className="col-12 mb-3">
-                               <label className="form-label small text-muted text-uppercase fw-bold">Message Content</label>
-                               <textarea className="form-control" rows="3" placeholder="Write your message here..." value={adminMsgInput} onChange={e => setAdminMsgInput(e.target.value)} required style={{ resize: 'none' }}></textarea>
-                            </div>
-                         </div>
-                         <div className="d-flex justify-content-end">
-                            <button type="submit" className={`btn px-4 ${isEditing ? 'btn-warning' : 'btn-dark'}`}>
-                                <i className={`fas ${isEditing ? 'fa-save' : 'fa-paper-plane'} me-2`}></i>
-                                {isEditing ? 'Update Notification' : 'Send Broadcast'}
-                            </button>
-                         </div>
+                                />
+                                <small className="text-muted">Leave blank for no expiration. Users won't see this after this date.</small>
+                             </div>
+                             <div className="col-12 mb-3">
+                                <label className="form-label small text-muted text-uppercase fw-bold">Message Content</label>
+                                <textarea className="form-control" rows="3" placeholder="Write your message here..." value={adminMsgInput} onChange={e => setAdminMsgInput(e.target.value)} required style={{ resize: 'none' }}></textarea>
+                             </div>
+                          </div>
+                          <div className="d-flex justify-content-end">
+                             <button type="submit" className={`btn px-4 ${isEditing ? 'btn-warning' : 'btn-dark'}`}>
+                                 <i className={`fas ${isEditing ? 'fa-save' : 'fa-paper-plane'} me-2`}></i>
+                                 {isEditing ? 'Update Notification' : 'Send Broadcast'}
+                             </button>
+                          </div>
                       </form>
                    </div>
                 </div>
@@ -1469,27 +1506,27 @@ function AppContent() {
                 ) : (
                    <div className="list-group">
                       {globalNotifications.map((notif) => (
-                         <div key={notif.id} className="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3 border-0 mb-2 shadow-sm rounded">
-                            <div className="w-100 pe-3">
-                               <div className="d-flex align-items-center mb-1">
-                                  <span className={`badge me-2 ${notif.type === 'error' ? 'bg-danger' : notif.type === 'warning' ? 'bg-warning text-dark' : 'bg-primary'}`}>{notif.type}</span>
-                                  <h6 className="mb-0 fw-bold">{notif.title}</h6>
-                                </div>
-                               <p className="mb-1 text-muted small text-truncate">{notif.message}</p>
-                               <div className="d-flex gap-3">
-                                   <small className="text-muted" style={{ fontSize: '10px' }}>Created: {new Date(notif.created_at).toLocaleString()}</small>
-                                   {notif.expires_at && (
+                          <div key={notif.id} className="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3 border-0 mb-2 shadow-sm rounded">
+                             <div className="w-100 pe-3">
+                                <div className="d-flex align-items-center mb-1">
+                                   <span className={`badge me-2 ${notif.type === 'error' ? 'bg-danger' : notif.type === 'warning' ? 'bg-warning text-dark' : 'bg-primary'}`}>{notif.type}</span>
+                                   <h6 className="mb-0 fw-bold">{notif.title}</h6>
+                                 </div>
+                                <p className="mb-1 text-muted small text-truncate">{notif.message}</p>
+                                <div className="d-flex gap-3">
+                                    <small className="text-muted" style={{ fontSize: '10px' }}>Created: {new Date(notif.created_at).toLocaleString()}</small>
+                                    {notif.expires_at && (
                                        <small className={new Date(notif.expires_at) < new Date() ? "text-danger fw-bold" : "text-success fw-bold"} style={{ fontSize: '10px' }}>
-                                           Expires: {new Date(notif.expires_at).toLocaleString()}
+                                            Expires: {new Date(notif.expires_at).toLocaleString()}
                                        </small>
-                                   )}
-                               </div>
-                            </div>
-                            <div className="d-flex flex-column gap-2">
-                                <button className="btn btn-outline-dark btn-sm rounded-circle" onClick={() => handleEditClick(notif)} title="Edit"><i className="fas fa-edit"></i></button>
-                                <button className="btn btn-outline-danger btn-sm rounded-circle" onClick={() => deleteNotification(notif.id)} title="Delete"><i className="fas fa-trash"></i></button>
-                            </div>
-                         </div>
+                                    )}
+                                </div>
+                             </div>
+                             <div className="d-flex flex-column gap-2">
+                                 <button className="btn btn-outline-dark btn-sm rounded-circle" onClick={() => handleEditClick(notif)} title="Edit"><i className="fas fa-edit"></i></button>
+                                 <button className="btn btn-outline-danger btn-sm rounded-circle" onClick={() => deleteNotification(notif.id)} title="Delete"><i className="fas fa-trash"></i></button>
+                             </div>
+                          </div>
                       ))}
                    </div>
                 )}
@@ -1623,7 +1660,7 @@ function AppContent() {
                 )}
                 {/* Admin Button inside Profile Modal as well for easy access */}
                 {isAdmin && (
-                   <button className="btn btn-warning w-100 mt-3 fw-bold" onClick={() => { setModalMode('adminPanel'); }}><i className="fas fa-tools me-2"></i>Open Admin Panel</button>
+                    <button className="btn btn-warning w-100 mt-3 fw-bold" onClick={() => { setModalMode('adminPanel'); }}><i className="fas fa-tools me-2"></i>Open Admin Panel</button>
                 )}
                 <button className="btn btn-outline-danger w-100 mt-4" onClick={handleLogout}>Sign Out</button>
               </div>
