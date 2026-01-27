@@ -87,7 +87,7 @@ const lawAliases = {
   'Non-Agricultural Tenancy Act (অ-কৃষি প্রজাস্বত্ব)': ['Non-Agricultural', 'Non-agri', 'Chandina', 'অ-কৃষি'],
   'Land Survey Tribunal (ভূমি জরিপ)': ['Land Survey', 'L.S.T', 'Tribunal', 'Survey', 'জরিপ'],
   'Trust Act (ট্রাস্ট আইন)': ['Trust Act', 'Trustee', 'Beneficiary'],
-   
+    
   // --- Family & Personal ---
   'Muslim Family Laws (মুসলিম পারিবারিক আইন)': ['Muslim Family', 'MFLO', 'Denmohar', 'Dower', 'Talaq', 'Divorce', 'Maintenance', 'Polygamy'],
   'Family Courts Ordinance (পারিবারিক আদালত)': ['Family Courts', 'Family Court', 'Restitution of conjugal rights', 'পারিবারিক'],
@@ -121,7 +121,7 @@ const HighlightedText = ({ text, highlight, isExactMatch }) => {
       const words = highlight.split(/\s+/)
         .filter(w => w.length > 0 && !stopwords.includes(w.toLowerCase()))
         .map(escapeRegExp);
-      
+       
       if (words.length === 0) return <span>{text}</span>;
       regex = new RegExp(`(${words.join('|')})`, 'gi');
     }
@@ -155,7 +155,7 @@ function AppContent() {
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  
+   
   const [suggestions, setSuggestions] = useState([]); 
   const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -193,7 +193,7 @@ function AppContent() {
 
   // --- Data Entry States ---
   const [entryToken, setEntryToken] = useState('');
-  const [entryFile, setEntryFile] = useState('75dlr_case.txt');
+  const [entryFile, setEntryFile] = useState('75_dlr_cases.txt'); // Updated default to match format
   const [entryCitation, setEntryCitation] = useState(''); // "75 DLR (AD) 209, 23 ALR (AD) 400"
   const [entryTitle, setEntryTitle] = useState('');
   const [entryHeadnote, setEntryHeadnote] = useState('');
@@ -241,13 +241,13 @@ function AppContent() {
           opacity: 0 !important;
           pointer-events: none !important;
       }
-      
+       
       body { 
           top: 0px !important; 
           position: static !important; 
           margin-top: 0 !important;
       }
-      
+       
       html {
           height: 100%;
           overflow-y: auto;
@@ -257,17 +257,17 @@ function AppContent() {
       .goog-tooltip { display: none !important; }
       .goog-tooltip:hover { display: none !important; }
       .goog-text-highlight { background-color: transparent !important; box-shadow: none !important; }
-      
+       
       /* Hide the element itself */
       #google_translate_element, .goog-te-gadget { display: none !important; }
-      
+       
       /* HIDE MOBILE TRANSLATE BAR (Specific IDs) */
       .VIpgJd-ZVi9od-ORHb-OEVmcd { display: none !important; }
       #goog-gt-tt { display: none !important; visibility: hidden !important; }
 
       /* --- Custom Professional Font for Bangla (Kalpurush/SolaimanLipi) --- */
       @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600&display=swap');
-      
+       
       /* When translated, apply Kalpurush first, then SolaimanLipi, then fallback */
       .translated-mode .judgment-content, 
       .translated-mode .judgment-content * {
@@ -277,7 +277,7 @@ function AppContent() {
           text-align: justify !important;
           color: #222;
       }
-      
+       
       /* Prevent weird Google link styles */
       font { background-color: transparent !important; box-shadow: none !important; color: inherit !important; }
     `;
@@ -406,7 +406,28 @@ function AppContent() {
       setAdminExpiryInput('');
   };
 
-  // --- SMART DATA ENTRY LOGIC ---
+  // --- NEW: Generate Dynamic GitHub Path Function ---
+  const generateGitHubPath = (filename) => {
+    // If the filename already has slashes, assume it's a full path
+    if (filename.includes('/')) return filename;
+
+    // Pattern: Volume_Journal_cases.txt (e.g., 75_dlr_cases.txt, 31_blt_cases.txt)
+    // Captures: Group 1 (Volume), Group 2 (Journal)
+    const regex = /^(\d+)_([a-zA-Z]+)_/;
+    const match = filename.match(regex);
+
+    if (match) {
+        const volume = match[1];
+        const journal = match[2].toUpperCase(); // Convert dlr -> DLR
+        // Return full path structure: judgments/DLR/Vol-75/75_dlr_cases.txt
+        return `judgments/${journal}/Vol-${volume}/${filename}`;
+    }
+
+    // Fallback if format doesn't match: assume it's directly under judgments/
+    return `judgments/${filename}`;
+  };
+
+  // --- SMART DATA ENTRY LOGIC (Updated with Dynamic Path) ---
   const handleSmartEntry = async (e) => {
     e.preventDefault();
     if(!entryToken) { openNotice({type: 'warning', title: 'Token Missing', message: 'Please enter GitHub Access Token.'}); return; }
@@ -414,25 +435,29 @@ function AppContent() {
 
     setEntryLoading(true);
     try {
-       // 1. Parse Citations
+       // 1. Generate Full Dynamic Path
+       const fullPath = generateGitHubPath(entryFile);
+       
+       // 2. Parse Citations
        const citations = entryCitation.split(',').map(c => c.trim()).filter(c => c.length > 0);
        const anchors = citations.map(c => c.replace(/[^a-zA-Z0-9]/g, ''));
        
        if(citations.length === 0) throw new Error("Invalid citation format.");
 
-       // 2. Prepare content for GitHub
+       // 3. Prepare content for GitHub
        // Generate anchor string: ===Anchor1=== ===Anchor2===
        const anchorHeader = anchors.map(a => `===${a}===`).join(' ');
        const textToAppend = `\n${anchorHeader}\n${entryBody}\n===End===`;
 
-       // 3. GitHub Logic (Append Mode)
+       // 4. GitHub Logic (Append Mode)
        const octokit = new Octokit({ auth: entryToken });
        
-       // Get current file sha and content
-       const { data: fileData } = await octokit.request('GET /repos/{owner}/{repo}/contents/judgments/{path}', {
+       // Get current file sha and content using full dynamic path
+       // Note: Removed 'judgments/' hardcoding from URL because fullPath includes it
+       const { data: fileData } = await octokit.request('GET /repos/{owner}/{repo}/contents/{path}', {
          owner: githubUser,
          repo: repoName,
-         path: entryFile
+         path: fullPath
        });
 
        // Decode content (Base64) to append
@@ -440,23 +465,22 @@ function AppContent() {
        const newContent = currentContent + textToAppend;
        const newContentBase64 = btoa(unescape(encodeURIComponent(newContent)));
 
-       // Push to GitHub
-       await octokit.request('PUT /repos/{owner}/{repo}/contents/judgments/{path}', {
+       // Push to GitHub using full dynamic path
+       await octokit.request('PUT /repos/{owner}/{repo}/contents/{path}', {
          owner: githubUser,
          repo: repoName,
-         path: entryFile,
+         path: fullPath,
          message: `Auto-add: ${citations.join(', ')}`,
          content: newContentBase64,
          sha: fileData.sha
        });
 
-       // 4. Supabase Logic (Loop Insert)
+       // 5. Supabase Logic (Loop Insert)
        for (let i = 0; i < citations.length; i++) {
          const cit = citations[i];
          const anch = anchors[i];
          
          // Parse Citation: "75 DLR (AD) 209" -> Vol:75, Jrnl:DLR, Div:AD, Page:209
-         // Regex explanation: Matches Start -> Digits -> Space -> Letters -> Space -> (Letters) -> Space -> Digits
          const regex = /^(\d+)\s*([A-Za-z]+)\s*[\(]?([A-Za-z]+)[\)]?\s*(\d+)$/;
          const match = cit.match(regex);
          
@@ -467,7 +491,6 @@ function AppContent() {
             div = match[3];
             pg = match[4];
          } else {
-            // Fallback simplistic parse if regex fails
              const parts = cit.split(' ');
              vol = parts[0] || '';
              jrnl = parts[1] || '';
@@ -480,7 +503,7 @@ function AppContent() {
             headnote: entryHeadnote,
             citation: cit,
             case_anchor: anch,
-            github_filename: entryFile,
+            github_filename: fullPath, // Save Full Path Here
             volume: vol,
             journal: jrnl,
             division: div,
@@ -491,7 +514,7 @@ function AppContent() {
          if(error) throw error;
        }
 
-       openNotice({ type: 'success', title: 'Success', message: 'Data saved to GitHub & Supabase!' });
+       openNotice({ type: 'success', title: 'Success', message: `Saved to ${fullPath}` });
        // Reset form except token & file
        setEntryCitation('');
        setEntryTitle('');
@@ -720,7 +743,7 @@ function AppContent() {
 
       try {
         const { data, error } = await supabase.auth.getSession();
-        
+         
         if (error) {
             console.error("Session fetch error:", error);
             hardClearAuthStorage(); 
@@ -804,11 +827,11 @@ function AppContent() {
 
       if (!error && data) {
         const phraseSet = new Set();
-        
+         
         data.forEach(item => {
           if (!item.headnote) return;
           const match = item.headnote.match(new RegExp(`\\b${trimmedTerm}[\\w]*(\\s+[\\w]+){0,3}`, 'i'));
-          
+           
           if (match) {
              let phrase = match[0].replace(/[.,;:"()]/g, '').trim();
              if(phrase.length > 2) {
@@ -930,7 +953,7 @@ function AppContent() {
   // --- Reset Language When Leaving Reader View ---
   const handleBackToResults = () => {
      if (isTranslated) {
-        toggleLanguage(); // Reset to English
+       toggleLanguage(); // Reset to English
      }
      setView('results');
   }
@@ -958,7 +981,7 @@ function AppContent() {
           const titleChecks = aliases.map(a => `title.ilike.%${a}%`).join(',');
           aliasCondition = headnoteChecks + ',' + titleChecks;
         }
-        
+         
         const termToUse = termOverride !== null ? termOverride : searchTerm;
         const safeSearchTerm = termToUse.replace(/[^\w\s\u0980-\u09FF-]/g, "");
 
@@ -1014,7 +1037,17 @@ function AppContent() {
     }
 
     try {
-      const url = `https://raw.githubusercontent.com/${githubUser}/${repoName}/main/judgments/${item.github_filename}`;
+      // --- Updated File Loading Logic for Dynamic Path ---
+      let filePath = item.github_filename;
+      // If the path doesn't start with judgments/ (old data), assume it's directly inside judgments/
+      if (!filePath.startsWith('judgments/')) {
+        filePath = `judgments/${filePath}`;
+      }
+      // If it already is a full path (e.g., judgments/DLR/Vol-75/...), use it as is.
+      
+      // Note: Removed 'judgments/' from the URL template because filePath now contains the correct full path
+      const url = `https://raw.githubusercontent.com/${githubUser}/${repoName}/main/${filePath}`;
+      
       const res = await fetch(url);
       if (!res.ok) throw new Error("File not found");
       const fullText = await res.text();
@@ -1188,16 +1221,16 @@ function AppContent() {
 
       {/* --- NEW PROFESSIONAL NOTIFICATION MODAL --- */}
       {globalNotifications.length > 0 && !isAdmin && (
-         <div className="notranslate" style={{
+          <div className="notranslate" style={{
             position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             zIndex: 9999, background: 'rgba(0, 0, 0, 0.65)', backdropFilter: 'blur(5px)'
-         }}>
-            {globalNotifications.slice(0, 1).map((note) => (
-                <div key={note.id} className="notification-modal-card" style={{
+          }}>
+             {globalNotifications.slice(0, 1).map((note) => (
+                 <div key={note.id} className="notification-modal-card" style={{
                     width: '90%', maxWidth: '420px', background: '#fff', borderRadius: '16px',
                     boxShadow: '0 20px 60px rgba(0,0,0,0.3)', overflow: 'hidden', animation: 'fadeInScale 0.3s ease-out'
-                }}>
+                 }}>
                     <div style={{
                         padding: '25px', textAlign: 'center', position: 'relative',
                         borderBottom: '1px solid #f0f0f0'
@@ -1234,14 +1267,14 @@ function AppContent() {
                         </button>
                     </div>
                 </div>
-            ))}
-            <style>{`
-                @keyframes fadeInScale {
-                    from { opacity: 0; transform: scale(0.9); }
-                    to { opacity: 1; transform: scale(1); }
-                }
-            `}</style>
-         </div>
+             ))}
+             <style>{`
+                 @keyframes fadeInScale {
+                     from { opacity: 0; transform: scale(0.9); }
+                     to { opacity: 1; transform: scale(1); }
+                 }
+             `}</style>
+          </div>
       )}
 
       {/* Added 'notranslate' class to prevent translation of UI */}
@@ -1266,9 +1299,9 @@ function AppContent() {
               {/* Admin Panel Button in Navbar */}
               {isAdmin && (
                   <li className="nav-item">
-                     <button className="btn btn-danger btn-sm rounded-pill px-3 ms-lg-3 fw-bold" onClick={() => setModalMode('adminPanel')}>
+                      <button className="btn btn-danger btn-sm rounded-pill px-3 ms-lg-3 fw-bold" onClick={() => setModalMode('adminPanel')}>
                         <i className="fas fa-user-shield me-2"></i>Admin Panel
-                     </button>
+                      </button>
                   </li>
               )}
                 
@@ -1606,7 +1639,7 @@ function AppContent() {
                   </>
                 )}
 
-                {/* === TAB 2: SMART DATA ENTRY === */}
+                {/* === TAB 2: SMART DATA ENTRY (UPDATED) === */}
                 {adminTab === 'dataEntry' && (
                    <div className="card border-0 shadow-sm">
                       <div className="card-header bg-white fw-bold py-3 border-bottom-0">
@@ -1628,16 +1661,27 @@ function AppContent() {
                                   <div className="form-text small">Separate multiple citations with commas. Anchors will be auto-generated.</div>
                                </div>
 
-                               {/* File Selector */}
+                               {/* UPDATED: File Selector with Input + Datalist */}
                                <div className="col-md-4">
-                                  <label className="form-label small fw-bold text-uppercase">Target File</label>
-                                  <select className="form-select" value={entryFile} onChange={e => setEntryFile(e.target.value)}>
-                                      <option value="75dlr_case.txt">75_dlr_cases.txt</option>
-                                      <option value="74dlr_case.txt">74dlr_case.txt</option>
-                                      <option value="73dlr_case.txt">73dlr_case.txt</option>
-                                      <option value="72dlr_case.txt">72dlr_case.txt</option>
-                                      <option value="71dlr_case.txt">71dlr_case.txt</option>
-                                  </select>
+                                  <label className="form-label small fw-bold text-uppercase">Target File (Auto-Path)</label>
+                                  <input 
+                                    list="fileOptions" 
+                                    className="form-control" 
+                                    placeholder="Type or Select..." 
+                                    value={entryFile} 
+                                    onChange={e => setEntryFile(e.target.value)} 
+                                    required 
+                                  />
+                                  <datalist id="fileOptions">
+                                     <option value="75_dlr_cases.txt" />
+                                     <option value="74_dlr_cases.txt" />
+                                     <option value="73_dlr_cases.txt" />
+                                     <option value="72_dlr_cases.txt" />
+                                     <option value="71_dlr_cases.txt" />
+                                     <option value="31_blt_cases.txt" />
+                                     <option value="18_blc_cases.txt" />
+                                  </datalist>
+                                  <div className="form-text small text-primary">Format: Vol_Journal_cases.txt</div>
                                </div>
 
                                {/* Title */}
