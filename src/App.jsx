@@ -193,7 +193,7 @@ function AppContent() {
 
   // --- Data Entry States ---
   const [entryToken, setEntryToken] = useState('');
-  const [entryFile, setEntryFile] = useState('75_dlr_cases.txt'); // Updated default to match format
+  const [entryFile, setEntryFile] = useState('75_dlr_cases.txt'); // Default value
   const [entryCitation, setEntryCitation] = useState(''); // "75 DLR (AD) 209, 23 ALR (AD) 400"
   const [entryTitle, setEntryTitle] = useState('');
   const [entryHeadnote, setEntryHeadnote] = useState('');
@@ -204,6 +204,14 @@ function AppContent() {
   const [isTranslated, setIsTranslated] = useState(false);
 
   const disclaimerText = "Please note that while every effort has been made to provide accurate case references, there may be some unintentional errors. We encourage users to verify the information from official sources for complete accuracy.";
+
+  // --- Initialize Token from LocalStorage ---
+  useEffect(() => {
+    const savedToken = localStorage.getItem('github_entry_token');
+    if (savedToken) {
+      setEntryToken(savedToken);
+    }
+  }, []);
 
   // --- Google Translate Initialization & Hiding Toolbar (AGGRESSIVE MODE) ---
   useEffect(() => {
@@ -408,29 +416,28 @@ function AppContent() {
 
   // --- NEW: Generate Dynamic GitHub Path Function ---
   const generateGitHubPath = (filename) => {
-    // If the filename already has slashes, assume it's a full path
     if (filename.includes('/')) return filename;
 
-    // Pattern: Volume_Journal_cases.txt (e.g., 75_dlr_cases.txt, 31_blt_cases.txt)
-    // Captures: Group 1 (Volume), Group 2 (Journal)
     const regex = /^(\d+)_([a-zA-Z]+)_/;
     const match = filename.match(regex);
 
     if (match) {
         const volume = match[1];
-        const journal = match[2].toUpperCase(); // Convert dlr -> DLR
-        // Return full path structure: judgments/DLR/Vol-75/75_dlr_cases.txt
+        const journal = match[2].toUpperCase(); 
         return `judgments/${journal}/Vol-${volume}/${filename}`;
     }
 
-    // Fallback if format doesn't match: assume it's directly under judgments/
     return `judgments/${filename}`;
   };
 
-  // --- SMART DATA ENTRY LOGIC (Updated with Dynamic Path) ---
+  // --- SMART DATA ENTRY LOGIC (Updated with Token Persistence) ---
   const handleSmartEntry = async (e) => {
     e.preventDefault();
     if(!entryToken) { openNotice({type: 'warning', title: 'Token Missing', message: 'Please enter GitHub Access Token.'}); return; }
+    
+    // Save token to localStorage for future use
+    localStorage.setItem('github_entry_token', entryToken);
+
     if(!entryCitation || !entryBody || !entryTitle || !entryHeadnote) { openNotice({type: 'warning', title: 'Empty Fields', message: 'Fill all fields.'}); return; }
 
     setEntryLoading(true);
@@ -445,27 +452,22 @@ function AppContent() {
        if(citations.length === 0) throw new Error("Invalid citation format.");
 
        // 3. Prepare content for GitHub
-       // Generate anchor string: ===Anchor1=== ===Anchor2===
        const anchorHeader = anchors.map(a => `===${a}===`).join(' ');
        const textToAppend = `\n${anchorHeader}\n${entryBody}\n===End===`;
 
        // 4. GitHub Logic (Append Mode)
        const octokit = new Octokit({ auth: entryToken });
        
-       // Get current file sha and content using full dynamic path
-       // Note: Removed 'judgments/' hardcoding from URL because fullPath includes it
        const { data: fileData } = await octokit.request('GET /repos/{owner}/{repo}/contents/{path}', {
          owner: githubUser,
          repo: repoName,
          path: fullPath
        });
 
-       // Decode content (Base64) to append
        const currentContent = decodeURIComponent(escape(atob(fileData.content)));
        const newContent = currentContent + textToAppend;
        const newContentBase64 = btoa(unescape(encodeURIComponent(newContent)));
 
-       // Push to GitHub using full dynamic path
        await octokit.request('PUT /repos/{owner}/{repo}/contents/{path}', {
          owner: githubUser,
          repo: repoName,
@@ -480,7 +482,6 @@ function AppContent() {
          const cit = citations[i];
          const anch = anchors[i];
          
-         // Parse Citation: "75 DLR (AD) 209" -> Vol:75, Jrnl:DLR, Div:AD, Page:209
          const regex = /^(\d+)\s*([A-Za-z]+)\s*[\(]?([A-Za-z]+)[\)]?\s*(\d+)$/;
          const match = cit.match(regex);
          
@@ -503,7 +504,7 @@ function AppContent() {
             headnote: entryHeadnote,
             citation: cit,
             case_anchor: anch,
-            github_filename: fullPath, // Save Full Path Here
+            github_filename: fullPath, 
             volume: vol,
             journal: jrnl,
             division: div,
