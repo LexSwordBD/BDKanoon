@@ -14,6 +14,7 @@ class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     console.error("App Crash Error:", error, errorInfo);
+    // Clear Google Translate cookies to prevent crash loops
     document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname;
     localStorage.clear();
@@ -354,9 +355,8 @@ function AppContent() {
                   div = match[3];
                   page = parseInt(match[4]);
               } else {
-                  // Attempt simpler parse or fallback
+                  // Attempt simpler parse or fallback if regex fails
                   console.warn("Regex mismatch for citation:", cite);
-                  // You might want to handle non-standard citations here manually or skip
               }
 
               dbRows.push({
@@ -386,12 +386,13 @@ function AppContent() {
 
           if(getRes.ok) {
               const fileData = await getRes.json();
+              // GitHub API returns content in Base64
               content = decodeURIComponent(escape(atob(fileData.content)));
               sha = fileData.sha;
           } else if(getRes.status === 404) {
-              content = ""; // Create new file
+              // File doesn't exist, create new (content remains empty)
           } else {
-              throw new Error("GitHub Fetch Failed");
+              throw new Error("GitHub Fetch Failed: Check Token/Repo");
           }
 
           // 5. Append & Upload to GitHub
@@ -811,7 +812,7 @@ function AppContent() {
         </div>
       </div>
 
-      {/* --- ADMIN DASHBOARD MODAL --- */}
+      {/* --- ADMIN MODAL (notranslate) --- */}
       {modalMode === 'adminPanel' && isAdmin && (
         <div className="modal d-block notranslate" style={{ background: 'rgba(0,0,0,0.8)', zIndex: 1100 }}>
           <div className="modal-dialog modal-lg modal-dialog-scrollable">
@@ -894,7 +895,7 @@ function AppContent() {
                                         <div className="col-md-8">
                                             <label className="form-label small text-muted text-uppercase fw-bold">Citations (Comma Separated)</label>
                                             <input type="text" className="form-control" placeholder="75 DLR (AD) 65, 23 ALR (AD) 43" value={entryCitations} onChange={e => setEntryCitations(e.target.value)} required />
-                                            <div className="form-text small">Supports multiple. Will create separate DB rows linked to same text.</div>
+                                            <div className="form-text small">Use format: Vol Journal (Div) Page. Ex: 75 DLR (AD) 65</div>
                                         </div>
 
                                         <div className="col-md-4">
