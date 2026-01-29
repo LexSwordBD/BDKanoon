@@ -1194,3 +1194,62 @@ All the appeals are, hereby, allowed by this Division's unanimous decision.
 
 </div>
 ===End===
+
+===20SCOBAD68===
+<!DOCTYPE html>
+<body>
+
+<div style="text-align: center;">
+    <strong>APPELLATE DIVISION</strong><br>
+    (Civil Appellate Jurisdiction)<br><br>
+    <strong>Present:</strong><br>
+    Mr. Justice Md. Ashfaqul Islam<br>
+    Mr. Justice S.M. Emdadul Hoque<br>
+    Mr. Justice A.K.M. Asaduzzaman<br><br>
+    <strong>CIVIL APPEAL No. 305 OF 2017</strong><br>
+    (From the judgment and decree dated 06.05.2015 passed by the High Court Division in Civil Revision No.4050 of 2013)
+</div>
+
+<p>
+    <strong>Md. Obaidul Islam and others</strong> ................... Appellants<br>
+    <strong>-Versus-</strong><br>
+    <strong>Md. Abdul Mazid Mondal and others</strong> ................... Respondents
+</p>
+
+<p>
+    <strong>For the Appellants:</strong> Mr. Md. Ashraf Ali, Advocate instructed by Md. Shafiqul Islam Chowdhury, Advocate-on-Record.<br>
+    <strong>For the Respondents:</strong> Mr. Zainul Abedin, Senior Adv. With Mr. B.M. Elias, Adv. instructed by Mr. Mohammad Abdul Hai, Mr. Md. Shahidul Islam, Advocate-on-Record.<br>
+    <strong>Date of Hearing and Judgment:</strong> 23-04-2025
+</p>
+
+<hr>
+
+<p><strong>JUDGMENT</strong></p>
+
+<p><strong>A.K.M. Asaduzzaman, J:</strong></p>
+
+<p>1. This civil petition for leave to appeal is directed against the judgment and decree dated 06.05.2015 passed by the High Court Division in Civil Revision No. 4050 of 2013 affirming those dated 10.10.2013 passed by the learned Joint District Judge, 1st Court, Jashore in Title Appeal No. 02 of 2013 reversing those dated 07.01.2013 passed by the Senior Assistant Judge, Chowgacha, Jashore in Title Suit No. 23 of 2005 dismissing the suit.</p>
+
+<p>2. Facts relevant for disposal of this matter in brief, are that Respondent Nos. 1-9 as plaintiffs instituted Title Suit No. 23 of 2005 before the Court of Assistant Judge, Chowgacha, Jashore against the petitioners praying for a declaration that the letter dated 21.03.2005 passed by the Senior Assistant secretary, Ministry of Rural Development and Co-operative is illegal, created, void ab-intio is liable to be cancelled.</p>
+
+<p>3. Plaint Case in short inter alia is that, letter dated 21.03.2013 for site selection of Pashapol Union Parishad Complex building at Pashapol is illegal, Collusive, ultravires, invalid etc. setting up a plea in the plaint that government at any point of time recognized the old site for Pashapol Union Parishad Office is at Bariali Mouza at Kha Schedule land of the plaint where all the requirements for construction of the Union Parishad Complex building though available has been illegally ignored by the government and the government proposed site of the land of the construction of Pashapol Union Parishad Complex Building site having defective title and want of contiguity and less than the required area and is not having any contiguous market, school and want of communication network with the majority villages peoples support of Pashapol Union Parishad for which plaintiff appellant opposite party Nos. 1-9 in a representative character suit and hence they filed this suit.</p>
+
+<p>4. Defendant Nos. 1/12-16, 2-5/18 and 6-11 filed separate written statements denying all the material allegations made in the plaint stating inter alia that the suit is barred by limitation and defect of parties. The government has approved to establish the Union Parishad Complex at ga scheduled land. Pashapol Mouza is at the centre of the union and the communication is good. There is a Hut, High School, Health complex, mosque, and primary school situated at this place. Almost 12,618 inhabitants out of 17,719 inhabitants of the said union live in surrounding villages of Pashapol. Therefore it is suitable place to construct Union Parishad Complex. Hence the suit is liable to be dismissed.</p>
+
+<p>5. Trial Court after considering the evidence and hearing the parties dismissed the suit by its judgment and decree date 07.01.2013. Being aggrieved, the plaintiffs preferred Title Appeal No. 02 of 2013 which was heard by the Joint District Judge, 1st Court, Jashore, who allowed the appeal and reversed the judgment of the trial court, decreeing the suit in favour of the plaintiffs. Challenging the same, the defendant-petitioners preferred Civil Revision No. 4050 of 2013 before the High Court Division, which affirmed the judgment of the Appellate Court.</p>
+
+<p>6. Challenging the said judgment and decree of the High Court Division, the instant leave petition was preferred and leave was granted on the grounds that the Apex Court has already decided that the selection of site of Union Parishad is the business of the Government and relates to Policy matters; as such, the plaintiffs have no locus standi to challenge such policy decisions.</p>
+
+<p>7. Mr. Md. Ashraf Ali, the learned Advocate for the petitioners, submits that the High Court Division and the Appellate Court failed to appreciate the settled principle of law that site selection is an administrative business of the government and that the suit is not maintainable under section 42 of the Specific Relief Act as the plaintiff has no right to any legal character or to any property.</p>
+
+<p>8. Mr. B.M. Elias, the learned Advocate for the respondents, opposes the submission and argues that specific guidelines given by circular dated 28.12.2005 were not followed. He contends that the decision should have been taken by the Union Parishad council first, and since guidelines were ignored, the civil court is competent to examine the legality of the administrative approval.</p>
+
+<p>9. Admittedly, Pashapol Union Parishad is composed of 17 villages. Plaintiffs are inhabitants of 10 villages. Since long, the office of the Parishad was running on land in mouza Bariali. However, the Deputy Commissioner, Jashore recommended the construction of the complex in Mouza Pashapol, noting that the Chairman and 08 members were in favour of this site. This led to the administrative approval which the plaintiffs challenged.</p>
+
+<p>10. The Trial Court, referring to the case of <i>Md. Abdul Motaleb Sarker and others Vs. Md. Laskar Ali and others</i> reported in 15 MLR (AD) 2010 page 231, correctly found that site selection is the business of the Government and relates to policy matters. Individual plaintiffs have no locus standi to challenge the policy-making power of the government. The shifting of the site of the Union Parishad is an administrative decision.</p>
+
+<p>11. In view of the above, we find substance in the appeal. The judgment and decree passed by the High Court Division and the Appellate Court are hereby set aside. The judgment of the Senior Assistant Judge is restored and the suit is dismissed. No order as to costs. Communicate the judgment at once.</p>
+
+</body>
+</html>
+===End===
