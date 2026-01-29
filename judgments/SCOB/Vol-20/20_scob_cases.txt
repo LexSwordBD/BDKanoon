@@ -1265,3 +1265,211 @@ Mr. Justice A.K.M. Asaduzzaman
 
 <p>16. Communicate the judgment at once.</p>
 ===End===
+
+===20SCOBAD73===
+<div class="judgment-content">
+
+  <p class="text-center"><strong>APPELLATE DIVISION</strong></p>
+
+  <p class="text-center">
+    <strong>Present:</strong><br>
+    Mr. Justice Zubayer Rahman Chowdhury<br>
+    Mr. Justice Md. Rezaul Haque<br>
+    Mrs. Justice Farah Mahbub
+  </p>
+
+  <p class="text-center"><strong>CIVIL APPEAL NOS. 171-174 OF 2015.</strong></p>
+  <p class="text-center">
+    (From the judgment and order dated 13.02.2014 passed by the High Court Division in Writ Petition Nos.766, 803, 1242 and 1478 all of 2012).
+  </p>
+
+  <p class="text-center">
+    Deputy Commissioner, Chittagong<br>
+    <strong>... Appellant (In all the cases)</strong>
+  </p>
+
+  <p class="text-center"><strong>-Versus-</strong></p>
+
+  <p class="text-center">
+    Interbulk Overseas SA Bangladesh Limited and another<br>
+    <strong>... Respondents (In C.A. No. 171/15)</strong>
+  </p>
+  <p class="text-center">
+    A. K. Khan and Company Limited, represented by its Managing Director and others<br>
+    <strong>... Respondents (In C.A. No. 172/15)</strong>
+  </p>
+  <p class="text-center">
+    East West Property Development (Pvt.) and others<br>
+    <strong>... Respondents (In C.A. No. 173/15)</strong>
+  </p>
+  <p class="text-center">
+    Bashundhara Industrial Complex Limited and another<br>
+    <strong>... Respondents (In C.A. No. 174/15)</strong>
+  </p>
+
+  <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr>
+      <td width="40%" valign="top"><strong>For the Appellants (In all the cases)</strong></td>
+      <td width="60%" valign="top">: Mr. Md. Asaduzzaman, Attorney General with Mr. Aneek R. Hoque, Additional Attorney General instructed by Ms. Nahid Sultana, Advocate-on-Record.</td>
+    </tr>
+    <tr>
+      <td valign="top"><strong>For the Respondent No. 1 (In C.A. No. 171/15)</strong></td>
+      <td valign="top">: Ms. Sufia Khatun, Advocate-on-Record.</td>
+    </tr>
+    <tr>
+      <td valign="top"><strong>For Respondent Nos. 2-16 (In C.A. No. 171/15)</strong></td>
+      <td valign="top">: Not represented.</td>
+    </tr>
+    <tr>
+      <td valign="top"><strong>For the Respondent No. 1 (In C.A. No. 172/15)</strong></td>
+      <td valign="top">: Mr. Zainul Abedin, Advocate-on-Record.</td>
+    </tr>
+    <tr>
+      <td valign="top"><strong>For Respondent Nos. 2-8 (In C.A. No. 172/15)</strong></td>
+      <td valign="top">: Not represented.</td>
+    </tr>
+    <tr>
+      <td valign="top"><strong>For the Respondent No. 1 (In C.A. No. 173/15)</strong></td>
+      <td valign="top">: Mr. Mvi. Md. Wahidullah, Advocate-on-Record.</td>
+    </tr>
+    <tr>
+      <td valign="top"><strong>For Respondent Nos. 2-3 (In C.A. No. 173/15)</strong></td>
+      <td valign="top">: Not represented.</td>
+    </tr>
+    <tr>
+      <td valign="top"><strong>For the Respondent No. 1 (In C.A. No. 174/15)</strong></td>
+      <td valign="top">: Mr. Mvi. Md. Wahidullah, Advocate-on-Record.</td>
+    </tr>
+    <tr>
+      <td valign="top"><strong>For the Respondent No. 2 (In C.A. No. 174/15)</strong></td>
+      <td valign="top">: Not represented.</td>
+    </tr>
+  </table>
+
+  <p><strong>Date of Hearing :</strong> 20 & 21-05-2025</p>
+  <p><strong>Date of Judgment :</strong> 21-05-2025</p>
+
+  <hr>
+
+  <p class="text-center judgment-title"><strong>JUDGMENT</strong></p>
+
+  <p><strong>Farah Mahbub, J:</strong></p>
+
+  <p>1. Since common question of law and similar facts are involved in all those 4 (four) civil appeals, as such, those have been heard together and are being disposed of by this single judgment.</p>
+
+  <p>2. These civil appeals by leave are directed against the judgment and order dated 13.02.2014 passed by the High Court Division in Writ Petition Nos.766, 803, 1242 and 1478 all of 2012 making the Rule absolute with necessary directions.</p>
+
+  <p>3. Facts, in connection with Civil Appeal No.171 of 2015 arising out of Writ Petition No.766 of 2012, in brief, are that pursuant to long term Settlement Case No.1/92-93 the Deputy Commissioner, Chittagong executed a registered deed dated 21.03.1994 in favour of the respondent-writ petitioner for 99 years covering an area of 19.29 acres corresponding to B.S. Dag No.1, Mouja-Majherchar, Police Station-Anwara, District-Chittagong. Accordingly, Mutation Case No.1099/2009-2010 was opened in the name of the writ-petitioner, who, upon paying land development tax, had been enjoying possession thereof without any objection from any quarter whatsoever.</p>
+
+  <p>4. Meanwhile, Land Acquisition Case No. 1/2010-2011 was initiated by the authority concerned to acquire 144.05 acres of land of Rangadia Mouja and 451.31 acres of land situated under Majherchar Mouja including the land of the writ-petitioner with publication of notice under Section 3 of the Acquisition and Requisition of Immovable Property Ordinance, 1982 (in short, the Ordinance, 1982). The writ-petitioner duly raised objection thereto vide letter dated 19.08.2010. In this regard, their categorical assertion is that neither they were heard nor their objection was disposed of.</p>
+
+  <p>5. Further assertion of the writ-petitioner is that when the proposal with concise report dated 02.11.2011 was placed before the Hon'ble Prime Minister of the Republic for final approval, in view of Section 5(1) of the Ordinance, 1982, it was sent back to the Ministry concerned on 14.11.2010 with the following remarks: "এমতাবস্থায়, বর্ণিত সমস্যা/ত্রুটিসমূহ আপনোদনপূর্বক সুস্পষ্ট মতামতসহ পুনরায় সার-সংক্ষেপ প্রেরণের জন্য ভূমি মন্ত্রণালয়কে অনুরোধ করা যেতে পারে।</p>
+
+  <p>6. However, the emphatic claim of the respondent-writ petitioner is that the Ministry of Land never submitted any concise report or fresh summary in compliance of the said direction. Rather, without obtaining approval of the Prime Minister, the Deputy Secretary, Ministry of Land, vide the impugned Memo bearing No. ভূঃমঃ/ অধিশাখা-১১/অধিঃ/চট্ট-১২৮/২০১০-২৯৬ dated 23.11.2010, gave final approval on behalf of the appellant-respondent government to acquire 07.60 acres of private land and to transfer 587.60 acres of "khas" land under clause 7 of the Land Acquisition Manual, 1997 for construction of coal based power plant jetty and cold storage yard with direction upon the Deputy Commissioner, Chittagong (now, Chattogram) to take necessary steps in due compliance of law.</p>
+
+  <p>7. Being aggrieved thereby led to filing the writ petition before the High Court Division under Article 102 of Constitution of the People's Republic of Bangladesh, whereupon a Rule Nisi was issued.</p>
+
+  <p>8. Short facts in relation to Civil Appeal No.172 of 2015 arising out of Writ Petition No. 803 of 2012 are that the appellant-respondent Government, vide registered lease deed No.1817 of 1961, leased out 109.71 acres of land under R.S. Dag Nos.241/3C, 241/2C, 241/4C, 241/9C, 241/7A, 241/6A, 241/5A, 241/10A corresponding to B.S. Khatian No.154, B.S. Dag Nos. 1001-1025, 1086-1096, 1100-1101, 1104-1117, 1120-1121, 1126-1128, 1136-1139, Mouja-Rangadia, Police Station-Kornophully, District-Chittagong and 75 acres of land under R.S. Dag No.1/A corresponding to B.S. Khatian No.3, B.S. Dag No.1, Mouja-Majherchar, Police Station-Kornophully, District-Chittagong, in total 184.71 acres of land in favour of the respondent-writ petitioner for 25 (twenty five) years, with possession thereof. Said lease period was subsequently renewed for another 25 (twenty five) years vide registered Renewal Deed No.1769 dated 29.03.2009.</p>
+
+  <p>9. While the respondent-writ petitioner was enjoying possession of the said properties upon paying due land development tax as was required under the law, notice under Section 3 of the Ordinance, 1982 was issued by the Deputy Commissioner, Chittagong in connection with L.A. Case No. 1/2010-2011. The respondent-writ petitioner raised objection thereto on 09.08.2010 and again, on 22.08.2010 respectively; those were duly received by the authority concerned.</p>
+
+  <p>10. It is also the categorical assertion of the respondent-writ petitioner that despite the fact that the appellant-writ respondent No.2 was not empowered to reject the objection of the writ petitioner he, upon rejecting the said objection, sent a report to the Ministry of Land for approval. On receipt thereof, said Ministry prepared a summary for the Hon'ble Prime Minister for approval vide Memo No. ভূঃমঃ/ অধিশাখা-১১/অধিঃ/চট্ট-১২৮/২০১০-২৪০ dated 02.11.2010, but without including the objection being raised by the respondent-writ petitioner. The then Prime Minister of the Republic, not being satisfied with the said concise report, sent it back to the Ministry concerned vide note dated 14.11.2010 with direction to submit a new summary with necessary clarification. But without sending report afresh, the Ministry of Land issued the impugned Memo dated 23.11.2010.</p>
+
+  <p>11. On the contention that the initiation and continuation of the said L.A. proceeding was illegal and hence, it was liable to be declared to have been issued without lawful authority and of no legal effect, the respondent-writ petitioner filed writ petition before the High Court Division under Article 102 of the Constitution. Having found prima-facie substance, a Rule Nisi was issued by the said Division.</p>
+
+  <p>12. Short facts in connection with Civil Appeal No.173 of 2015 arising out of Writ Petition No.1242 of 2012, are that writ-respondent No.1, i.e. Chittagong Port Authority leased out 264 acres of land of B.S. Plot No.101, 1(p), 114(p), Mouja-Majherchar, P.S.-Karnaphuli (Bandar), Upzilla-Anwara, District-Chittagong in favour of the respondent-writ petitioner on execution of a lease agreement dated 04.05.2006 for the purpose of Container Freight Station (CFS), Inland Container Depot (ICD), Supply Based Station (SBS), port based and also, port and shipping related industries. While the writ petitioner was enjoying possession thereof on payment of Tk.47 crores as rent on account of the lease agreement, respective notices were issued upon it by the Deputy Commissioner, Chittagong under Section 3 of the Ordinance, 1982 in connection with L.A. Case No.1/2010-2011 for acquisition of the properties including the properties of the writ petitioner.</p>
+
+  <p>13. Challenging the proceedings of the said L.A. Case, the respondent-writ petitioner instituted Other Suit No.130 of 2011 before the Court of First Joint District Judge, Chittagong. During pendency of the said suit, the Ministry of Land issued the impugned Memo dated 23.11.2010 with direction upon the Deputy Commissioner, Chittagong to transfer the case property of the writ petitioner in favour of the requiring body, treating the properties as "khas" land. In the given context, allowing the prayer of the respondent-writ petitioner, the concerned Court below dismissed the suit for non-prosecution vide order dated 03.04.2012.</p>
+
+  <p>14. At the same, challenging the impugned memo dated 23.11.2010, issued by the Ministry of Land, the writ petitioner filed Writ Petition No.1242 of 2012 before the High Court Division under Article 102 of the Constitution on the contention that the case property belonged to Chittagong Port Authority and that those were not acquired by the authority concerned in connection with L.A. Case No.1 of 2010-2011. As such, giving direction upon the Deputy Commissioner, Chittagong to transfer the case land in favour of the requiring body under Article 7 of the Land Acquisition Manual, 1997 was unlawful.</p>
+
+  <p>15. The writ petitioner also relied upon the Note dated 14.11.2010, claiming to have been signed by the then Hon'ble Prime Minister of the Republic in order to challenge the impugned Memo dated 23.11.2010 issued by the Ministry concerned.</p>
+
+  <p>16. Having found prima-facie substance a Rule Nisi was issued.</p>
+
+  <p>17. Brief facts in connection with Civil Appeal No.174 of 2015 arising out of Writ Petition No.1478 of 2012, are that the respondent-writ petitioner is the owner of 0.66 acre of land in connection with B.S. Plot No.1144, 0.18 acre of B.S. Plot No.1145, 0.47 acre of B.S. Plot No.1146, 0.77 acre of B.S. Plot No.1147, 1.70 acre of B.S. Plot No.1148, 3.12 acres of B.S. Plot Nos.1149, 1152 and 1153, B.S. Khatian No.33, corresponding to R.S. Khatian No.12, R.S. Plot No.56, P.S. Plot No.429, J.L. No. P.S. 5, B.S. 31 of Rangadia Mouja, Union-Boyrag, Upozilla-Anwara, at present-Karnafuly, District-Chittagong.</p>
+
+  <p>18. While the respondent-writ petitioner was enjoying possession thereof on payment of land development tax regularly in due compliance of law, a notice was issued by the Deputy Commissioner, Chittagong under Section 3 of the Ordinance, 1982 for acquisition of properties including the properties of the writ petitioner in connection with L.A. Case No.1 of 2010-2011. Pursuant to the said notice, the writ petitioner duly raised objection, which was ultimately rejected by the authority concerned. Accordingly, the Ministry of Land prepared a concise report dated 02.11.2010 for placing the same before the then Hon'ble Prime Minister for her approval. Relying upon the Note dated 14.11.2010 their further claim was that pursuant thereto the then Hon'ble Prime Minister gave direction upon the Ministry concerned to submit concise report afresh, which was not complied with.</p>
+
+  <p>19. At this juncture, challenging the proceeding of L.A. Case No.1 of 2010-2011 the respondent-writ petitioner as plaintiff instituted Other Suit No.130 of 2011 before the Court of First Joint District Judge, Chittagong. Subsequently, the writ-petitioner having come to learn as to issuance of notice under Section 6 of the Ordinance vide Memo dated 31.01.2012 for taking possession of the case land, made a prayer before the concerned court below to dismiss the suit for non-prosecution, which was duly allowed vide order dated 03.04.2012.</p>
+
+  <p>20. In the given facts and circumstances, the respondent-writ petitioner filed Writ Petition No.1478 of 2012 before the High Court Division upon the contention that without execution of any agreement with the requiring body, the L.A. proceeding was without jurisdiction. Their further claim was that the then Hon'ble Prime Minister never approved acquisition of the case land in connection with the said L.A. Case. Hence, the impugned proceeding was liable to be declared unlawful.</p>
+
+  <p>21. Having found prima-facie substance a Rule Nisi was accordingly issued.</p>
+
+  <p>22. All those Rules Nisi, except the Rule in connection with Writ Petition No.1478 of 2012, were contested by the appellant-writ respondent, Deputy Commissioner, Chittagong by filing separate sets of affidavits-in-opposition, stating, inter-alia, that the whole process of L.A. Case No. 1 of 2010-2011 was initiated in due compliance of law upon providing opportunities to the respective respondents-writ petitioners of being heard. Also, upon taking due approval of the Government under Section 5(1) of the Ordinance, 1982, the impugned Memo dated 23.10.2010 was issued with a direction upon the Deputy Commissioner, Chittagong to take necessary steps in due compliance of law.</p>
+
+  <p>23. Upon hearing the respective contending parties, the High Court Division, vide judgment and order dated 13.02.2014, disposed of all the 4(four) writ petitions making the Rules absolute upon declaring the impugned Memo dated 23.11.2010 to have been issued without lawful authority and hence, of no legal effect, with the following observations and findings:</p>
+
+  <blockquote>
+    "Therefore, if a land is vested in the Government, the said land ipso facto does not become the property of a statutory corporation or a local authority, unless the Government transfers the said land to the said statutory corporation such as PDB and PDB has also to acquire such land in compliance of provision of section 3 of the said Order of 1972. Therefore, in our view, since PDB ipso facto shall not become owner of the land when it vests in the Government, and since PDB is though a Governmental authority in nature, but is not Government unto itself, further action on behalf of the Government is required to transfer the land to PDB....... Therefore, PDB shall not become owner of the land unless the same is transferred to PDB by Government under section 15(2) of the said Ordinance and for this reason section 15(1) of the said Ordinance has to be complied with by way of executing a prior agreement between PDB and the Government.
+  </blockquote>
+
+  <p>24. Apart from this, another aspect that calls for consideration is that the Ministry of Land submitted a summary dated 02.11.2010 before the Hon'ble Prime Minister of the Republic. But the Hon'ble Prime Minister vide note dated 14.11.2010 directed the Ministry of Republic to submit a new summary afresh.</p>
+
+  <p>25. We do not find anything which shows the Ministry of Land to comply with the direction of the Prime Minister made in note dated 14.11.2010. The contesting respondent stated in respect of the said note dated 14.11.2010 that it is unaware of any omission of the Government in this respect. The Ministry of Land did not file any affidavit-in-opposition. Therefore, the said note dated 14.11.2010 leads us to irresistible conclusion that the Prime Minister never had the opportunity to approve the said acquisition of land in the said L/A case.</p>
+
+  <p>26. It is also pertinent to mention that Memo No. তৃঃমাঃ/শা-৫/১ আঃ (খুঃ)-15/2002/378(64) dated 01.09.2002 issued by the Ministry of Land itself clarifies that if the proposed acquisition exceeds 50 standard bighas, the approval of the Prime Minister shall be required.</p>
+
+  <p>27. Therefore, we are of the view that even if only 7.86 acres of land has been directed to be acquired by the Ministry of Land, but since the land required for the whole project of PDB exceeds 50 standard bighas of land, the approval of the Hon'ble Prime Minister is required and in the cases in hand, we cannot lose sight of the fact that the Prime Minister had never had the opportunity to ponder over such approval as Ministry of Land did never submit a new summary as directed by Hon'ble Prime Minister vide note dated 14.11.2010. The action of Ministry of Land in issuing the said memo dated 23.11.2010 directing the Deputy Commissioner, Chittagong to acquire the said 7.86 acres of land and to transfer rest of the land to the requiring body instead of complying with the direction of Hon'ble Prime Minister to submit fresh summary is an outright deviation from direction of Hon'ble Prime Minister which is absolutely unconstitutional being flagrant violation of authority of the Hon'ble Prime Minister under Article 55(2) of the Constitution.</p>
+
+  <p>28. the action of the Ministry of Land in the said impugned Memo dated 23.11.2010 is absolutely malafide and such malafide action goes to the root of the jurisdiction and hence the same is without jurisdiction. Further, the whole L/A proceeding being a nullity, the impugned Memo dated 23.11.2010 issued and all further actions pursuant to the said L/A proceeding is also a nullity"</p>
+
+  <p>29. Being aggrieved, the writ-respondent No.1, the Deputy Commissioner, Chittagong, as petitioner, preferred Civil Petition for Leave to Appeal bearing Nos. 1869, 1870, 1871, and 1872 all of 2014 before this Division under Article 103 of the Constitution.</p>
+
+  <p>30. After hearing the parties concerned, leave was granted by this Division in all the civil petitions vide order dated 26.02.2015 on 4 (four) counts. However, the following, being relevant, is quoted below:</p>
+
+  <blockquote>
+    II. Because, the High Court Division committed an error in relying upon an alleged letter dated 08.11.2010 showing further clarification which was allegedly sought from the office of the Prime Minister to the Ministry of Land without asking the Government to produce the relevant file; however, had the original file been called for, it would have had appeared that there was no existence of any alleged letter which was produced by the writ petitioner and it was nothing but a concocted one; as such, interference by this Division is called for.
+  </blockquote>
+
+  <p>Consequent thereto instant civil appeals arose.</p>
+
+  <p>31. Mr. Md. Assaduzzaman, the learned Attorney General appearing with Mr. Annek R. Hoque, the learned Additional Attorney General for the appellant categorically submits that in order to seek equitable relief under Article 102 of the Constitution, the foremost important principle which an aggrieved person is required to follow is to invoke writ jurisdiction with clean hand. If any question arises on that count, it shall be considered as a disentitling factor to grant relief, as prayed for.</p>
+
+  <p>32. In the instant case, he submits, the cardinal assertions of the respondents-writ petitioners, among others, are that pursuant to Note no.4 dated 14.11.2010, necessary direction was given by the then Hon'ble Prime Minister of the Republic upon the Ministry of Land to furnish a fresh concise report in view of incomplete information as to disposal of objections being raised by the parties concerned, but that writ-respondent no.1 never sent fresh concise report. Ultimately, without taking approval of the then Hon'ble Prime Minister, the appellant-writ respondent no.1, vide the impugned Memo dated 23.11.2010, directed writ-respondent no.2 to take necessary steps in connection with the properties in question in due compliance of law.</p>
+
+  <p>33. Said assertion of the respondents-writ petitioners, he submits, are incorrect, for, Note no.4 containing the signature of the then Hon'ble Prime Minister seeking further clarification from the concerned Ministry, as reproduced and quoted in the writ petitions, are non-existent; hence, those are the product of concoction/forgery.</p>
+
+  <p>34. In this regard, he also goes to argue that had the original file been called for, it would have appeared before the High Court Division that there was no existence of the alleged letter/note dated 08.11.2010 in the respective record. The High Court Division, however, basing on the said non-existent letter, categorically found that the Ministry of Land never sent any report, as required by the then Hon'ble Prime Minister and suppressing the said fact, had issued the impugned memo dated 23.11.2010. Ultimately, the respective Rules were made absolute terming the action of the Ministry concerned mala fide with declaration that the whole process of L.A. Case No.1 of 2010-2011 is without jurisdiction.</p>
+
+  <p>35. In the given facts and circumstances, he submits, the impugned judgment and order 13.02.2014 passed by the High Court Division in all the 4 (four) writ petitions is liable to be knocked down for being based on forged documents.</p>
+
+  <p>36. No one appears on behalf of the respondents-writ petitioners to contest the instant appeals.</p>
+
+  <p>37. The obligations of a litigant while approaching the Court for redressal of his grievances must be with "clean hands". Courts have, over the centuries, frowned upon litigants who, with intent to deceive and mislead the Courts, initiated proceeding without full disclosure of facts and came to the Courts with "unclean hands". Courts have held that such litigants are neither entitled to be heard on merit nor are entitled to any relief, interim or final: Kishore Samrite -Vs-State of U.P. (2013) 2 SCC 398.</p>
+
+  <p>38. In the instant case, the respondents-writ petitioners, while challenging the impugned Memo dated 23.11.2010, issued by the Ministry of Land under Section 5(1) of the Ordinance, 1982, have admittedly based their foundation on the note dated 14.11.2010, as quoted/reproduced in the respective writ petitions, on the contention that the then Hon'ble Prime Minister, vide the said note dated 14.11.2010, directed the Ministry concerned to submit a summary afresh. However, the said Ministry, without complying said direction, i.e. without sending the said summary afresh, had approved the acquisition process with direction upon the concerned Deputy Commissioner to take steps for transferring the properties in question to the requiring body.</p>
+
+  <p>39. It appears from record that the Ministry of Land did not enter appearance in the respective writ petitions to contest the Rules Nisi. The Deputy Commissioner, Chittagong, however, contested the Rules by filing separate sets of affidavit-in-opposition stating, inter-alia, that "the concise report dated 02.11.2010 of the Ministry of Land, as quoted in paragraph-23, is matter of record (paragraph 18 of affidavit-in-opposition dated 15.04.2012). The contents of note of Prime Minister dated 14.11.2010 directing the Ministry of Land by the Prime Minister to submit further concise report, as quoted in paragraph No.24 of the writ petition, are also matter of records. The Deputy Commissioner, Chittagong merely acted as per final orders and instructions of Government based on the impugned Memo No. ভূঃমঃ/ অধিশাখা-১১/ অধিঃ চট্ট-১২৮/২০১০-২৯৬ dated 23.11.2010 issued by the Ministry of Land and the Deputy Commissioner, Chittagong is unaware of any act of omission committed by Ministry of Land in issuing the said impugned Memo dated 23.11.2010, the contents of which are matters of record (paragraph No.20 of affidavit-in-opposition dated 15.04.2012 and Annexure-5 of the affidavit-in-opposition dated 15.04.2012)."</p>
+
+  <p>40. Taking cognizance of Note no.4 dated 14.11.2010 and also, of the assertions of the respondents-writ petitioners that the Ministry concerned approved the acquisition process vide Memo dated 23.11.2010 without sending summary afresh in compliance of the direction of the Hon'ble Prime Minister, the High Court Division categorically found the action of the said Ministry to be malafide and hence, without jurisdiction.</p>
+
+  <p>41. During the course of hearing of the instant Civil Appeals, the categorical contention of the appellant-writ respondent has been that in the original file of the concerned Ministry, there is no existence of the alleged letter/note dated 14.11.2010, which was reproduced/quoted in the respective writ petitions and that respondents-writ petitioners have obtained the relief in the High Court Division exercising fraud upon the Court; hence, the impugned judgment and order dated 13.02.2014 passed by the High Court Division is liable to be struck down.</p>
+
+  <p>42. This Division, however, finds substance to the said contention in view of the fact that in para 23 of Writ Petition No.766 of 2012, the respondent-writ petitioner has quoted/reproduced the summary dated 02.11.2010 prepared for the then Hon'ble Prime Minister of the Republic, a confidential document, without disclosing as to how they managed to obtain the same and for using them in a court proceeding without being duly authorised, is a punishable offence under the Official Secret Act, 1923.</p>
+
+  <p>43. It is surprising to note that during the course of hearing of the Rules before the High Court Division, neither the Ministry of Land as writ respondent No.1 entered appearance to contest the Rules to clarify the veracity of the said contents nor the appellant-writ respondent No.2 raised any objection whatsoever to the same. Rather, in their affidavits-in-opposition, they discharged their duties negligently by merely stating that the summary note dated 08.11.2010, as reproduced in para 24 of Writ Petition No.766 of 2012, are matters of record.</p>
+
+  <p>44. In the given facts and circumstances, the said stand of the appellant-writ respondent No.2 is unfortunate, unacceptable and hence, strongly deprecated.</p>
+
+  <p>45. However, fact remains, after granting leave by this Division vide order dated 26.02.2015, in particular on ground No. II, corresponding to Note no.4 dated 14.11.2010, the respondent-writ petitioners, in their concise statements, could not controvert the assertion of the appellant-writ respondent No.1 that there is no existence of the alleged note/letter dated 08.11.2010, which was reproduced by the respondents-writ petitioners.</p>
+
+  <p>46. In the given facts and circumstances, the contents of the summary dated 08.11.2010, as reproduced in the respective writ petitions, showing endorsement of the signature of the then Hon'ble Prime Minister dated 14.11.2010, is found to be fictitious and a non-existent letter.</p>
+
+  <p>47. In Lazarus Estate Ltd. Vs. Beasley, (1956) 1 QB 702 PP. 712 and 713, Lord Denning observed:</p>
+  <blockquote>
+    "No judgment of a Court, no order of a Minister can be allowed to stand if it has been obtained by fraud. Fraud unravels everything."
+  </blockquote>
+
+  <p>48. In the same judgment, Lord Parker L.J. observed that:</p>
+  <blockquote>
+    "Fraud vitiates all transactions known to the law of however high a degree of solemnity."
+  </blockquote>
+
+  <p>49. The High Court Division, while declaring the entire proceedings of L.A. Case No.1/2010-2011 including the impugned Memo dated 23.11.2010 issued by the Ministry of Land as being unlawful, malafide and without jurisdiction, took cognizance of the said fictitious and non-existent note/concise report dated 08.11.2010. Resultantly, the entire judgment and order dated 13.02.2014 by the High Court Division is vitiated with fraud and the same is, accordingly, struck down.</p>
+
+  <p>50. In the result, all the civil appeals bearing Nos. 171-174 of 2015 are hereby allowed.</p>
+
+</div>
+===End===
