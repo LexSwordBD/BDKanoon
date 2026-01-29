@@ -1109,27 +1109,24 @@ All the appeals are, hereby, allowed by this Division's unanimous decision.
 ===20SCOBAD61===
 <div class="judgment-content">
 
-      <h3 class="text-center">APPELLATE DIVISION</h3>
+    <h3 class="text-center judgment-title">20 SCOB [2025] AD</h3>
+    <h3 class="text-center">APPELLATE DIVISION</h3>
 
-    <p class="text-center text-bold">Present:</p>
-    <p class="text-center">Mr. Justice Md. Ashfaqul Islam</p>
-    <p class="text-center">Mr. Justice S. M. Emdadul Hoque</p>
-    <p class="text-center">Mr. Justice A. K. M. Asaduzzaman</p>
+    <p class="text-center">
+        <span class="text-bold">Present:</span><br>
+        Mr. Justice Md. Ashfaqul Islam<br>
+        Mr. Justice S. M. Emdadul Hoque<br>
+        Mr. Justice A. K. M. Asaduzzaman
+    </p>
 
     <h3 class="text-center">CIVIL APPEAL NO. 726 OF 2016</h3>
     <p class="text-center">(From the judgment and order dated 17.09.2013, passed by the High Court Division in Civil Revision No. 1843 of 2008)</p>
 
-    <br>
-
     <p class="text-center text-bold">Rezaul Haq</p>
     <p class="text-right">... Appellant</p>
-
     <p class="text-center text-bold">-Versus-</p>
-
     <p class="text-center text-bold">Mossammat Monwara Khanam and others.</p>
     <p class="text-right">.... Respondents</p>
-
-    <br>
 
     <table>
         <tr>
@@ -1153,10 +1150,7 @@ All the appeals are, hereby, allowed by this Division's unanimous decision.
             <td valign="top">: 20-05-2025</td>
         </tr>
     </table>
-
-    <br>
     <hr>
-    <br>
 
     <h3 class="text-center">JUDGMENT</h3>
 
@@ -1201,7 +1195,7 @@ All the appeals are, hereby, allowed by this Division's unanimous decision.
     <p>19. The Trial Court, in disposing of the suit, took view that the suit is maintainable and not barred by limitation. The Trial Court further opined that the plaintiff-respondent No.1, by adducing sufficient evidence, proved his title and possession over the suit land and also succeeded in proving the case of dispossession by the defendant No.1-appellant, and accordingly decreed the suit in part. In deciding the case between the parties, the Trial Court observed that:-</p>
 
     <blockquote>
-        "উপরোক্ত আলোচনা পর্যালোচনায় ও বিশ্লেষনের আলোকে আদালতের স্থির সিদ্ধান্ত যে প্রদঃ নং ২(ক) এবং প্রদঃ নং ক এ উল্লেখিত চৌহদ্দি পরস্পর এক অভিন্ন এবং যেহেতু প্রদঃ নং ২ (ক) এর সম্পাদন ও রেজিষ্টির তারিখ ১৫/৫/১৯৯১ ইং সেহেতু উক্ত দলিল সম্পাদন ও রেজিষ্টির প্রায় ছয় বছর কাল পরে একই চৌহদ্দি উল্লেখ প্রদঃ নং ক সম্পাদন ও রেজিঃ করা হয়েছে। উক্ত চৌহদ্দিভুক্ত ভূমিতে বর্তমানে ১নং বিবাদীর দখল থাকবার স্বীকৃত এবং ১নং বিবাদীর স্বীকৃত মতেই তিনি ১১/১/৯৭ ইং তারিখে সম্পাদিত ও রেজিঃ কত প্রদঃনং ক মূলে উক্ত ভূমির দখলে গেছেন এবং উক্ত তারিখের পূর্বে উক্ত ভূমিতে তার কোন দখল ছিল না। অন্য দিকে ১১/১/৯৭ ইং তারিখের পাচ বছরের ও অধিককাল পূর্বে উক্ত চৌহুদ্দিভুক্ত নাঃ ভূমিতে বাদিনী খরিদ মূলে দখল অর্জন করেছিলেন মর্মে ইতো পূর্বে আদালতে দৃষ্ট ও প্রতিষ্ঠিত হয়েছে এবং পি, ডব্লিউ-১ এর পাশাপাশি পি, ডব্লিউ-২ মফিজ উল্লাহ, পি, ডব্লিউ-৩ রওশন আরা বেগম ওরফে দুর্লোভী রেগম পরস্পর কে সমর্থন করে সাক্ষ্য পূর্ন সাক্ষ্য দানের মাধ্যমে বিগত ২৭/১০/৯৭ ইং তারিখে উক্ত ভূমি হতে ১নং বিবাদী কর্তৃক বাদিনীপক্ষকে বেদখল করবার দাবী ও ঘটনাকে আদালতে প্রতিষ্ঠিত ও প্রমানিত করেছেন।<br><br>
+        "উপরোক্ত আলোচনা পর্যালোচনায় ও বিশ্লেষনের আলোকে আদালতের স্থির সিদ্ধান্ত যে প্রদঃ নং ২(ক) এবং প্রদঃ নং ক এ উল্লেখিত চৌহদ্দি পরস্পর এক অভিন্ন এবং যেহেতু প্রদঃ নং ২ (ক) এর সম্পাদন ও রেজিষ্টির তারিখ ১৫/৫/১৯৯১ ইং সেহেতু উক্ত দলিল সম্পাদন ও রেজিষ্টির প্রায় ছয় বছর কাল পরে একই চৌহদ্দি উল্লেখ প্রদঃ নং ক সম্পাদন ও রেজিঃ করা হয়েছে। উক্ত চৌহদ্দিভুক্ত ভূমিতে বর্তমানে ১নং বিবাদীর দখল থাকবার স্বীকৃত এবং ১নং বিবাদীর স্বীকৃত মতেই তিনি ১১/১/৯৭ ইং তারিখে সম্পাদিত ও রেজিঃ কত প্রদঃনং ক মূলে উক্ত ভূমির দখলে গেছেন এবং উক্ত তারিখের পূর্বে উক্ত ভূমিতে তার কোন দখল ছিল না। অন্য দিকে ১১/১/৯৭ ইং তারিখের পাচ বছরের ও অধিককাল পূর্বে উক্ত চৌহুদ্দিভুক্ত নাঃ ভূমিতে বাদিনী খরিদ মূলে দখল অর্জন করেছিলেন মর্মে ইতো পূর্বে আদালতে দৃষ্ট ও প্রতিষ্ঠিত হয়েছে এবং পি, ডব্লিউ-১ এর পাশাপাশি পি, ডব্লিউ-২ মফিজ উল্লাহ, পি, ডব্লিউ-৩ রওশন আরা বেগম ওরফে দুর্লোভী রেগম পরস্পর কে সমর্থন করে সাক্ষ্য পূর্ন সাক্ষ্য দানের মাধ্যমে বিগত ২৭/১০/৯৭ ইং তারিখে উক্ত ভূমি হতে ১নং বিবাদী কর্তৃক বাদিনীপক্ষকে বেদখল করবার দাবী ও ঘটনাকে আদালতে প্রতিষ্ঠিত ও প্রমানিত করেছেন।<br>
         এমতাবস্থায় উল্লিখিত রূপ আলোচনার আলাকে এই স্থির ও চুড়ান্ত সিদ্ধান্ত উপনীত হলেন যে, বিগত ২৭/১০/৯৭ ইং তারিখে নাঃ জমি হতে তাকে বেদখল করবার দাবী প্রমানে বাদীপক্ষ সম্পূর্নরুপে সক্ষম হয়েছেন এবং উক্ত তারিখে ১নং বিবাদী নাঃ ভূমি হতে বাদীপক্ষ কে বেদখল করেছেন"।
     </blockquote>
 
