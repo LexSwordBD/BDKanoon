@@ -270,3 +270,98 @@ footer { background: #0f172a; color: #94a3b8; padding: 60px 0; font-size: 14px; 
 .pagination { margin-top: 40px; }
 .page-link { border: none; margin: 0 6px; border-radius: 8px; color: var(--text-main); font-weight: 600; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
 .page-link.active { background-color: var(--primary); color: white; }
+
+
+
+/* --- Judgment Book-Like Styling --- */
+
+/* কন্টেইনার স্টাইল: বইয়ের পাতার মতো মার্জিন ও প্যাডিং */
+.judgment-content {
+    font-family: 'Merriweather', 'Georgia', serif; /* বইয়ের জন্য আদর্শ ফন্ট */
+    font-size: 18px; /* পড়ার সুবিধার জন্য আদর্শ সাইজ */
+    line-height: 1.8; /* লাইনের মাঝখানে পর্যাপ্ত ফাঁকা */
+    color: #2c3e50; /* পুরোপুরি কালো না, চোখের জন্য আরামদায়ক গাঢ় ছাই */
+    text-align: justify; /* দুই পাশ সমান রাখার জন্য */
+    background-color: #fff;
+    max-width: 900px; /* লাইনগুলো খুব বেশি লম্বা হবে না */
+    margin: 0 auto; /* মাঝখানে থাকবে */
+    padding: 20px 0;
+}
+
+/* প্যারাগ্রাফ স্টাইল */
+.judgment-content p {
+    margin-bottom: 15px; /* প্যারাগ্রাফের মাঝে পরিমিত গ্যাপ */
+    text-indent: 0; /* আধুনিক স্টাইলে ইনডেন্ট প্রয়োজন নেই, চাইলে 30px দিতে পারেন */
+}
+
+/* হেডনোট সেকশন (যদি HTML-এর ভেতর থাকে) */
+.judgment-headnote {
+    background-color: #f8f9fa;
+    border-left: 4px solid #34495e;
+    padding: 15px 20px;
+    margin-bottom: 30px;
+    font-size: 0.95em;
+    font-style: italic;
+    color: #555;
+}
+
+/* বিচারপতির নাম বা বিশেষ অংশের জন্য */
+.judgment-content strong, 
+.judgment-content b {
+    font-weight: 700;
+    color: #000;
+}
+
+/* জাজমেন্টের টাইটেল বা কোর্টের নাম */
+.judgment-title {
+    text-align: center;
+    font-family: 'Playfair Display', serif; /* জাজমেন্টের শিরোনামের জন্য রাজকীয় ফন্ট */
+    font-weight: bold;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+}
+
+/* টেবিল স্টাইল (যাতে মোবাইল বা পিসিতে সুন্দর দেখায়) */
+.judgment-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 0.9em;
+}
+
+.judgment-content th, 
+.judgment-content td {
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+    text-align: left;
+}
+
+.judgment-content th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+/* উদ্ধৃতি বা Blockquote (বইয়ের মতো) */
+.judgment-content blockquote {
+    margin: 20px 40px;
+    padding: 10px 20px;
+    border-left: 3px solid #ccc;
+    background: #fafafa;
+    font-style: italic;
+    color: #666;
+}
+
+/* মোবাইল রেসপন্সিভনেস */
+@media (max-width: 768px) {
+    .judgment-content {
+        font-size: 16px;
+        line-height: 1.6;
+        padding: 10px;
+    }
+    .judgment-content blockquote {
+        margin: 15px 10px;
+    }
+}
