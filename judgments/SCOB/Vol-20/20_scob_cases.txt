@@ -1109,25 +1109,20 @@ All the appeals are, hereby, allowed by this Division's unanimous decision.
 ===20SCOBAD61===
 <div class="judgment-content">
 
-    <h3 class="text-center judgment-title">20 SCOB [2025] AD</h3>
-    <h3 class="text-center">APPELLATE DIVISION</h3>
-
+       <h3 class="text-center">APPELLATE DIVISION</h3>
     <p class="text-center">
         <span class="text-bold">Present:</span><br>
         Mr. Justice Md. Ashfaqul Islam<br>
         Mr. Justice S. M. Emdadul Hoque<br>
         Mr. Justice A. K. M. Asaduzzaman
     </p>
-
     <h3 class="text-center">CIVIL APPEAL NO. 726 OF 2016</h3>
     <p class="text-center">(From the judgment and order dated 17.09.2013, passed by the High Court Division in Civil Revision No. 1843 of 2008)</p>
-
     <p class="text-center text-bold">Rezaul Haq</p>
     <p class="text-right">... Appellant</p>
     <p class="text-center text-bold">-Versus-</p>
     <p class="text-center text-bold">Mossammat Monwara Khanam and others.</p>
     <p class="text-right">.... Respondents</p>
-
     <table>
         <tr>
             <td class="text-bold" valign="top">For the Appellant</td>
@@ -1151,64 +1146,36 @@ All the appeals are, hereby, allowed by this Division's unanimous decision.
         </tr>
     </table>
     <hr>
-
     <h3 class="text-center">JUDGMENT</h3>
-
     <p class="text-bold">S. M. Emdadul Hoque, J:</p>
-
     <p>1. This Civil Appeal, by leave granting order dated 15.11.2016 in Civil Petition for Leave to Appeal No.162 of 2014 at the instance of the appellant, has been directed against the judgment and order dated 17.09.2013, passed by the High Court Division in Civil Revision No.1843 of 2008, making the Rule absolute.</p>
-
     <p>2. Briefly stated, the facts relevant for disposal of this Appeal are that the plaintiff-respondent No.1, Mossammat Monwara Khanam, filed the Title Suit No.329 of 2003 in the Court of Senior Assistant Judge, Sadar, Noakhali, seeking a declaration of title and recovery of khas possession by evicting the defendant No. 1-appellant, Rejaul Haq, from the suit land described in the schedule of the plaint, stating, inter alia, that the suit land, measuring 18 decimals under Plot Nos.472 and 473 of Khatian No.175, originally belonged to Sadia Khatun and Entaz Miah. After the death of Entaz Miah, his heirs, namely, Abdul Khalek Miah, Abdul Malek Miah, Ruchia Khatun, Zakia Khatun, and his wife, Asia Khatun, became the owners of his share. Subsequently, Zakia Khatun transferred 1-1/4 decimals of land from Khatian No. 175 of Plot Nos. 472 and 473, along with other lands, to the plaintiff-respondent No.1 vide registered deed No. 4835 dated 15.05.1991. Later, Abdul Malek Miah transferred 2-6/16 decimals of land from the same plot to the plaintiff-respondent No.1 through registered deed No. 6834 dated 09.07.1991. The land was subsequently mutated in the names of the plaintiff-respondent No.1 and her husband in a separate Khatian No.772, and they remained in possession and regularly paid rents to the government. Thereafter, Asia Khatun, Abdul Khalek, and Ruchia Khatun purportedly transferred the suit land to defendant No.1-appellant vide deed No. 385 dated 11.01.1997, leading to a dispute between the parties. Despite assurances from the local residents to settle the matter through compromise, the defendant No.1-appellant attempted to set up a petrol pump on the suit land claimed by the plaintiff-respondent No.1. Since the plaintiff-respondent No.1 resided in Chattogram, she requested the defendant No.2-respondent No.2, through a letter dated 06.08.1997, not to grant any approval for setting up the petrol pump on the disputed land, but no action was taken. On 27.10.1997, the defendant No.1-appellant, with the help of hired thugs and labourers, allegedly removed soil from Plot Nos. 472 and 473, and dumped it onto the land of the plaintiff-respondent No.1. Although the plaintiff-respondent No.1's sister-in-law, Durlovi Begum, tried to resist, she was unable to prevent the dispossession. Hence, the plaintiff-respondent No.1 was compelled to institute the suit.</p>
-
     <p>3. The defendant No.1-appellant contested the suit by filing a written statement, denying all the material allegations made in the plaint, contending, inter alia, that the defendant No.1-appellant purchased the suit land on 11.01.1997 vide deed No. 385, measuring 5-7/10 decimals in Plot Nos. 472 and 473, and mutated the same through Mutation Case No.36/97-98 dated 21.07.1997, resulting in Mutation Khatian No.683. He erected a wall around the suit land, established a petrol pump by spending a huge amount of money, and has been carrying on business there. It was further stated that the lands of the defendant No.1-appellant and the plaintiff-respondent No.1 are different, and the defendant No.1-appellant did not dispossess the plaintiff-respondent No.1 from the suit land. The plaintiff-respondent No.1 instituted the suit only out of jealousy and was trying to harass the defendant No.1-appellant. Therefore, the defendant No.1-appellant prayed for dismissal of the suit.</p>
-
     <p>4. During the trial, the plaintiff-respondent No.1 adduced the evidence of 4 (four) witnesses, while the defendant No.1-appellant adduced the evidence of 3 (three) witnesses and both sides submitted their relevant documents, marking them as exhibits.</p>
-
     <p>5. After conclusion of the trial, the Senior Assistant Judge, Sadar, Noakhali, upon hearing the parties and considering the evidence on record, partly decreed the suit vide judgment and decree dated 29.09.2005.</p>
-
     <p>6. Being aggrieved, the defendant No.1-appellant filed the Title Appeal No.235 of 2005 in the Court of the District Judge, Noakhali. Upon transfer, the appeal was heard by the Joint District Judge, 3rd Court, Noakhali, who, vide judgment and decree dated 03.03.2008, allowed the appeal and reversed the judgment and decree dated 29.09.2005, passed by the Trial Court.</p>
-
     <p>7. Being dissatisfied with the judgment and decree dated 03.03.2008, passed by the Joint District Judge, 3rd Court, Noakhali, the plaintiff-respondent No.1 filed the Civil Revision No.1843 of 2008 in the High Court Division and obtained a Rule. Upon final hearing, the High Court Division, vide judgment and order dated 17.09.2013, made the Rule absolute, set aside the judgment and decree dated 03.03.2008, passed by the Joint District Judge, 3rd Court, Noakhali, upheld the judgment and decree dated 29.09.2005, passed by the Senior Assistant Judge, Sadar, Noakhali and decreed the suit in part.</p>
-
     <p>8. Being disgruntled with the judgment and order dated 17.09.2013, passed by the High Court Division in Civil Revision No. 1843 of 2008; the defendant No.1-appellant filed the Civil Petition for Leave to Appeal No.162 of 2014 in this Division. After hearing the parties, this Division allowed the Civil Petition for Leave to Appeal and granted leave on consideration of the submission of the learned Counsel for the leave-petitioner to the effect that since the plaintiff-respondent No.1 and the defendant No.1-appellant were purchasers from different co-sharers by inheritance, the suit for declaration of title and recovery of khas possession was not maintainable without a prayer for partition, and the Appellate Court as the last Court of fact, after properly adverting to the evidence on record, reversed the findings of the Trial Court regarding the plaintiff-respondent No.1's case of possession and dispossession, as such, the Appellate Court below rightly allowed the appeal and reversed the judgment and decree of the Trial Court; however, the High Court Division erred in law by interfering in revision without any finding of misreading or non-consideration of evidence by the Appellate Court. Hence, the Appeal.</p>
-
     <p>9. Mr. M. Qumrul Haque Siddique, the learned Counsel appearing on behalf of the defendant No.1-appellant, submits that since the plaintiff-respondent No.1 and defendant No.1-appellant were purchasers from different co-sharers by inheritance, the suit for declaration of title and recovery of khas possession was not maintainable without a prayer for partition. However, the High Court Division erroneously restored the decree passed by the Trial Court.</p>
-
     <p>10. He further submits that the Appellate Court, being the last Court of fact, after properly adverting to the evidence on record, reversed the findings of the Trial Court regarding the plaintiff-respondent No.1's claim of possession and dispossession, and consequently set aside the decree. Nonetheless, the High Court Division erred in law by interfering in revision without any finding of misreading or non-consideration of evidence by the Appellate Court.</p>
-
     <p>11. Mr. Nurul Amin, the learned Senior Advocate appearing for the plaintiff-respondent No.1, submits that the plaintiff-respondent No.1 purchased the suit land from some of the defendants of the original suit, and that defendant No.1-appellant subsequently took forcible possession. Hence, the suit for declaration of title and recovery of khas possession is maintainable in law; as a result, the Appellate Court below committed an error in law by holding otherwise.</p>
-
     <p>12. He further submits that the Trial Court as well as the High Court Division, upon proper appraisal of the evidence on record, found that the plaintiff-respondent No.1 had prior possession and was dispossessed by the defendant No.1-appellant from the suit land. However, the Appellate Court below, without assigning any findings or observations in this regard, allowed the appeal and thereby erred in dismissing the suit.</p>
-
     <p>13. He contends next that the Trial Court, on the basis of documentary and oral evidence as described in its judgment, held that the schedule of the plaintiff-respondent No.1's purchase deed would prevail over that of the defendant No.1-appellant, since the defendant No.1-appellant's purchase related to the same land but was made subsequently. As such, the judgment of the Appellate Court below allowing the appeal without addressing the specific findings of the Trial Court was erroneous.</p>
-
     <p>14. Mr. Nurul Amin, the learned Senior Advocate, further submits that the learned Appellate Court below was wrong in holding that the suit filed by the plaintiff-respondent No.1 was not maintainable without a partition by the co-sharers, and in failing to appreciate that there had been an amicable partition among the co-sharers. Both the plaintiff-respondent No.1 and defendant No.1-appellant stood on the same footing with regard to the partition, and therefore, the plaintiff-respondent No.1's prior purchase should take precedence.</p>
-
     <p>15. He finally submits that the plaintiff-respondent No.1, by adducing evidence, proved the defendant No.1-appellant's forcible possession and use of the plaintiff-respondent No.1's land and had even sought to resolve the dispute through local salish/mediation. Since prior possession was proved, the decree passed in favour of the plaintiff-respondent No.1 was justified in law, and therefore, the Appeal is liable to be dismissed.</p>
-
     <p>16. We have heard the learned Counsel of both sides and perused the impugned judgment of the High Court Division together with the decisions of the courts below.</p>
-
     <p>17. In the instant suit, the core issue for disposal of the Appeal is whether a suit for declaration of title and recovery of khas possession is maintainable without a prayer for partition, where both the plaintiff-respondent No.1 and the defendant No.1-appellant have purchased the land from the co-sharers of the suit land.</p>
-
     <p>18. In the matter under consideration, the Trial Court, after considering the evidence on record, found title in favour of the plaintiff-respondent No.1 and accordingly, partly decreed the suit. However, the Appellate Court below allowed the appeal, mainly taking the view that, in the case of ejmali property, a suit is not maintainable without a prayer for partition.</p>
-
     <p>19. The Trial Court, in disposing of the suit, took view that the suit is maintainable and not barred by limitation. The Trial Court further opined that the plaintiff-respondent No.1, by adducing sufficient evidence, proved his title and possession over the suit land and also succeeded in proving the case of dispossession by the defendant No.1-appellant, and accordingly decreed the suit in part. In deciding the case between the parties, the Trial Court observed that:-</p>
-
     <blockquote>
         "উপরোক্ত আলোচনা পর্যালোচনায় ও বিশ্লেষনের আলোকে আদালতের স্থির সিদ্ধান্ত যে প্রদঃ নং ২(ক) এবং প্রদঃ নং ক এ উল্লেখিত চৌহদ্দি পরস্পর এক অভিন্ন এবং যেহেতু প্রদঃ নং ২ (ক) এর সম্পাদন ও রেজিষ্টির তারিখ ১৫/৫/১৯৯১ ইং সেহেতু উক্ত দলিল সম্পাদন ও রেজিষ্টির প্রায় ছয় বছর কাল পরে একই চৌহদ্দি উল্লেখ প্রদঃ নং ক সম্পাদন ও রেজিঃ করা হয়েছে। উক্ত চৌহদ্দিভুক্ত ভূমিতে বর্তমানে ১নং বিবাদীর দখল থাকবার স্বীকৃত এবং ১নং বিবাদীর স্বীকৃত মতেই তিনি ১১/১/৯৭ ইং তারিখে সম্পাদিত ও রেজিঃ কত প্রদঃনং ক মূলে উক্ত ভূমির দখলে গেছেন এবং উক্ত তারিখের পূর্বে উক্ত ভূমিতে তার কোন দখল ছিল না। অন্য দিকে ১১/১/৯৭ ইং তারিখের পাচ বছরের ও অধিককাল পূর্বে উক্ত চৌহুদ্দিভুক্ত নাঃ ভূমিতে বাদিনী খরিদ মূলে দখল অর্জন করেছিলেন মর্মে ইতো পূর্বে আদালতে দৃষ্ট ও প্রতিষ্ঠিত হয়েছে এবং পি, ডব্লিউ-১ এর পাশাপাশি পি, ডব্লিউ-২ মফিজ উল্লাহ, পি, ডব্লিউ-৩ রওশন আরা বেগম ওরফে দুর্লোভী রেগম পরস্পর কে সমর্থন করে সাক্ষ্য পূর্ন সাক্ষ্য দানের মাধ্যমে বিগত ২৭/১০/৯৭ ইং তারিখে উক্ত ভূমি হতে ১নং বিবাদী কর্তৃক বাদিনীপক্ষকে বেদখল করবার দাবী ও ঘটনাকে আদালতে প্রতিষ্ঠিত ও প্রমানিত করেছেন।<br>
         এমতাবস্থায় উল্লিখিত রূপ আলোচনার আলাকে এই স্থির ও চুড়ান্ত সিদ্ধান্ত উপনীত হলেন যে, বিগত ২৭/১০/৯৭ ইং তারিখে নাঃ জমি হতে তাকে বেদখল করবার দাবী প্রমানে বাদীপক্ষ সম্পূর্নরুপে সক্ষম হয়েছেন এবং উক্ত তারিখে ১নং বিবাদী নাঃ ভূমি হতে বাদীপক্ষ কে বেদখল করেছেন"।
     </blockquote>
-
     <p>20. It is an admitted fact that the plaintiff-respondent No.1 purchased the land on 15.05.1991 through registered deed No. 4835 (Exhibit-2Ka) and also mutated her name. The Trial Court observed that after six years of the plaintiff-respondent No.1's purchase, the defendant No.1-appellant purchased the land through registered deed No. 385 dated 11.01.1997 (Exhibit-Ka) and took possession thereafter.</p>
-
     <p>21. The Trial Court further opined that, since it is admitted that the plaintiff-respondent No.1 was in continuous possession of the suit land prior to the possession taken by defendant No.1-appellant, and it is also admitted by the defendant No.1-appellant that he obtained possession of the suit land on 11.01.1997, accordingly, it is clearly evident to the Trial Court that the defendant No.1-appellant had no possession of the suit land before that date. It was also found by the Trial Court that the plaintiff-respondent No.1 was in possession prior to the possession taken by defendant No.1-appellant.</p>
-
     <p>22. Upon consideration of the evidence on record, both oral and documentary, the Trial Court finally opined that the plaintiff-respondent No.1 had proved her title, possession, and the case of dispossession by adducing sufficient evidence. Whereas it appears that the Appellate Court, without reversing the said findings of the Trial Court, set aside the judgment of the Trial Court. The Appellate Court only considered that, since the plaintiff-respondent No.1 had purchased the land from some of the co-sharers of the suit land and the defendant No.1-appellant had also purchased the suit land from other co-sharers, a simple suit for declaration of title and recovery of khas possession, without a prayer for partition, is not maintainable.</p>
-
     <p>23. We have gone through the judgments of the Courts below. Admittedly, the plaintiff-respondent No.1 purchased the land through registered deed No.4835 dated 15.05.1991, mutated her name, and has been regularly paying rent to the government and the defendant No.1-appellant purchased the land six years after the said purchase by the plaintiff-respondent No.1 and thereafter took possession of the suit land.</p>
-
     <p>24. After perusal of the evidence on record, it also appears that in both registered deeds, the boundaries have been specifically mentioned, and the defendant No.1-appellant took possession of the said portion of land 6 (six) years after the date of purchase by the plaintiff-respondent No.1. In the deed of the plaintiff-respondent No.1 the boundary of the suit land has been mentioned as under:-</p>
-
     <blockquote>
         "স্থানীয় চৌহদ্দি:- উত্তরে: চলাচলের রাস্তা দক্ষিনে: আব্দুল গনি গং পূর্বে বেড়ী পশ্চিমে: মোস্তাফিজের রহমান ও কবরস্থান এই চৌহুদ্দির মধ্যে ময়গুঞ্জায়েদ সহ বিক্রীত বটে"।
     </blockquote>
@@ -1218,17 +1185,11 @@ All the appeals are, hereby, allowed by this Division's unanimous decision.
     <blockquote>
         "চৌহদ্দী হিসাবে পূর্বে: সোনাপুর চর জব্বার সড়ক দক্ষিণে: আব্দুল বারি চেয়ারম্যানের বাড়ীর রাস্তা উত্তরে: দয়ালী বাড়ী। অত্র দাগের বাড়ীর চলাচলের রাস্তা পশ্চিমে: কবরস্থান ও খোকা মিয়া এই চৌহদ্দির মধ্যে ৫০ শ: ভূমি দখল বুঝাইয়া দিলাম"।
     </blockquote>
-
     <p>26. In view of the above, it appears that the Trial Court, after elaborate discussion and consideration of the evidence on record, took view that the boundaries in both deeds are similar. Admittedly, the plaintiff-respondent No.1 purchased the land and possessed the same by mutating her name. However, six years after the said purchase by the plaintiff-respondent No.1, the defendant No.1-appellant purchased the land and took possession of the said portion. In such circumstances, it cannot be said that the plaintiff-respondent No.1 failed to prove her case of possession and dispossession.</p>
-
     <p>27. The Appellate Court below, although, opined that the suit was not maintainable as the suit land was ejmali and had not been partitioned, failed to consider that the plaintiff-respondent No.1 had purchased the land six years prior to the defendant No.1-appellant and had been in possession of it, having mutated her name and paid rent to the government. Thus, in view of the above, it appears that the plaintiff-respondent No.1 has title over the suit land. It also appears from the judgment of the Trial Court, the evidence on record as well as the documents produced by the plaintiff-respondent No.1, that the plaintiff-respondent No.1 was in possession of the suit land and was forcefully dispossessed therefrom, and thus filed the suit for declaration of title and recovery of khas possession, which is quite maintainable in the eye of law.</p>
-
     <p>28. However, in a suit for recovery of possession, the plaintiff must first prove possession and then dispossession. It appears that, in the instant suit, the plaintiff-respondent No.1 succeeded in proving her title and that she was forcefully dispossessed from the suit land by the defendant No.1-appellant. It is also the finding of the Trial Court that the plaintiff-respondent No.1 successfully proved her title and that the defendant No.1-appellant took possession of the said land six years after the plaintiff-respondent No.1 had purchased it. In such a case, there is no bar to file a suit for declaration of title and recovery of khas possession alone, and a prayer for partition is not required.</p>
-
     <p>29. However, since the defendant No.1-appellant is a subsequent purchaser, he had no option but to establish his right by filing a suit for partition, whereas the plaintiff-respondent No.1 has no such obligation.</p>
-
     <p>30. Considering the facts and circumstances of the case, and in view of the foregoing discussions, it is our considered view that the High Court Division, upon proper consideration of the evidence on record, rightly set aside the judgment and decree dated 03.03.2008 passed by the learned Joint District Judge, 3rd Court, Noakhali, and correctly restored the judgment and decree of the Trial Court.</p>
-
     <p>31. In light of the above, we find no merit in the appeal. Accordingly, the Civil Appeal No.726 of 2016 is hereby dismissed.</p>
 
 </div>
